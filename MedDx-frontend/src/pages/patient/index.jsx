@@ -4,6 +4,7 @@ import PatientSidebar from './components/patient-sidebar'
 
 const SECTIONS = {
   '/patient': 'My appointments',
+  '/patient/triage': 'Symptom check',
   '/patient/doctors': 'Find a doctor',
 }
 

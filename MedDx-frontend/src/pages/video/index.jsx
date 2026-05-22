@@ -1,33 +1,40 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { format } from 'date-fns'
 import { ArrowLeft, PhoneOff, Stethoscope, User } from 'lucide-react'
 
 import { useAppointment, useVideoSession } from '@/apis'
-import {
-  useAuth,
-  useDailyVideo,
-  useJitsi,
-  usePageTitle,
-} from '@/hooks'
-import { errorToast } from '@/lib'
+import { useAuth, useJitsi, usePageTitle } from '@/hooks'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 import PatientRecordPanel from './components/patient-record-panel'
 import ConsultationNotesForm from './components/consultation-notes-form'
+import TriageSummaryCard from './components/triage-summary-card'
+import PrescriptionCard from '@/components/shared/prescription-card'
+
+const buildDailyUrl = ({ url, token, displayName }) => {
+  if (!url) return null
+  const u = new URL(url)
+  if (token) u.searchParams.set('t', token)
+  if (displayName) u.searchParams.set('userName', displayName)
+  return u.toString()
+}
 
 const VideoConsultPage = () => {
   usePageTitle({ title: 'Video consult · MedDx' })
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const stageRef = useRef(null)
+  const jitsiContainerRef = useRef(null)
 
   const { appointment, isLoading, error, refetch } = useAppointment({ id })
-  const { session, isLoading: sessionLoading, error: sessionError } =
-    useVideoSession({ id, enabled: !!appointment })
+  const {
+    session,
+    isLoading: sessionLoading,
+    error: sessionError,
+  } = useVideoSession({ id, enabled: !!appointment })
 
   const [activeTab, setActiveTab] = useState('history')
 
@@ -40,21 +47,22 @@ const VideoConsultPage = () => {
 
   const isDaily = session?.provider === 'daily'
 
-  // Daily path — preferred.
-  const dailyState = useDailyVideo({
-    containerRef: stageRef,
-    url: isDaily ? session?.url : null,
-    token: isDaily ? session?.token : null,
-    displayName,
-    enabled: !!isDaily,
-    onLeft: () => {
-      if (isPatient) navigate('/patient', { replace: true })
-    },
-  })
+  // Daily: just a plain iframe URL (no SDK = no singleton problems).
+  const dailyIframeSrc = useMemo(
+    () =>
+      isDaily
+        ? buildDailyUrl({
+            url: session?.url,
+            token: session?.token,
+            displayName,
+          })
+        : null,
+    [isDaily, session?.url, session?.token, displayName]
+  )
 
-  // Jitsi fallback (used only when Daily isn't configured server-side).
+  // Jitsi fallback uses the SDK loader.
   const jitsiState = useJitsi({
-    containerRef: stageRef,
+    containerRef: jitsiContainerRef,
     roomName: !isDaily && session ? session.roomName : null,
     displayName,
     email: user?.email,
@@ -64,9 +72,8 @@ const VideoConsultPage = () => {
     },
   })
 
-  const videoLoading = isDaily ? dailyState.loading : jitsiState.loading
-  const videoError = isDaily ? dailyState.error : jitsiState.error
-  const hangup = isDaily ? dailyState.hangup : jitsiState.hangup
+  const goBack = () =>
+    navigate(isDoctor ? '/doctor' : isPatient ? '/patient' : '/')
 
   if (isLoading || (appointment && sessionLoading)) {
     return (
@@ -109,14 +116,11 @@ const VideoConsultPage = () => {
 
   return (
     <div className="grid h-screen w-screen grid-cols-1 lg:grid-cols-[1fr_22rem] bg-background">
-      {/* Left: video stage */}
       <div className="flex h-full min-h-0 flex-col">
         <header className="flex h-14 shrink-0 items-center justify-between border-b border-border/60 bg-card/60 px-4 backdrop-blur-md">
           <button
             type="button"
-            onClick={() =>
-              navigate(isDoctor ? '/doctor' : isPatient ? '/patient' : '/')
-            }
+            onClick={goBack}
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -163,11 +167,16 @@ const VideoConsultPage = () => {
             size="sm"
             className="rounded-full text-destructive hover:bg-destructive/10"
             onClick={() => {
-              try {
-                hangup()
-              } catch {
-                errorToast({ message: 'Could not hang up cleanly.' })
+              // For Daily we just navigate away — the iframe unloads and Daily
+              // tears down on its own. For Jitsi we send the hangup command.
+              if (!isDaily) {
+                try {
+                  jitsiState.hangup()
+                } catch {
+                  // noop
+                }
               }
+              goBack()
             }}
           >
             <PhoneOff className="h-4 w-4" />
@@ -176,22 +185,35 @@ const VideoConsultPage = () => {
         </header>
 
         <div className="relative flex-1 bg-black">
-          {videoLoading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center text-sm text-muted-foreground bg-black/80">
-              <Spinner />
-              <span className="ml-2">Connecting to the room…</span>
-            </div>
+          {isDaily ? (
+            dailyIframeSrc && (
+              <iframe
+                key={dailyIframeSrc}
+                title="MedDx video consult"
+                src={dailyIframeSrc}
+                allow="camera; microphone; fullscreen; display-capture; autoplay"
+                className="h-full w-full border-0"
+              />
+            )
+          ) : (
+            <>
+              {jitsiState.loading && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center text-sm text-muted-foreground bg-black/80">
+                  <Spinner />
+                  <span className="ml-2">Connecting to the room…</span>
+                </div>
+              )}
+              {jitsiState.error && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center text-sm text-destructive bg-background/95 p-6 text-center">
+                  {jitsiState.error}
+                </div>
+              )}
+              <div ref={jitsiContainerRef} className="h-full w-full" />
+            </>
           )}
-          {videoError && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center text-sm text-destructive bg-background/95 p-6 text-center">
-              {videoError}
-            </div>
-          )}
-          <div ref={stageRef} className="h-full w-full" />
         </div>
       </div>
 
-      {/* Right: role-aware sidebar */}
       <aside className="hidden lg:flex h-full min-h-0 flex-col border-l border-border/60 bg-card">
         {isDoctor ? (
           <Tabs
@@ -207,11 +229,17 @@ const VideoConsultPage = () => {
                 Notes
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="history" className="flex-1 overflow-hidden">
-              <PatientRecordPanel
-                patientId={peer?._id}
-                patientName={peer?.name}
-              />
+            <TabsContent
+              value="history"
+              className="flex-1 overflow-hidden flex flex-col"
+            >
+              <TriageSummaryCard appointment={appointment} />
+              <div className="flex-1 overflow-hidden">
+                <PatientRecordPanel
+                  patientId={peer?._id}
+                  patientName={peer?.name}
+                />
+              </div>
             </TabsContent>
             <TabsContent value="notes" className="flex-1 overflow-hidden">
               <ConsultationNotesForm
@@ -275,11 +303,24 @@ const PatientSidePanel = ({ appointment, peer }) => (
             {appointment.doctorNotes || 'No notes were added.'}
           </div>
           {appointment.prescription && (
-            <pre className="rounded-xl border border-border/60 bg-muted/60 p-3 text-[11px] font-mono whitespace-pre-wrap wrap-break-word">
-              {typeof appointment.prescription === 'string'
-                ? appointment.prescription
-                : JSON.stringify(appointment.prescription, null, 2)}
-            </pre>
+            <div className="pt-2">
+              <PrescriptionCard
+                prescription={appointment.prescription}
+                compact
+                printContext={{
+                  doctorName: peer?.name,
+                  doctorSpecialty: peer?.specialty,
+                  patientName: appointment.patientId?.name,
+                  date: appointment.datetime
+                    ? format(
+                        new Date(appointment.datetime),
+                        "EEE, MMM d, yyyy · h:mm a"
+                      )
+                    : '',
+                  notes: appointment.doctorNotes,
+                }}
+              />
+            </div>
           )}
         </div>
       )}

@@ -55,16 +55,22 @@ class DailyService {
       },
       body: JSON.stringify(body),
     })
-    if (res.status === 409) {
+    if (res.ok) {
+      const data = await res.json()
+      return { url: data.url, name: data.name }
+    }
+
+    // Daily returns 400 (not 409) with a specific "already exists" payload
+    // when the room name is taken. Treat that as success — same outcome.
+    const errText = await res.text()
+    if (
+      (res.status === 409 || res.status === 400) &&
+      /already exists/i.test(errText)
+    ) {
       logger.info({ msg: 'Daily room already exists', data: { name } })
       return { url: this.roomUrl(name), name }
     }
-    if (!res.ok) {
-      const text = await res.text()
-      throw new Error(`Daily ensureRoom failed: ${res.status} ${text}`)
-    }
-    const data = await res.json()
-    return { url: data.url, name: data.name }
+    throw new Error(`Daily ensureRoom failed: ${res.status} ${errText}`)
   }
 
   // A short-lived per-user join token with their display name + role.

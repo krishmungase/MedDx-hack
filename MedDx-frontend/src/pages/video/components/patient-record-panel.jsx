@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 
 import { usePatientMedicalRecord } from '@/apis'
+import PrescriptionCard from '@/components/shared/prescription-card'
 
 const PatientRecordPanel = ({ patientId, patientName }) => {
   const { record, isLoading } = usePatientMedicalRecord({
@@ -95,11 +96,12 @@ const PatientRecordPanel = ({ patientId, patientName }) => {
                       </p>
                     )}
                     {c.prescription && (
-                      <pre className="mt-2 rounded-lg bg-muted/60 p-2 text-[11px] font-mono whitespace-pre-wrap break-words">
-                        {typeof c.prescription === 'string'
-                          ? c.prescription
-                          : JSON.stringify(c.prescription, null, 2)}
-                      </pre>
+                      <div className="mt-2">
+                        <PrescriptionCard
+                          prescription={c.prescription}
+                          compact
+                        />
+                      </div>
                     )}
                   </li>
                 ))}

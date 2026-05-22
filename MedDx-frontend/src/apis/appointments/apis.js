@@ -8,6 +8,7 @@ const urls = {
   byId: (id) => `/appointments/${id}`,
   consultation: (id) => `/appointments/${id}/consultation`,
   videoSession: (id) => `/appointments/${id}/video-session`,
+  verifyPayment: '/appointments/verify-payment',
 }
 
 const apis = {
@@ -27,6 +28,8 @@ const apis = {
     }),
   getVideoSession: ({ id }) =>
     apiRequest({ url: urls.videoSession(id), method: REQUEST_METHOD.GET }),
+  verifyPayment: ({ data }) =>
+    apiRequest({ url: urls.verifyPayment, method: REQUEST_METHOD.POST, data }),
 }
 
 export default apis

@@ -18,16 +18,26 @@ const consoleItems = [
     end: true,
   },
   {
+    id: 'triage',
+    label: 'Symptom check',
+    icon: Sparkles,
+    to: '/patient/triage',
+  },
+  {
     id: 'doctors',
     label: 'Find a doctor',
     icon: Stethoscope,
     to: '/patient/doctors',
   },
+  {
+    id: 'records',
+    label: 'My records',
+    icon: FileText,
+    to: '/patient/records',
+  },
 ]
 
 const futureItems = [
-  { id: 'triage', label: 'Symptom check', icon: Sparkles, soon: 'Phase 5' },
-  { id: 'records', label: 'My records', icon: FileText, soon: 'Phase 7' },
   { id: 'language', label: 'Language', icon: Languages, soon: 'Phase 8' },
   { id: 'settings', label: 'Settings', icon: Settings, soon: '—' },
 ]

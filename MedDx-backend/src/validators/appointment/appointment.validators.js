@@ -1,7 +1,18 @@
 import { body, param } from 'express-validator'
 
+import { AvailableTriageUrgencies } from '../../constants/index.js'
+
 const bookValidator = [
   body('slotId').isMongoId().withMessage('Invalid slotId'),
+  body('triageSummary')
+    .optional({ nullable: true, checkFalsy: true })
+    .isString()
+    .isLength({ max: 2000 })
+    .withMessage('Triage summary too long'),
+  body('triageUrgency')
+    .optional({ nullable: true, checkFalsy: true })
+    .isIn(AvailableTriageUrgencies)
+    .withMessage('Invalid triage urgency'),
 ]
 
 const idParamValidator = [

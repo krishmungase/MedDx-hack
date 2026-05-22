@@ -16,6 +16,7 @@ import useDoctorSlots from './slots/use-doctor-slots'
 
 import useActiveDoctors from './doctors/use-active-doctors'
 import useDoctorById from './doctors/use-doctor-by-id'
+import useMyEarnings from './doctors/use-my-earnings'
 
 import useBookAppointment from './appointments/use-book-appointment'
 import useMyAppointments from './appointments/use-my-appointments'
@@ -23,8 +24,12 @@ import useDoctorQueue from './appointments/use-doctor-queue'
 import useAppointment from './appointments/use-appointment'
 import useSubmitConsultation from './appointments/use-submit-consultation'
 import useVideoSession from './appointments/use-video-session'
+import useVerifyPayment from './appointments/use-verify-payment'
 
 import usePatientMedicalRecord from './medical-records/use-patient-medical-record'
+
+import useTriage from './ai/use-triage'
+import usePrescriptionFormat from './ai/use-prescription-format'
 
 export {
   useLogin,
@@ -42,11 +47,15 @@ export {
   useDoctorSlots,
   useActiveDoctors,
   useDoctorById,
+  useMyEarnings,
   useBookAppointment,
   useMyAppointments,
   useDoctorQueue,
   useAppointment,
   useSubmitConsultation,
   useVideoSession,
+  useVerifyPayment,
   usePatientMedicalRecord,
+  useTriage,
+  usePrescriptionFormat,
 }

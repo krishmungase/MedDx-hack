@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { format, isSameDay, isToday, isTomorrow } from 'date-fns'
-import { CalendarX, Clock, Stethoscope } from 'lucide-react'
+import { CalendarX, Clock, IndianRupee, Stethoscope } from 'lucide-react'
 
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import {
@@ -14,7 +15,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 
-import { useBookAppointment, useDoctorSlots } from '@/apis'
+import {
+  useBookAppointment,
+  useDoctorSlots,
+  useVerifyPayment,
+} from '@/apis'
+import { useAuth, useRazorpay } from '@/hooks'
+import { errorToast, successToast } from '@/lib'
+
+const CONSULT_RUPEES = 199
 
 const dayHeading = (date) => {
   if (isToday(date)) return 'Today'
@@ -22,20 +31,47 @@ const dayHeading = (date) => {
   return format(date, 'EEE, MMM d')
 }
 
-const BookDoctorDialog = ({ doctor, open, onOpenChange, onBooked }) => {
+// Decide the price label for the chip + button before we even hit the server.
+// Backend remains the source of truth — this is just so the patient isn't
+// surprised when Razorpay either opens or doesn't.
+const computePricing = ({ user, triage }) => {
+  const isEmergency = triage?.urgency === 'emergency'
+  const firstFree = !user?.freeConsultationUsed
+  if (isEmergency) {
+    return { kind: 'free', label: 'Free · emergency', note: 'Free emergency consult.' }
+  }
+  if (firstFree) {
+    return { kind: 'free', label: 'Free · first consult', note: 'Your first MedDx consult is on us.' }
+  }
+  return {
+    kind: 'paid',
+    label: `₹${CONSULT_RUPEES}`,
+    note: '₹199 · 30-minute video consult. Paid via Razorpay (test mode).',
+  }
+}
+
+const BookDoctorDialog = ({
+  doctor,
+  open,
+  onOpenChange,
+  onBooked,
+  triage,
+}) => {
+  const { user } = useAuth()
   const [selected, setSelected] = useState(null)
   const { slots, isLoading } = useDoctorSlots({
     doctorId: doctor?._id,
     enabled: !!doctor && open,
   })
 
-  const { isLoading: isBooking, bookAppointment } = useBookAppointment({
-    onSuccess: (payload) => {
-      onBooked?.(payload.appointment)
-      onOpenChange(false)
-      setSelected(null)
-    },
-  })
+  const { openCheckout } = useRazorpay()
+
+  const { bookAppointmentAsync, isLoading: isBooking } = useBookAppointment()
+  const { verifyPaymentAsync, isLoading: isVerifying } = useVerifyPayment()
+  const [isPaying, setIsPaying] = useState(false)
+
+  const busy = isBooking || isVerifying || isPaying
+  const pricing = useMemo(() => computePricing({ user, triage }), [user, triage])
 
   // Group future + available slots by day.
   const groups = useMemo(() => {
@@ -53,11 +89,87 @@ const BookDoctorDialog = ({ doctor, open, onOpenChange, onBooked }) => {
     return acc
   }, [slots])
 
+  const finishBooking = (appointment) => {
+    successToast({ message: 'Appointment confirmed.' })
+    onBooked?.(appointment)
+    onOpenChange(false)
+    setSelected(null)
+  }
+
+  const onConfirm = async () => {
+    if (!selected) return
+
+    const bookPayload = {
+      slotId: selected._id,
+      ...(triage?.summary ? { triageSummary: triage.summary } : {}),
+      ...(triage?.urgency ? { triageUrgency: triage.urgency } : {}),
+    }
+
+    let response
+    try {
+      response = await bookAppointmentAsync({ data: bookPayload })
+    } catch (err) {
+      return errorToast({
+        message:
+          err?.response?.data?.message ||
+          'Could not book — please try again.',
+      })
+    }
+
+    // Free / emergency path: backend already confirmed.
+    if (!response.paymentRequired) {
+      return finishBooking(response.appointment)
+    }
+
+    // Paid path: open Razorpay checkout, then verify.
+    setIsPaying(true)
+    let payResult
+    try {
+      payResult = await openCheckout({
+        keyId: response.keyId,
+        order: response.order,
+        name: 'MedDx',
+        description: `Consult with Dr ${doctor.name}`,
+        prefill: {
+          name: user?.name || '',
+          email: user?.email || '',
+        },
+      })
+    } catch (err) {
+      setIsPaying(false)
+      return errorToast({
+        message: err?.message || 'Payment was cancelled.',
+      })
+    }
+
+    try {
+      const verified = await verifyPaymentAsync({
+        data: {
+          slotId: response.slotId,
+          razorpay_order_id: payResult.razorpay_order_id,
+          razorpay_payment_id: payResult.razorpay_payment_id,
+          razorpay_signature: payResult.razorpay_signature,
+          ...(triage?.summary ? { triageSummary: triage.summary } : {}),
+          ...(triage?.urgency ? { triageUrgency: triage.urgency } : {}),
+        },
+      })
+      finishBooking(verified.appointment)
+    } catch (err) {
+      errorToast({
+        message:
+          err?.response?.data?.message ||
+          'Payment received but we could not confirm the booking. Contact support.',
+      })
+    } finally {
+      setIsPaying(false)
+    }
+  }
+
   return (
     <Dialog
       open={open}
       onOpenChange={(o) => {
-        if (!isBooking) onOpenChange(o)
+        if (!busy) onOpenChange(o)
         if (!o) setSelected(null)
       }}
     >
@@ -67,7 +179,7 @@ const BookDoctorDialog = ({ doctor, open, onOpenChange, onBooked }) => {
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-clinic/10 text-clinic shrink-0">
               <Stethoscope className="h-5 w-5" />
             </span>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <DialogTitle className="font-display text-xl tracking-tight">
                 Book {doctor?.name}
               </DialogTitle>
@@ -75,6 +187,19 @@ const BookDoctorDialog = ({ doctor, open, onOpenChange, onBooked }) => {
                 {doctor?.specialty} · pick an open slot below
               </DialogDescription>
             </div>
+            <Badge
+              variant="outline"
+              className={`rounded-full text-[10px] uppercase tracking-[0.14em] shrink-0 ${
+                pricing.kind === 'free'
+                  ? 'bg-sage/15 text-sage-foreground border-sage/30'
+                  : 'bg-clinic/10 text-clinic border-clinic/25'
+              }`}
+            >
+              {pricing.kind === 'paid' && (
+                <IndianRupee className="h-3 w-3 -mr-1" />
+              )}
+              {pricing.label}
+            </Badge>
           </div>
         </DialogHeader>
 
@@ -124,10 +249,10 @@ const BookDoctorDialog = ({ doctor, open, onOpenChange, onBooked }) => {
 
         <DialogFooter className="px-6 py-4 border-t border-border/60 bg-card/50">
           <div className="flex w-full items-center justify-between gap-3">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground max-w-[55%]">
               {selected
                 ? `Selected: ${format(new Date(selected.datetime), "EEE, MMM d 'at' h:mm a")}`
-                : 'Tap a time to choose.'}
+                : pricing.note}
             </p>
             <div className="flex items-center gap-2">
               <DialogClose asChild>
@@ -135,7 +260,7 @@ const BookDoctorDialog = ({ doctor, open, onOpenChange, onBooked }) => {
                   type="button"
                   variant="ghost"
                   className="rounded-full"
-                  disabled={isBooking}
+                  disabled={busy}
                 >
                   Cancel
                 </Button>
@@ -143,13 +268,13 @@ const BookDoctorDialog = ({ doctor, open, onOpenChange, onBooked }) => {
               <Button
                 type="button"
                 className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-5"
-                disabled={!selected || isBooking}
-                onClick={() =>
-                  bookAppointment({ data: { slotId: selected._id } })
-                }
+                disabled={!selected || busy}
+                onClick={onConfirm}
               >
-                {isBooking ? <Spinner /> : null}
-                Confirm booking
+                {busy ? <Spinner /> : null}
+                {pricing.kind === 'paid'
+                  ? `Pay ₹${CONSULT_RUPEES} & book`
+                  : 'Confirm booking'}
               </Button>
             </div>
           </div>

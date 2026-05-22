@@ -20,6 +20,13 @@ const STATUS_TONE = {
   cancelled: 'bg-destructive/10 text-destructive border-destructive/25',
 }
 
+const URGENCY_TONE = {
+  low: 'bg-sage/15 text-sage-foreground border-sage/30',
+  medium: 'bg-amber-500/15 text-amber-700 border-amber-500/30',
+  high: 'bg-orange-600/15 text-orange-700 border-orange-600/30',
+  emergency: 'bg-destructive/15 text-destructive border-destructive/30',
+}
+
 const JOIN_WINDOW_BEFORE_MS = 5 * 60 * 1000
 const JOIN_WINDOW_AFTER_MS = 60 * 60 * 1000
 
@@ -142,34 +149,53 @@ const DoctorQueue = () => {
 const QueueRow = ({ appt, primary }) => {
   const patient = appt.patientId
   return (
-    <li className="flex flex-wrap items-center gap-4 rounded-xl border border-border/60 bg-background/60 px-4 py-3">
-      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-sage/15 text-sage-foreground shrink-0">
-        {appt.status === 'completed' ? (
-          <CheckCircle2 className="h-5 w-5" />
-        ) : (
-          <CalendarCheck className="h-5 w-5" />
+    <li className="rounded-xl border border-border/60 bg-background/60 px-4 py-3">
+      <div className="flex flex-wrap items-center gap-4">
+        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-sage/15 text-sage-foreground shrink-0">
+          {appt.status === 'completed' ? (
+            <CheckCircle2 className="h-5 w-5" />
+          ) : (
+            <CalendarCheck className="h-5 w-5" />
+          )}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-medium text-sm truncate">
+            {patient?.name || 'Patient'}{' '}
+            <span className="text-muted-foreground font-normal">
+              · {patient?.email || ''}
+            </span>
+          </p>
+          <p className="text-xs text-muted-foreground font-mono tabular-nums mt-0.5">
+            {format(new Date(appt.datetime), "EEE, MMM d · h:mm a")}
+          </p>
+        </div>
+        {appt.triageUrgency && (
+          <Badge
+            variant="outline"
+            className={`rounded-full text-[10px] uppercase tracking-[0.12em] ${
+              URGENCY_TONE[appt.triageUrgency] || ''
+            }`}
+            title="AI triage urgency"
+          >
+            {appt.triageUrgency} urgency
+          </Badge>
         )}
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="font-medium text-sm truncate">
-          {patient?.name || 'Patient'}{' '}
-          <span className="text-muted-foreground font-normal">
-            · {patient?.email || ''}
-          </span>
-        </p>
-        <p className="text-xs text-muted-foreground font-mono tabular-nums mt-0.5">
-          {format(new Date(appt.datetime), "EEE, MMM d · h:mm a")}
-        </p>
+        <Badge
+          variant="outline"
+          className={`rounded-full text-[10px] uppercase tracking-[0.12em] ${
+            STATUS_TONE[appt.status] || ''
+          }`}
+        >
+          {appt.status}
+        </Badge>
+        {primary}
       </div>
-      <Badge
-        variant="outline"
-        className={`rounded-full text-[10px] uppercase tracking-[0.12em] ${
-          STATUS_TONE[appt.status] || ''
-        }`}
-      >
-        {appt.status}
-      </Badge>
-      {primary}
+      {appt.triageSummary && (
+        <p className="mt-2 ml-14 text-xs text-muted-foreground leading-relaxed line-clamp-2">
+          <span className="font-semibold text-foreground/80">AI triage:</span>{' '}
+          {appt.triageSummary}
+        </p>
+      )}
     </li>
   )
 }

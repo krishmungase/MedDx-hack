@@ -8,6 +8,7 @@ import {
   AppLayout,
   AuthLayout,
   DoctorAvailabilityPage,
+  DoctorEarningsPage,
   DoctorLayout,
   DoctorQueuePage,
   HomePage,
@@ -15,6 +16,8 @@ import {
   PatientAppointmentsPage,
   PatientDoctorsPage,
   PatientLayout,
+  PatientRecordsPage,
+  PatientTriagePage,
   SetPasswordPage,
   SignInPage,
   SignUpPage,
@@ -37,7 +40,9 @@ const AppRoutes = () => {
           <Route element={<ProtectedRoute role="patient" />}>
             <Route path="patient" element={<PatientLayout />}>
               <Route index element={<PatientAppointmentsPage />} />
+              <Route path="triage" element={<PatientTriagePage />} />
               <Route path="doctors" element={<PatientDoctorsPage />} />
+              <Route path="records" element={<PatientRecordsPage />} />
             </Route>
           </Route>
 
@@ -45,6 +50,7 @@ const AppRoutes = () => {
             <Route path="doctor" element={<DoctorLayout />}>
               <Route index element={<DoctorQueuePage />} />
               <Route path="availability" element={<DoctorAvailabilityPage />} />
+              <Route path="earnings" element={<DoctorEarningsPage />} />
             </Route>
           </Route>
 

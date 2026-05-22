@@ -7,6 +7,7 @@ import { logger } from './logger/index.js'
 import { MSG } from './constants/index.js'
 import {
   adminRoutes,
+  aiRoutes,
   appointmentRoutes,
   authRoutes,
   doctorRoutes,
@@ -48,6 +49,7 @@ class ServerApp {
     this.app.use('/api/v1/doctors', doctorRoutes)
     this.app.use('/api/v1/appointments', appointmentRoutes)
     this.app.use('/api/v1/medical-records', medicalRecordRoutes)
+    this.app.use('/api/v1/ai', aiRoutes)
 
     this.app.use(errorHandler)
   }

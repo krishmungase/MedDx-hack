@@ -2,8 +2,9 @@ import { ApiError, ApiResponse } from '../../utils/index.js'
 import { AccountStatus, UserRoles } from '../../constants/index.js'
 
 class DoctorController {
-  constructor(userService) {
+  constructor(userService, transactionService) {
     this.userSvc = userService
+    this.transactionSvc = transactionService
   }
 
   serialize(doc) {
@@ -19,7 +20,6 @@ class DoctorController {
   }
 
   // GET /doctors — public list of active doctors.
-  // Phase 5 will accept ?specialty=... to filter.
   async listActive(req, res) {
     const { specialty } = req.query
     const filter = {
@@ -55,6 +55,49 @@ class DoctorController {
       .json(
         new ApiResponse(200, { doctor: this.serialize(doctor) }, 'Doctor fetched.')
       )
+  }
+
+  // GET /doctors/me/earnings — wallet balance + recent transactions.
+  // Used by the doctor's "Earnings" page (Phase 6).
+  async getMyEarnings(req, res) {
+    if (req.user.role !== UserRoles.DOCTOR) {
+      throw new ApiError(403, 'Only doctors can view earnings.')
+    }
+
+    const me = await this.userSvc.findById(req.user._id)
+    const balancePaise = me?.walletBalance || 0
+
+    const transactions = await this.transactionSvc.findByDoctor(req.user._id, {
+      limit: 50,
+    })
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          balancePaise,
+          transactions: transactions.map((t) => ({
+            _id: t._id,
+            amount: t.amount,
+            platformFee: t.platformFee,
+            doctorEarning: t.doctorEarning,
+            type: t.type,
+            createdAt: t.createdAt,
+            patient: t.patientId
+              ? { _id: t.patientId._id, name: t.patientId.name }
+              : null,
+            appointment: t.appointmentId
+              ? {
+                  _id: t.appointmentId._id,
+                  datetime: t.appointmentId.datetime,
+                  status: t.appointmentId.status,
+                }
+              : null,
+          })),
+        },
+        'Earnings fetched.'
+      )
+    )
   }
 }
 

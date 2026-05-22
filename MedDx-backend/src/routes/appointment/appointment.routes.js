@@ -5,6 +5,8 @@ import {
   AppointmentModel,
   MedicalRecordModel,
   SlotModel,
+  TransactionModel,
+  UserModel,
 } from '../../models/index.js'
 import { asyncHandler } from '../../utils/index.js'
 import { UserRoles } from '../../constants/index.js'
@@ -15,7 +17,10 @@ import {
   MailgenService,
   MedicalRecordService,
   NotificationService,
+  PaymentService,
   SlotService,
+  TransactionService,
+  UserService,
 } from '../../services/index.js'
 import { AppointmentController } from '../../controllers/index.js'
 import {
@@ -35,6 +40,9 @@ const appointmentRoutes = express.Router()
 const apptService = new AppointmentService(AppointmentModel)
 const slotService = new SlotService(SlotModel)
 const mrService = new MedicalRecordService(MedicalRecordModel)
+const userService = new UserService(UserModel)
+const paymentService = new PaymentService()
+const transactionService = new TransactionService(TransactionModel)
 const notificationService = new NotificationService()
 const mailgenService = new MailgenService()
 const icsService = new IcsService({
@@ -47,6 +55,9 @@ const apptController = new AppointmentController(
   apptService,
   slotService,
   mrService,
+  userService,
+  paymentService,
+  transactionService,
   notificationService,
   mailgenService,
   icsService,
@@ -56,13 +67,22 @@ const apptController = new AppointmentController(
 
 appointmentRoutes.use(verifyJWT)
 
-// Patient: book a slot
+// Patient: book a slot (may return Razorpay order if payment required)
 appointmentRoutes.post(
   '/book',
   requireRole(UserRoles.PATIENT),
   bookValidator,
   validate,
   asyncHandler((req, res, next) => apptController.book(req, res, next))
+)
+
+// Patient: verify Razorpay payment and finalise the booking
+appointmentRoutes.post(
+  '/verify-payment',
+  requireRole(UserRoles.PATIENT),
+  asyncHandler((req, res, next) =>
+    apptController.verifyPayment(req, res, next)
+  )
 )
 
 // Patient: my appointments

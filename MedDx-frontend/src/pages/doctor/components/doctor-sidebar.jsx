@@ -23,12 +23,22 @@ const consoleItems = [
     icon: CalendarRange,
     to: '/doctor/availability',
   },
+  {
+    id: 'earnings',
+    label: 'Earnings',
+    icon: Coins,
+    to: '/doctor/earnings',
+  },
 ]
 
 const futureItems = [
   { id: 'history', label: 'Patient history', icon: Users, soon: 'In-call' },
-  { id: 'prescriptions', label: 'Prescriptions', icon: Notebook, soon: 'Phase 7' },
-  { id: 'earnings', label: 'Earnings', icon: Coins, soon: 'Phase 6' },
+  {
+    id: 'prescriptions',
+    label: 'Prescriptions',
+    icon: Notebook,
+    soon: 'Phase 7',
+  },
   { id: 'settings', label: 'Settings', icon: Settings, soon: '—' },
 ]
 

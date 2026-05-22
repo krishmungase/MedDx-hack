@@ -6,6 +6,7 @@ import appointmentRoutes from './appointment/appointment.routes.js'
 import medicalRecordRoutes from './medical-record/medical-record.routes.js'
 
 import assistantRoutes from './ai/assistant.routes.js'
+import aiRoutes from './ai/ai.routes.js'
 
 export {
   authRoutes,
@@ -15,4 +16,5 @@ export {
   appointmentRoutes,
   medicalRecordRoutes,
   assistantRoutes,
+  aiRoutes,
 }

@@ -5,14 +5,23 @@ import {
   ConsultationMode,
   PaymentStatus,
   SlotStatus,
+  TransactionType,
+  TriageUrgency,
   UserRoles,
 } from '../../constants/index.js'
+import {
+  CONSULT_FEE_PAISE,
+  splitFee,
+} from '../../constants/pricing.js'
 
 class AppointmentController {
   constructor(
     appointmentService,
     slotService,
     medicalRecordService,
+    userService,
+    paymentService,
+    transactionService,
     notificationService,
     mailgenService,
     icsService,
@@ -22,6 +31,9 @@ class AppointmentController {
     this.apptSvc = appointmentService
     this.slotSvc = slotService
     this.mrSvc = medicalRecordService
+    this.userSvc = userService
+    this.paymentSvc = paymentService
+    this.transactionSvc = transactionService
     this.notificationSvc = notificationService
     this.mailgenSvc = mailgenService
     this.icsSvc = icsService
@@ -29,11 +41,27 @@ class AppointmentController {
     this.log = logger
   }
 
+  // Determine whether the booking should bypass payment.
+  // Two cases qualify, per project spec:
+  //   1) Patient hasn't used their free first consult yet.
+  //   2) Triage assessed this case as an emergency.
+  isFreeConsult(patient, triageUrgency) {
+    if (!patient?.freeConsultationUsed) return true
+    if (triageUrgency === TriageUrgency.EMERGENCY) return true
+    return false
+  }
+
   // ── Book a slot (patient only) ─────────────────────────────────────────
-  // POST /appointments/book { slotId }
+  // POST /appointments/book { slotId, triageSummary?, triageUrgency? }
+  //
+  // Two response shapes:
+  //   { paymentRequired: false, appointment }   — free path, slot locked, done
+  //   { paymentRequired: true,  order, ... }    — Razorpay order created;
+  //                                              client opens checkout, then
+  //                                              calls /payments/verify
   async book(req, res) {
-    const { slotId } = req.body
-    const patientId = req.user._id
+    const { slotId, triageSummary, triageUrgency } = req.body
+    const patient = req.user
 
     const slot = await this.slotSvc.findById(slotId)
     if (!slot) throw new ApiError(404, 'Slot not found.')
@@ -44,56 +72,231 @@ class AppointmentController {
       throw new ApiError(400, 'That slot is in the past.')
     }
 
-    // Mark slot booked first (best-effort optimistic lock via the find).
-    // A full transactional path is added in Phase 6 with payment.
+    const free = this.isFreeConsult(patient, triageUrgency)
+
+    if (free) {
+      return this.confirmFreeBooking(req, res, {
+        slot,
+        triageSummary,
+        triageUrgency,
+      })
+    }
+
+    // Paid path — create Razorpay order. We deliberately do NOT lock the
+    // slot here. The slot is locked inside /payments/verify after signature
+    // verification succeeds, so an abandoned checkout doesn't strand a slot.
+    if (!this.paymentSvc?.isConfigured) {
+      throw new ApiError(
+        503,
+        'Payments are not configured yet. Please ask the admin to set Razorpay test keys.'
+      )
+    }
+
+    let order
+    try {
+      order = await this.paymentSvc.createOrder({
+        amountPaise: CONSULT_FEE_PAISE,
+        slotId: slot._id,
+        patientId: patient._id,
+      })
+    } catch (err) {
+      this.log.error({ msg: 'Razorpay order failed', error: err?.message })
+      throw new ApiError(502, 'Could not start payment. Please try again.')
+    }
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          paymentRequired: true,
+          order: {
+            id: order.id,
+            amount: order.amount,
+            currency: order.currency,
+            receipt: order.receipt,
+          },
+          keyId: ENV.RAZORPAY_KEY_ID,
+          slotId: String(slot._id),
+          // Echo triage context back so the client can pass it to /verify.
+          triageSummary: triageSummary || null,
+          triageUrgency: triageUrgency || null,
+        },
+        'Razorpay order created. Complete payment to confirm the slot.'
+      )
+    )
+  }
+
+  // ── Free / emergency booking path ──────────────────────────────────────
+  async confirmFreeBooking(req, res, { slot, triageSummary, triageUrgency }) {
+    const patient = req.user
     slot.status = SlotStatus.BOOKED
     await slot.save()
 
     let appointment
     try {
       appointment = await this.apptSvc.create({
-        patientId,
+        patientId: patient._id,
         doctorId: slot.doctorId,
         slotId: slot._id,
         datetime: slot.datetime,
         status: AppointmentStatus.SCHEDULED,
         paymentStatus: PaymentStatus.FREE,
         mode: ConsultationMode.VIDEO,
+        triageSummary: triageSummary || null,
+        triageUrgency: triageUrgency || null,
       })
     } catch (err) {
-      // Roll the slot back if the appointment insert fails
       slot.status = SlotStatus.AVAILABLE
       await slot.save()
       throw err
     }
 
+    // First-consult freebie is burned even if this booking was emergency-free.
+    // Cleaner accounting: every patient gets exactly one freebie, and emergency
+    // bookings don't piggyback on that quota.
+    if (!patient.freeConsultationUsed && triageUrgency !== TriageUrgency.EMERGENCY) {
+      await this.userSvc.updateById(patient._id, { freeConsultationUsed: true })
+    }
+
     this.log.info({
-      msg: 'Appointment booked',
+      msg: 'Appointment booked (free path)',
       data: {
         appointmentId: appointment._id,
-        patientId,
+        patientId: patient._id,
         doctorId: slot.doctorId,
-        datetime: slot.datetime,
+        urgency: triageUrgency || 'n/a',
       },
     })
 
     const populated = await this.apptSvc.findByIdPopulated(appointment._id)
-
-    // Best-effort: fire the calendar invites + emails. Never fail booking
-    // because email/Gmail had a bad day.
     this.sendBookingInvites(populated).catch((err) =>
       this.log.warn({ msg: 'Booking invite send failed', error: err?.message })
     )
 
-    return res
-      .status(201)
-      .json(
-        new ApiResponse(
-          201,
-          { appointment: populated },
-          'Appointment confirmed. Calendar invite is on its way.'
-        )
+    return res.status(201).json(
+      new ApiResponse(
+        201,
+        { paymentRequired: false, appointment: populated },
+        'Appointment confirmed.'
       )
+    )
+  }
+
+  // ── Verify Razorpay payment + finalise the booking ─────────────────────
+  // POST /appointments/verify-payment
+  // body: { slotId, razorpay_order_id, razorpay_payment_id, razorpay_signature,
+  //         triageSummary?, triageUrgency? }
+  async verifyPayment(req, res) {
+    const {
+      slotId,
+      razorpay_order_id: orderId,
+      razorpay_payment_id: paymentId,
+      razorpay_signature: signature,
+      triageSummary,
+      triageUrgency,
+    } = req.body
+
+    if (!this.paymentSvc?.isConfigured) {
+      throw new ApiError(503, 'Payments are not configured.')
+    }
+
+    const ok = this.paymentSvc.verifySignature({ orderId, paymentId, signature })
+    if (!ok) {
+      this.log.warn({
+        msg: 'Razorpay signature mismatch',
+        data: { orderId, paymentId, patientId: req.user._id },
+      })
+      throw new ApiError(400, 'Payment verification failed.')
+    }
+
+    // Trust the order's notes, not the client's slotId — defends against the
+    // client paying for slot A but trying to redeem against slot B.
+    const order = await this.paymentSvc.fetchOrder(orderId)
+    const notedSlotId = order?.notes?.slotId
+    if (!notedSlotId || notedSlotId !== String(slotId)) {
+      throw new ApiError(400, 'This payment is for a different slot.')
+    }
+    if (order.status !== 'paid') {
+      // Razorpay marks the order as "paid" once a successful capture lands.
+      throw new ApiError(400, 'Payment is not in a paid state yet.')
+    }
+    if (order.amount !== CONSULT_FEE_PAISE) {
+      throw new ApiError(400, 'Payment amount mismatch.')
+    }
+
+    const slot = await this.slotSvc.findById(slotId)
+    if (!slot) throw new ApiError(404, 'Slot not found.')
+    if (slot.status !== SlotStatus.AVAILABLE) {
+      throw new ApiError(
+        409,
+        'That slot was taken while you were paying. We will refund you shortly.'
+      )
+    }
+    if (new Date(slot.datetime).getTime() < Date.now()) {
+      throw new ApiError(400, 'That slot is in the past.')
+    }
+
+    // Lock slot first so a parallel booker bounces off our 409 above.
+    slot.status = SlotStatus.BOOKED
+    await slot.save()
+
+    let appointment
+    try {
+      appointment = await this.apptSvc.create({
+        patientId: req.user._id,
+        doctorId: slot.doctorId,
+        slotId: slot._id,
+        datetime: slot.datetime,
+        status: AppointmentStatus.SCHEDULED,
+        paymentStatus: PaymentStatus.PAID,
+        mode: ConsultationMode.VIDEO,
+        triageSummary: triageSummary || null,
+        triageUrgency: triageUrgency || null,
+      })
+    } catch (err) {
+      slot.status = SlotStatus.AVAILABLE
+      await slot.save()
+      throw err
+    }
+
+    // 80/20 split, integer paise to avoid float drift on payouts.
+    const { platformFee, doctorEarning } = splitFee(CONSULT_FEE_PAISE)
+    await this.transactionSvc.create({
+      appointmentId: appointment._id,
+      patientId: req.user._id,
+      doctorId: slot.doctorId,
+      amount: CONSULT_FEE_PAISE,
+      platformFee,
+      doctorEarning,
+      type: TransactionType.CONSULTATION,
+    })
+    await this.userSvc.updateById(slot.doctorId, {
+      $inc: { walletBalance: doctorEarning },
+    })
+
+    this.log.info({
+      msg: 'Appointment booked (paid path)',
+      data: {
+        appointmentId: appointment._id,
+        orderId,
+        paymentId,
+        doctorEarning,
+        platformFee,
+      },
+    })
+
+    const populated = await this.apptSvc.findByIdPopulated(appointment._id)
+    this.sendBookingInvites(populated).catch((err) =>
+      this.log.warn({ msg: 'Booking invite send failed', error: err?.message })
+    )
+
+    return res.status(201).json(
+      new ApiResponse(
+        201,
+        { paymentRequired: false, appointment: populated },
+        'Payment received. Appointment confirmed.'
+      )
+    )
   }
 
   // GET /appointments/mine — patient's appointments
@@ -148,7 +351,6 @@ class AppointmentController {
   }
 
   // PATCH /appointments/:id/consultation — doctor only
-  // Body: { doctorNotes, prescription }
   async submitConsultation(req, res) {
     const { doctorNotes, prescription } = req.body
     const appt = await this.apptSvc.findById(req.params.id)
@@ -163,7 +365,6 @@ class AppointmentController {
       status: AppointmentStatus.COMPLETED,
     })
 
-    // Push into patient's MedicalRecord.consultations (find-or-create).
     await this.mrSvc.appendConsultation({
       patientId: appt.patientId,
       entry: {
@@ -196,10 +397,6 @@ class AppointmentController {
   }
 
   // ── Video session (Daily.co) ─────────────────────────────────────────────
-  // GET /appointments/:id/video-session
-  // Returns { provider, url, token } for the frontend to mount the call.
-  // Falls back to Jitsi public room if Daily isn't configured, so the demo
-  // still works without API keys.
   async getVideoSession(req, res) {
     const appt = await this.apptSvc.findByIdPopulated(req.params.id)
     if (!appt) throw new ApiError(404, 'Appointment not found.')
@@ -209,7 +406,6 @@ class AppointmentController {
 
     const roomName = `meddx-${appt._id}`
     const slotStartMs = new Date(appt.datetime).getTime()
-    // Room expires 90 minutes after the slot — long enough to run over.
     const expSec = Math.floor((slotStartMs + 90 * 60 * 1000) / 1000)
 
     if (!this.dailySvc?.isConfigured) {

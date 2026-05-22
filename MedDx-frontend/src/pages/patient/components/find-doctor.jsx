@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
-import { Search, Stethoscope, UserSearch } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Search, Stethoscope, UserSearch, X } from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 import { useActiveDoctors } from '@/apis'
 
@@ -17,10 +18,28 @@ const initialsOf = (name = '') =>
     .join('')
     .toUpperCase() || 'DR'
 
-const FindDoctor = ({ onBooked }) => {
+const URGENCY_TONE = {
+  low: 'bg-sage/15 text-sage-foreground border-sage/30',
+  medium: 'bg-amber-500/15 text-amber-700 border-amber-500/30',
+  high: 'bg-orange-600/15 text-orange-700 border-orange-600/30',
+  emergency: 'bg-destructive/15 text-destructive border-destructive/30',
+}
+
+const FindDoctor = ({
+  onBooked,
+  specialtyFilter, // string from ?specialty=...
+  onClearSpecialty, // called when user clicks the X chip
+  triage, // optional triage context {summary, urgency, specialty, reason}
+}) => {
   const { doctors, isLoading } = useActiveDoctors()
   const [query, setQuery] = useState('')
   const [picked, setPicked] = useState(null)
+
+  // Whenever the specialty filter changes (e.g. user came from triage),
+  // pre-populate the search box so the chip + input stay in sync.
+  useEffect(() => {
+    if (specialtyFilter) setQuery(specialtyFilter)
+  }, [specialtyFilter])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -35,11 +54,12 @@ const FindDoctor = ({ onBooked }) => {
   return (
     <section className="rounded-2xl border border-border/70 bg-card overflow-hidden">
       <header className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-border/70">
-        <div>
+        <div className="space-y-1">
           <h2 className="font-display text-xl tracking-tight">Find a doctor</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {doctors.length} specialist{doctors.length === 1 ? '' : 's'}{' '}
-            available
+          <p className="text-xs text-muted-foreground">
+            {filtered.length} of {doctors.length} specialist
+            {doctors.length === 1 ? '' : 's'} match
+            {specialtyFilter ? ` "${specialtyFilter}"` : ''}
           </p>
         </div>
         <div className="relative w-full sm:w-72">
@@ -52,6 +72,48 @@ const FindDoctor = ({ onBooked }) => {
           />
         </div>
       </header>
+
+      {triage && (
+        <div className="px-6 py-3 border-b border-border/60 bg-clinic/5 flex flex-wrap items-center gap-2 text-xs">
+          <Badge
+            variant="outline"
+            className={`rounded-full text-[10px] uppercase tracking-[0.14em] ${URGENCY_TONE[triage.urgency] || ''}`}
+          >
+            {triage.urgency} urgency
+          </Badge>
+          <span className="text-muted-foreground">
+            Suggested by your symptom check —
+          </span>
+          <span className="font-medium text-foreground">{triage.specialty}</span>
+          {specialtyFilter && onClearSpecialty && (
+            <button
+              type="button"
+              onClick={onClearSpecialty}
+              className="ml-auto inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+            >
+              <X className="h-3 w-3" />
+              Show all
+            </button>
+          )}
+        </div>
+      )}
+
+      {!triage && specialtyFilter && onClearSpecialty && (
+        <div className="px-6 py-2 border-b border-border/60 bg-muted/30 flex items-center gap-2 text-xs text-muted-foreground">
+          <span>Filtered by specialty:</span>
+          <Badge variant="outline" className="rounded-full">
+            {specialtyFilter}
+          </Badge>
+          <button
+            type="button"
+            onClick={onClearSpecialty}
+            className="ml-auto inline-flex items-center gap-1 hover:text-foreground transition-colors"
+          >
+            <X className="h-3 w-3" />
+            Clear
+          </button>
+        </div>
+      )}
 
       {isLoading ? (
         <Loading />
@@ -90,6 +152,7 @@ const FindDoctor = ({ onBooked }) => {
 
       <BookDoctorDialog
         doctor={picked}
+        triage={triage}
         open={!!picked}
         onOpenChange={(o) => !o && setPicked(null)}
         onBooked={onBooked}

@@ -2,20 +2,26 @@ import { useState } from 'react'
 import { ClipboardCheck, Save } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 
 import { useSubmitConsultation } from '@/apis'
 
+import PrescriptionEditor from './prescription-editor'
+
+const initialPrescription = (appointment) => {
+  const rx = appointment?.prescription
+  if (!rx) return null
+  if (typeof rx === 'string') return { rawText: rx }
+  return rx
+}
+
 const ConsultationNotesForm = ({ appointment, onSubmitted }) => {
   const isCompleted = appointment?.status === 'completed'
   const [notes, setNotes] = useState(appointment?.doctorNotes || '')
   const [prescription, setPrescription] = useState(
-    typeof appointment?.prescription === 'string'
-      ? appointment.prescription
-      : appointment?.prescription
-        ? JSON.stringify(appointment.prescription, null, 2)
-        : ''
+    initialPrescription(appointment)
   )
 
   const { isLoading, submitConsultation } = useSubmitConsultation({
@@ -36,7 +42,7 @@ const ConsultationNotesForm = ({ appointment, onSubmitted }) => {
   return (
     <form
       onSubmit={onSubmit}
-      className="flex h-full flex-col gap-3 overflow-y-auto p-4"
+      className="flex h-full flex-col gap-4 overflow-y-auto p-4"
     >
       <header>
         <div className="flex items-center gap-2 text-clinic">
@@ -46,17 +52,17 @@ const ConsultationNotesForm = ({ appointment, onSubmitted }) => {
           </p>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
-          Save your notes and prescription before ending the call — they'll be
-          attached to this patient's record.
+          Notes go on the appointment. The prescription is saved to the
+          patient's record once approved.
         </p>
       </header>
 
       <div className="space-y-1.5">
-        <label className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+        <Label className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold">
           Notes
-        </label>
+        </Label>
         <Textarea
-          rows={6}
+          rows={5}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Symptoms, examination findings, plan…"
@@ -64,18 +70,11 @@ const ConsultationNotesForm = ({ appointment, onSubmitted }) => {
         />
       </div>
 
-      <div className="space-y-1.5">
-        <label className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold">
-          Prescription
-        </label>
-        <Textarea
-          rows={4}
-          value={prescription}
-          onChange={(e) => setPrescription(e.target.value)}
-          placeholder="Drug · dose · frequency · duration"
-          className="rounded-xl resize-none font-mono text-xs"
-        />
-      </div>
+      <PrescriptionEditor
+        value={prescription}
+        onChange={setPrescription}
+        defaultLanguage={appointment?.patientId?.language || 'en'}
+      />
 
       <Button
         type="submit"
@@ -83,7 +82,7 @@ const ConsultationNotesForm = ({ appointment, onSubmitted }) => {
         className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 mt-auto h-11"
       >
         {isLoading ? <Spinner /> : <Save className="h-4 w-4" />}
-        {isCompleted ? 'Update consultation' : 'Save & mark completed'}
+        {isCompleted ? 'Update consultation' : 'Approve & save'}
       </Button>
     </form>
   )

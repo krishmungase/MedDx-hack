@@ -21,6 +21,11 @@ class AuthController {
         role: user.role,
         language: user.language,
         accountStatus: user.accountStatus,
+        // Patient-only flag — drives the "Free first consult" pricing chip.
+        freeConsultationUsed: user.freeConsultationUsed,
+        // Doctor-only — exposed so the dashboard can render wallet balance.
+        walletBalance: user.walletBalance,
+        specialty: user.specialty,
       },
     }
   }
