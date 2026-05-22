@@ -16,6 +16,11 @@ const Header = () => {
   const onDashboard =
     isAuth && user?.role && location.pathname.startsWith(`/${user.role}`)
 
+  // The admin console has its own sidebar shell that brands itself and
+  // provides sign-out. Skip the global header there so the sidebar can
+  // own the full viewport.
+  if (location.pathname.startsWith('/admin')) return null
+
   const onLogout = () => {
     dispatch(logout())
     navigate('/auth/sign-in', { replace: true })

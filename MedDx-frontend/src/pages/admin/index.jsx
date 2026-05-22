@@ -1,131 +1,82 @@
-import {
-  ArrowRight,
-  BarChart3,
-  ShieldCheck,
-  UserCog,
-  UserPlus,
-} from 'lucide-react'
-
 import { useAuth, usePageTitle } from '@/hooks'
+import { useStats } from '@/apis'
 import { pageTitle } from '@/constants'
-import { DashboardShell } from '@/components'
-import { Button } from '@/components/ui/button'
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@/components/ui/sidebar'
+
+import AdminSidebar from './components/admin-sidebar'
+import StatsRow from './components/stats-row'
+import DoctorsTable from './components/doctors-table'
+import RegisterDoctorDialog from './components/register-doctor-dialog'
 
 const AdminHomePage = () => {
   usePageTitle({ title: pageTitle.ADMIN_DASHBOARD })
   const { user } = useAuth()
   const first = user?.name?.split(' ')[0] || 'admin'
 
+  const { stats, isLoading } = useStats()
+
   return (
-    <DashboardShell
-      role="admin"
-      eyebrow="Admin · Console"
-      title={`${first}, the platform's in your hands.`}
-      italic=""
-      intro="Register specialists, manage their accounts, and watch the health of the platform. Public registration is off for everyone except patients — every doctor on MedDx is verified by you."
+    <SidebarProvider
+      defaultOpen
+      style={{ '--sidebar-width': '17rem', '--sidebar-width-icon': '3.25rem' }}
     >
-      <div className="grid lg:grid-cols-3 gap-5">
-        <Card
-          phase="Phase 2"
-          className="lg:col-span-2 relative overflow-hidden bg-clinic-mesh text-clinic-foreground"
-        >
-          <div className="relative z-10">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-sage">
-              <UserPlus className="h-3 w-3" />
-              Onboard a specialist
-            </div>
-            <h2 className="mt-4 font-display text-3xl tracking-tight">
-              Register a doctor in under a minute.
-            </h2>
-            <p className="mt-2 max-w-md text-clinic-foreground/80 text-sm leading-relaxed">
-              Name, email, specialty, license number — we email a one-time
-              password-setup link (valid 24h). If Gmail isn't configured we
-              surface the link right here for you to share.
+      <AdminSidebar />
+
+      <SidebarInset className="bg-grain">
+        {/* Inset top bar */}
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/60 bg-background/85 px-4 backdrop-blur-md sm:px-6">
+          <SidebarTrigger className="h-8 w-8 rounded-full" />
+          <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
+            <span className="text-xs uppercase tracking-[0.18em] font-semibold">
+              Admin · Console
+            </span>
+            <span className="opacity-50">/</span>
+            <span className="text-foreground">Overview</span>
+          </div>
+          <div className="ml-auto">
+            <RegisterDoctorDialog />
+          </div>
+        </header>
+
+        {/* Page content */}
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+          <div className="fade-up">
+            <h1 className="font-display text-4xl md:text-5xl tracking-tight leading-tight">
+              {first}, the platform's in your hands.
+            </h1>
+            <p className="mt-3 max-w-2xl text-muted-foreground leading-relaxed">
+              Register specialists, manage their accounts, and watch the health
+              of the platform. Public registration is patient-only — every
+              doctor on MedDx is verified by you.
             </p>
-            <Button
-              size="lg"
-              className="mt-6 rounded-full bg-card text-foreground hover:bg-card/90 h-11 px-6"
-              disabled
-            >
-              Coming in Phase 2
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
           </div>
-          <div className="pointer-events-none absolute -right-12 -top-12 opacity-15">
-            <ShieldCheck className="h-72 w-72" strokeWidth={1} />
-          </div>
-        </Card>
 
-        <Card phase="Phase 2">
-          <div className="flex items-center gap-2 text-clinic">
-            <UserCog className="h-4 w-4" />
-            <span className="text-xs uppercase tracking-[0.16em] font-semibold">
-              Doctors
-            </span>
-          </div>
-          <h3 className="mt-3 font-display text-xl tracking-tight">
-            Verified, pending, suspended.
-          </h3>
-          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-            One table for every doctor on the platform. Suspend or remove with a
-            single action — patients are notified, slots release automatically.
-          </p>
-        </Card>
+          <section id="stats" className="fade-up fade-up-delay-1 scroll-mt-24">
+            <p className="mb-3 text-xs uppercase tracking-[0.16em] text-muted-foreground font-semibold">
+              Overview
+            </p>
+            <StatsRow stats={stats} isLoading={isLoading} />
+          </section>
 
-        <Card phase="Phase 2">
-          <div className="flex items-center gap-2 text-clinic">
-            <BarChart3 className="h-4 w-4" />
-            <span className="text-xs uppercase tracking-[0.16em] font-semibold">
-              Platform stats
-            </span>
-          </div>
-          <h3 className="mt-3 font-display text-xl tracking-tight">
-            Patients · Doctors · Visits.
-          </h3>
-          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-            Headline counts at a glance. Phase 6 adds revenue split, Phase 5
-            adds urgency-by-specialty breakdowns.
-          </p>
-        </Card>
+          <section
+            id="doctors"
+            className="fade-up fade-up-delay-2 scroll-mt-24"
+          >
+            <DoctorsTable />
+          </section>
 
-        <Card phase="Always-on">
-          <div className="flex items-center gap-2 text-clinic">
-            <ShieldCheck className="h-4 w-4" />
-            <span className="text-xs uppercase tracking-[0.16em] font-semibold">
-              Safety rails
-            </span>
-          </div>
-          <h3 className="mt-3 font-display text-xl tracking-tight">
-            Patients only on public sign-up.
-          </h3>
-          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-            The backend already refuses any registration request with
-            <code className="mx-1 rounded bg-muted px-1.5 py-0.5 text-[11px]">
-              role: doctor
-            </code>
-            or
-            <code className="mx-1 rounded bg-muted px-1.5 py-0.5 text-[11px]">
-              admin
-            </code>
-            . Onboarding is your job, only.
+          <p className="text-[11px] text-muted-foreground leading-relaxed max-w-2xl">
+            Suspended doctors can't log in. Re-activating restores access
+            without re-issuing a setup link. Removing is permanent.
           </p>
-        </Card>
-      </div>
-    </DashboardShell>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
-
-const Card = ({ children, className = '', phase }) => (
-  <div
-    className={`relative rounded-2xl border border-border/70 bg-card p-7 transition-shadow hover:shadow-[0_24px_60px_-30px_oklch(0.22_0.025_240/0.2)] ${className}`}
-  >
-    {phase && (
-      <span className="absolute right-4 top-4 rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-        {phase}
-      </span>
-    )}
-    {children}
-  </div>
-)
 
 export default AdminHomePage

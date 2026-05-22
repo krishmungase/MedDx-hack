@@ -15,6 +15,17 @@ const MSG = {
     RESET_PASSWORD: 'Password reset successfully.',
     USER_UPDATED_FULL_NAME: 'User full name updated.',
     USER_UPDATED_AVATAR: 'User avatar updated.',
+    DOCTOR_INVITED: 'Doctor invited; awaiting password setup.',
+    DOCTOR_ACTIVATED: 'Doctor account activated via set-password link.',
+  },
+  ADMIN: {
+    DOCTOR_SUSPENDED: 'Doctor suspended by admin.',
+    DOCTOR_REMOVED: 'Doctor removed by admin.',
+  },
+  MAILER: {
+    NOT_CONFIGURED:
+      'Gmail not configured (missing GMAIL_USER / GMAIL_APP_PASSWORD). Returning link instead.',
+    SEND_FAILED: 'Failed to send email; returning link as fallback.',
   },
 }
 

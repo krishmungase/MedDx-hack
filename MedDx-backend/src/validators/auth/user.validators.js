@@ -1,4 +1,4 @@
-import { body } from 'express-validator'
+import { body, query } from 'express-validator'
 
 const createNotEmptyMessage = (field) => `${field} is required`
 
@@ -23,8 +23,24 @@ const nameField = body('name')
   .isLength({ min: 2 })
   .withMessage('Name must be at least 2 characters long')
 
+const tokenBody = body('token')
+  .trim()
+  .notEmpty()
+  .withMessage(createNotEmptyMessage('Token'))
+
+const tokenQuery = query('token')
+  .trim()
+  .notEmpty()
+  .withMessage(createNotEmptyMessage('Token'))
+
 const registerValidator = [nameField, emailField, passwordField]
-
 const loginValidator = [emailField, passwordField]
+const setPasswordValidator = [tokenBody, passwordField]
+const verifySetupTokenValidator = [tokenQuery]
 
-export { registerValidator, loginValidator }
+export {
+  registerValidator,
+  loginValidator,
+  setPasswordValidator,
+  verifySetupTokenValidator,
+}

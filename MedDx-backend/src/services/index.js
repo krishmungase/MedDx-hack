@@ -1,4 +1,5 @@
 import UserService from './auth/user.services.js'
+import SlotService from './slot/slot.services.js'
 
 import LLMServices from './ai/llm.services.js'
 
@@ -10,6 +11,7 @@ import NotificationService from './shared/notification.services.js'
 
 export {
   UserService,
+  SlotService,
   LLMServices,
   TokenService,
   HashService,

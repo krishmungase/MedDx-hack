@@ -1,4 +1,22 @@
 import useLogin from './auth/use-login'
 import useRegister from './auth/use-register'
+import useSetPassword from './auth/use-set-password'
+import useVerifySetupToken from './auth/use-verify-setup-token'
 
-export { useLogin, useRegister }
+import useStats from './admin/use-stats'
+import useDoctors from './admin/use-doctors'
+import useRegisterDoctor from './admin/use-register-doctor'
+import useRemoveDoctor from './admin/use-remove-doctor'
+import useUpdateDoctorStatus from './admin/use-update-doctor-status'
+
+export {
+  useLogin,
+  useRegister,
+  useSetPassword,
+  useVerifySetupToken,
+  useStats,
+  useDoctors,
+  useRegisterDoctor,
+  useRemoveDoctor,
+  useUpdateDoctorStatus,
+}

@@ -28,8 +28,6 @@ class AuthController {
   async register(req, res) {
     const { name, email, password, role } = req.body
 
-    // Public registration is for PATIENTS ONLY. Reject any attempt to
-    // self-register as doctor or admin.
     if (role && role !== UserRoles.PATIENT) {
       throw new ApiError(
         403,
@@ -82,10 +80,11 @@ class AuthController {
     }
 
     if (user.accountStatus !== AccountStatus.ACTIVE) {
-      throw new ApiError(
-        403,
-        'Your account is not active yet. Please complete the password setup link sent to your email.'
-      )
+      const reason =
+        user.accountStatus === AccountStatus.PENDING_SETUP
+          ? 'Your account is not active yet. Please complete the password-setup link sent to your email.'
+          : 'Your account has been suspended. Please contact the administrator.'
+      throw new ApiError(403, reason)
     }
 
     const isMatch = await this.hashSvc.hashCompare(password, user.passwordHash)
@@ -110,6 +109,92 @@ class AuthController {
           200,
           this.buildAuthResponse(user, token),
           'Logged in successfully.'
+        )
+      )
+  }
+
+  async verifySetupToken(req, res) {
+    const token = (req.query?.token || '').trim()
+    if (!token) throw new ApiError(400, 'Token is required.')
+
+    const user = await this.userSvc.findOne({ passwordSetupToken: token })
+    if (!user) {
+      throw new ApiError(400, 'This link is invalid or has already been used.')
+    }
+    if (
+      !user.tokenExpiry ||
+      new Date(user.tokenExpiry).getTime() < Date.now()
+    ) {
+      throw new ApiError(
+        400,
+        'This link has expired. Please ask an admin to send a new invitation.'
+      )
+    }
+    if (user.accountStatus !== AccountStatus.PENDING_SETUP) {
+      throw new ApiError(
+        400,
+        'This account is already active. Please sign in instead.'
+      )
+    }
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          specialty: user.specialty,
+        },
+        'Token is valid.'
+      )
+    )
+  }
+
+  async setPassword(req, res) {
+    const { token, password } = req.body
+    if (!token) throw new ApiError(400, 'Token is required.')
+
+    const user = await this.userSvc.findOne({ passwordSetupToken: token })
+    if (!user) {
+      throw new ApiError(400, 'This link is invalid or has already been used.')
+    }
+    if (
+      !user.tokenExpiry ||
+      new Date(user.tokenExpiry).getTime() < Date.now()
+    ) {
+      throw new ApiError(400, 'This link has expired.')
+    }
+    if (user.accountStatus !== AccountStatus.PENDING_SETUP) {
+      throw new ApiError(400, 'This account is already active.')
+    }
+
+    const passwordHash = await this.hashSvc.hashData(password)
+
+    const updated = await this.userSvc.updateById(user._id, {
+      passwordHash,
+      accountStatus: AccountStatus.ACTIVE,
+      passwordSetupToken: null,
+      tokenExpiry: null,
+    })
+
+    const accessToken = await this.tokenSvc.signToken({
+      id: updated._id,
+      role: updated.role,
+    })
+
+    this.log.info({
+      msg: MSG.AUTH.DOCTOR_ACTIVATED,
+      data: { userId: updated._id, email: updated.email },
+    })
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          this.buildAuthResponse(updated, accessToken),
+          'Password set successfully. You are now logged in.'
         )
       )
   }

@@ -11,6 +11,7 @@ export const UserRoles = {
 export const AccountStatus = {
   ACTIVE: 'active',
   PENDING_SETUP: 'pending_setup',
+  SUSPENDED: 'suspended',
 }
 
 export const DoctorStatus = {

@@ -5,7 +5,7 @@ import { ENV } from './config/index.js'
 import { connectDB } from './db/index.js'
 import { logger } from './logger/index.js'
 import { MSG } from './constants/index.js'
-import { authRoutes } from './routes/index.js'
+import { adminRoutes, authRoutes, slotRoutes } from './routes/index.js'
 import { asyncHandler } from './utils/index.js'
 import { errorHandler, morganMiddleware } from './middlewares/index.js'
 
@@ -36,6 +36,8 @@ class ServerApp {
     this.app.get('/', this.healthCheck)
 
     this.app.use('/api/v1/auth', authRoutes)
+    this.app.use('/api/v1/admin', adminRoutes)
+    this.app.use('/api/v1/slots', slotRoutes)
 
     this.app.use(errorHandler)
   }

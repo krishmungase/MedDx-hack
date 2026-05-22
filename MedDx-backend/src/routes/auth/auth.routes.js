@@ -14,6 +14,8 @@ import {
 import {
   loginValidator,
   registerValidator,
+  setPasswordValidator,
+  verifySetupTokenValidator,
 } from '../../validators/auth/user.validators.js'
 
 const authRoutes = express.Router()
@@ -41,6 +43,18 @@ const routeDefinitions = [
     method: 'post',
     validators: [loginValidator, validate],
     handler: authController.login.bind(authController),
+  },
+  {
+    path: '/verify-setup-token',
+    method: 'get',
+    validators: [verifySetupTokenValidator, validate],
+    handler: authController.verifySetupToken.bind(authController),
+  },
+  {
+    path: '/set-password',
+    method: 'post',
+    validators: [setPasswordValidator, validate],
+    handler: authController.setPassword.bind(authController),
   },
 ]
 

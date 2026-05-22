@@ -9,6 +9,7 @@ import {
   HomePage,
   NotFoundPage,
   PatientHomePage,
+  SetPasswordPage,
   SignInPage,
   SignUpPage,
 } from './pages'
@@ -22,6 +23,9 @@ const AppRoutes = () => {
             <Route path="sign-in" element={<SignInPage />} />
             <Route path="sign-up" element={<SignUpPage />} />
           </Route>
+
+          {/* Public: doctor onboarding via emailed setup link */}
+          <Route path="set-password" element={<SetPasswordPage />} />
 
           <Route element={<ProtectedRoute role="patient" />}>
             <Route path="patient" element={<PatientHomePage />} />
