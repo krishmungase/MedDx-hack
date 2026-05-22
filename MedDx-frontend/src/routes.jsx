@@ -1,7 +1,17 @@
 import { BrowserRouter, Routes, Route } from 'react-router'
 
-import { AppLayout, AuthLayout } from './pages'
-import { HomePage, NotFoundPage, SignInPage, SignUpPage } from './pages'
+import { ProtectedRoute } from './components/auth'
+import {
+  AdminHomePage,
+  AppLayout,
+  AuthLayout,
+  DoctorHomePage,
+  HomePage,
+  NotFoundPage,
+  PatientHomePage,
+  SignInPage,
+  SignUpPage,
+} from './pages'
 
 const AppRoutes = () => {
   return (
@@ -12,6 +22,19 @@ const AppRoutes = () => {
             <Route path="sign-in" element={<SignInPage />} />
             <Route path="sign-up" element={<SignUpPage />} />
           </Route>
+
+          <Route element={<ProtectedRoute role="patient" />}>
+            <Route path="patient" element={<PatientHomePage />} />
+          </Route>
+
+          <Route element={<ProtectedRoute role="doctor" />}>
+            <Route path="doctor" element={<DoctorHomePage />} />
+          </Route>
+
+          <Route element={<ProtectedRoute role="admin" />}>
+            <Route path="admin" element={<AdminHomePage />} />
+          </Route>
+
           <Route index element={<HomePage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>

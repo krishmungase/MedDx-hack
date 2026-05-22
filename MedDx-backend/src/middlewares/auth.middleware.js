@@ -4,44 +4,60 @@ import { ENV } from '../config/index.js'
 import { UserModel } from '../models/index.js'
 import { ApiError, asyncHandler } from '../utils/index.js'
 
+const extractToken = (req) =>
+  req.cookies?.accessToken ||
+  req.header('Authorization')?.replace(/^Bearer\s+/i, '')
+
 export const verifyJWT = asyncHandler(async (req, res, next) => {
-  const token =
-    req.cookies?.accessToken ||
-    req.header('Authorization')?.replace('Bearer ', '')
+  const token = extractToken(req)
   if (!token) {
     throw new ApiError(401, 'Unauthorized request')
   }
 
+  let decoded
   try {
-    const decodedToken = jwt.verify(token, ENV.JWT_SECRET)
-    const user = await UserModel.findById(decodedToken?.user?._id).select(
-      '-password'
-    )
-    if (!user) {
-      throw new ApiError(401, 'Invalid access token')
-    }
-    req.user = user
-    next()
+    decoded = jwt.verify(token, ENV.JWT_SECRET)
   } catch (error) {
     throw new ApiError(401, error?.message || 'Invalid access token')
   }
+
+  const user = await UserModel.findById(decoded?.id).select('-passwordHash')
+  if (!user) {
+    throw new ApiError(401, 'Invalid access token')
+  }
+
+  req.user = user
+  next()
 })
 
 export const getLoggedInUserOrIgnore = asyncHandler(async (req, res, next) => {
-  const token =
-    req.cookies?.accessToken ||
-    req.header('Authorization')?.replace('Bearer ', '')
+  const token = extractToken(req)
+  if (!token) return next()
 
   try {
-    const decodedToken = jwt.verify(token, ENV.JWT_SECRET)
-    const user = await UserModel.findById(decodedToken?._id).select('-password')
-    req.user = user
-    next()
-  } catch (error) {
-    next()
+    const decoded = jwt.verify(token, ENV.JWT_SECRET)
+    const user = await UserModel.findById(decoded?.id).select('-passwordHash')
+    req.user = user || null
+  } catch {
+    req.user = null
   }
+  next()
 })
 
+// Single-role gate per MedDx spec.
+export const requireRole = (role) =>
+  asyncHandler(async (req, res, next) => {
+    if (!req.user?._id) {
+      throw new ApiError(401, 'Unauthorized request')
+    }
+    if (req.user.role !== role) {
+      throw new ApiError(403, 'You are not allowed to perform this action')
+    }
+    next()
+  })
+
+// Multi-role gate (retained from boilerplate; still useful for endpoints
+// that accept more than one role, e.g. doctor OR admin).
 export const verifyPermission = (roles = []) =>
   asyncHandler(async (req, res, next) => {
     if (!req.user?._id) {

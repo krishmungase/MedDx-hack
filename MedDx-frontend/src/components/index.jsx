@@ -3,6 +3,15 @@ import Header from './shared/header'
 import Footer from './shared/footer'
 import ThemeToggle from './shared/theme-toggle'
 import InputSearch from './shared/input-search'
+import DashboardShell from './shared/dashboard-shell'
 import ConfirmDeleteButton from './shared/confirm-delete-button'
 
-export { Header, Footer, ConfirmDeleteButton, InputSearch, Logo, ThemeToggle }
+export {
+  Header,
+  Footer,
+  ConfirmDeleteButton,
+  InputSearch,
+  Logo,
+  ThemeToggle,
+  DashboardShell,
+}

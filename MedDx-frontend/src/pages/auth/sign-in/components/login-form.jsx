@@ -1,20 +1,13 @@
 import * as z from 'zod'
 import { Link } from 'react-router'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Eye, EyeOff } from 'lucide-react'
+import { ArrowRight, Eye, EyeOff } from 'lucide-react'
 import { zodResolver } from '@hookform/resolvers/zod'
 
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import {
   Form,
   FormControl,
@@ -30,7 +23,7 @@ const formSchema = z.object({
   email: z
     .string()
     .min(1, { message: 'Email is required' })
-    .email({ message: 'Please enter a valid email address' }),
+    .email({ message: 'Please enter a valid email' }),
   password: z
     .string()
     .min(6, { message: 'Password must be at least 6 characters' }),
@@ -42,103 +35,131 @@ const LoginForm = () => {
 
   const form = useForm({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
+    defaultValues: { email: '', password: '' },
   })
 
   const onSubmit = (data) => login({ data })
 
   return (
-    <div className="flex flex-1 items-center justify-center px-10">
-      <Card className="w-full max-w-md border-none shadow-none bg-transparent">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-3xl font-semibold text-center">
-            Welcome back
-          </CardTitle>
-          <CardDescription className="text-center text-zinc-500">
-            Enter your credentials to access your account
-          </CardDescription>
-        </CardHeader>
+    <section className="flex items-center justify-center p-6 md:p-10">
+      <div className="w-full max-w-md fade-up">
+        <div className="mb-8">
+          <p className="text-xs uppercase tracking-[0.2em] text-clinic font-semibold">
+            Sign in
+          </p>
+          <h1 className="mt-3 font-display text-4xl md:text-5xl tracking-tight leading-tight">
+            Welcome back.
+          </h1>
+          <p className="mt-3 text-muted-foreground">
+            Continue to your patient, doctor, or admin dashboard.
+          </p>
+        </div>
 
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email*</FormLabel>
-                    <FormControl>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+                    Email
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="you@example.com"
+                      className="h-12 rounded-xl bg-card border-border focus-visible:ring-2 focus-visible:ring-ring/40"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+                    Password
+                  </FormLabel>
+                  <FormControl>
+                    <div className="relative">
                       <Input
-                        type="email"
-                        placeholder="name@example.com"
-                        className="h-10 text-sm"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Enter your password"
+                        className="h-12 rounded-xl bg-card border-border pr-11 focus-visible:ring-2 focus-visible:ring-ring/40"
                         {...field}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <button
+                        type="button"
+                        aria-label={
+                          showPassword ? 'Hide password' : 'Show password'
+                        }
+                        onClick={() => setShowPassword((p) => !p)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password*</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          type={showPassword ? 'text' : 'password'}
-                          placeholder="Enter your password"
-                          className="h-10 text-sm pr-10"
-                          {...field}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword((prev) => !prev)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="group w-full h-12 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 text-base font-medium"
+            >
+              {isLoading ? (
+                <Spinner />
+              ) : (
+                <>
+                  Sign in
+                  <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </>
+              )}
+            </Button>
 
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full h-10 text-sm font-medium"
-              >
-                {isLoading ? <Spinner /> : null}
-                Sign in
-              </Button>
-
-              <div className="text-center text-sm text-zinc-500">
-                Don't have an account?{' '}
-                <Link
-                  to="/auth/sign-up"
-                  className="font-medium text-active hover:underline"
-                >
-                  Sign up
-                </Link>
+            <div className="relative my-2">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
               </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
+              <div className="relative flex justify-center">
+                <span className="bg-background px-3 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                  New to MedDx
+                </span>
+              </div>
+            </div>
+
+            <Link
+              to="/auth/sign-up"
+              className="block text-center text-sm text-foreground"
+            >
+              Create a{' '}
+              <span className="font-medium text-clinic underline-offset-4 hover:underline">
+                patient account
+              </span>
+            </Link>
+
+            <p className="mt-6 text-center text-[11px] text-muted-foreground leading-relaxed">
+              Doctors are registered by an admin and cannot self-register.
+              <br />
+              First consultation is always free.
+            </p>
+          </form>
+        </Form>
+      </div>
+    </section>
   )
 }
 

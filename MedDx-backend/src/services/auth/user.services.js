@@ -2,6 +2,7 @@ class UserService {
   constructor(model) {
     this.model = model
   }
+
   async findById(id) {
     return await this.model.findById(id)
   }
@@ -18,8 +19,9 @@ class UserService {
     return await this.model.findByIdAndUpdate(id, data, { new: true })
   }
 
-  async findAll() {
-    return await this.model.find().sort({ createdAt: -1 })
+  async findAll(filter = {}) {
+    return await this.model.find(filter).sort({ createdAt: -1 })
   }
 }
+
 export default UserService

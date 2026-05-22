@@ -5,6 +5,7 @@ import uploader from './uploader.middleware.js'
 import {
   verifyJWT,
   getLoggedInUserOrIgnore,
+  requireRole,
   verifyPermission,
   avoidInProduction,
 } from './auth.middleware.js'
@@ -16,6 +17,7 @@ export {
   uploader,
   verifyJWT,
   getLoggedInUserOrIgnore,
+  requireRole,
   verifyPermission,
   avoidInProduction,
 }

@@ -1,4 +1,5 @@
 import { useDispatch } from 'react-redux'
+import { useNavigate } from 'react-router'
 import { useMutation } from '@tanstack/react-query'
 
 import { setAuth } from '@/store'
@@ -8,17 +9,20 @@ import apis from './apis'
 
 const useRegister = () => {
   const dispatch = useDispatch()
+  const navigate = useNavigate()
 
   const { isPending, mutate } = useMutation({
     mutationFn: ({ data }) => apis.register({ data }),
-    onSuccess: () => {
-      successToast({ message: 'User registered successfully' })
+    onSuccess: ({ data: response }) => {
+      const payload = response?.data || {}
+      successToast({ message: 'Account created successfully' })
       dispatch(
         setAuth({
-          user: response?.data?.user,
-          token: response?.data?.token,
+          user: payload.user,
+          token: payload.token,
         })
       )
+      if (payload.role) navigate(`/${payload.role}`, { replace: true })
     },
     retry: false,
   })

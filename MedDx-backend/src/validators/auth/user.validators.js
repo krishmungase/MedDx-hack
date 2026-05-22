@@ -8,47 +8,23 @@ const emailField = body('email')
   .withMessage(createNotEmptyMessage('Email'))
   .isEmail()
   .withMessage('Email is invalid')
+  .normalizeEmail()
 
 const passwordField = body('password')
-  .trim()
   .notEmpty()
   .withMessage(createNotEmptyMessage('Password'))
   .isLength({ min: 6 })
   .withMessage('Password must be at least 6 characters long')
 
-const confirmPasswordField = body('confirmPassword')
+const nameField = body('name')
   .trim()
   .notEmpty()
-  .withMessage(createNotEmptyMessage('Confirm password'))
-  .custom((value, { req }) => value === req.body.password)
-  .withMessage('Passwords do not match')
+  .withMessage(createNotEmptyMessage('Name'))
+  .isLength({ min: 2 })
+  .withMessage('Name must be at least 2 characters long')
 
-const tokenField = body('token')
-  .trim()
-  .notEmpty()
-  .withMessage(createNotEmptyMessage('Token'))
-
-const nameField = body('fullName')
-  .trim()
-  .notEmpty()
-  .withMessage(createNotEmptyMessage('Full Name'))
-  .isLength({ min: 3 })
-  .withMessage('Name must be at least 3 characters long')
-
-const registerValidator = [emailField, nameField]
-
-const passwordValidator = [passwordField, confirmPasswordField, tokenField]
+const registerValidator = [nameField, emailField, passwordField]
 
 const loginValidator = [emailField, passwordField]
 
-const emailValidator = [emailField]
-
-const tokenValidator = [tokenField]
-
-export {
-  registerValidator,
-  passwordValidator,
-  loginValidator,
-  emailValidator,
-  tokenValidator,
-}
+export { registerValidator, loginValidator }

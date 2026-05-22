@@ -1,20 +1,21 @@
 import { usePageTitle } from '@/hooks'
 import { pageTitle } from '@/constants'
+import { AuthAside } from '@/components/auth'
 
 import LoginForm from './components/login-form'
-import LoginIllustration from './components/login-illustration'
 
 const SignInPage = () => {
   usePageTitle({ title: pageTitle.SIGN_IN_PAGE })
 
   return (
-    <div className="h-full flex">
-      <LoginIllustration />
-
-      <div className="hidden lg:flex items-center">
-        <div className="h-[80%] w-px bg-zinc-200 dark:bg-zinc-600" />
-      </div>
-
+    <div className="grid min-h-[calc(100vh-4rem)] lg:grid-cols-[1.05fr_1fr] bg-grain">
+      <AuthAside
+        title="Welcome back to"
+        italicWord="quieter care."
+        body="Pick up where you left off — your specialists, your records, and your prescriptions are right where they should be."
+        quote="The doctor saw me from the village clinic. No bus, no full day lost. Just care."
+        quoteAuthor="Patient · Vidarbha, Maharashtra"
+      />
       <LoginForm />
     </div>
   )

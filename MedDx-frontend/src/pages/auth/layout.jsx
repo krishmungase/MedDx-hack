@@ -3,8 +3,10 @@ import { Navigate, Outlet } from 'react-router'
 import { useAuth } from '@/hooks'
 
 const AuthLayout = () => {
-  const { isAuth } = useAuth()
-  // if (isAuth) return <Navigate to="/" replace={true} />
+  const { isAuth, user } = useAuth()
+  if (isAuth && user?.role) {
+    return <Navigate to={`/${user.role}`} replace />
+  }
   return <Outlet />
 }
 
