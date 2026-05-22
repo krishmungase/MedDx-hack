@@ -7,18 +7,21 @@ import {
   AdminDoctorsPage,
   AdminLayout,
   AdminOverviewPage,
+  AdminProfilePage,
   AppLayout,
   AuthLayout,
   DoctorAvailabilityPage,
   DoctorEarningsPage,
   DoctorLayout,
   DoctorPrescriptionsPage,
+  DoctorProfilePage,
   DoctorQueuePage,
   HomePage,
   NotFoundPage,
   PatientAppointmentsPage,
   PatientDoctorsPage,
   PatientLayout,
+  PatientProfilePage,
   PatientRecordsPage,
   PatientTriagePage,
   SetPasswordPage,
@@ -46,6 +49,7 @@ const AppRoutes = () => {
               <Route path="triage" element={<PatientTriagePage />} />
               <Route path="doctors" element={<PatientDoctorsPage />} />
               <Route path="records" element={<PatientRecordsPage />} />
+              <Route path="profile" element={<PatientProfilePage />} />
             </Route>
           </Route>
 
@@ -58,6 +62,7 @@ const AppRoutes = () => {
                 element={<DoctorPrescriptionsPage />}
               />
               <Route path="earnings" element={<DoctorEarningsPage />} />
+              <Route path="profile" element={<DoctorProfilePage />} />
             </Route>
           </Route>
 
@@ -67,6 +72,7 @@ const AppRoutes = () => {
               <Route path="doctors" element={<AdminDoctorsPage />} />
               <Route path="appointments" element={<AdminAppointmentsPage />} />
               <Route path="audit-log" element={<AdminAuditLogPage />} />
+              <Route path="profile" element={<AdminProfilePage />} />
             </Route>
           </Route>
 

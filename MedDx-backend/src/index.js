@@ -13,6 +13,7 @@ import {
   doctorRoutes,
   medicalRecordRoutes,
   slotRoutes,
+  userRoutes,
 } from './routes/index.js'
 import razorpayStaticRoutes from './routes/static/razorpay.routes.js'
 import { asyncHandler } from './utils/index.js'
@@ -45,6 +46,7 @@ class ServerApp {
     this.app.get('/', this.healthCheck)
 
     this.app.use('/api/v1/auth', authRoutes)
+    this.app.use('/api/v1/users', userRoutes)
     this.app.use('/api/v1/admin', adminRoutes)
     this.app.use('/api/v1/slots', slotRoutes)
     this.app.use('/api/v1/doctors', doctorRoutes)

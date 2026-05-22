@@ -4,6 +4,7 @@ import {
   Coins,
   Notebook,
   Settings,
+  UserRound,
 } from 'lucide-react'
 
 import RoleSidebar from '@/components/shared/role-sidebar'
@@ -33,6 +34,12 @@ const consoleItems = [
     label: 'Earnings',
     icon: Coins,
     to: '/doctor/earnings',
+  },
+  {
+    id: 'profile',
+    label: 'Profile',
+    icon: UserRound,
+    to: '/doctor/profile',
   },
 ]
 

@@ -7,6 +7,7 @@ const SECTIONS = {
   '/doctor/availability': 'Availability',
   '/doctor/prescriptions': 'Prescriptions',
   '/doctor/earnings': 'Earnings',
+  '/doctor/profile': 'Profile',
 }
 
 const DoctorLayout = () => (

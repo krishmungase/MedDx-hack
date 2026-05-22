@@ -4,6 +4,7 @@ import {
   ScrollText,
   Settings,
   Stethoscope,
+  UserRound,
 } from 'lucide-react'
 
 import RoleSidebar from '@/components/shared/role-sidebar'
@@ -33,6 +34,12 @@ const consoleItems = [
     label: 'Audit log',
     icon: ScrollText,
     to: '/admin/audit-log',
+  },
+  {
+    id: 'profile',
+    label: 'Profile',
+    icon: UserRound,
+    to: '/admin/profile',
   },
 ]
 

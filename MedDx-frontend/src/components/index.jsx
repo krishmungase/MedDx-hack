@@ -11,6 +11,7 @@ import StatCard from './shared/stat-card'
 import StatusBadge from './shared/status-badge'
 import VitalLine from './shared/vital-line'
 import DoctorAvatar from './shared/doctor-avatar'
+import ProfileView from './shared/profile-view'
 
 export {
   Header,
@@ -26,4 +27,5 @@ export {
   StatusBadge,
   VitalLine,
   DoctorAvatar,
+  ProfileView,
 }

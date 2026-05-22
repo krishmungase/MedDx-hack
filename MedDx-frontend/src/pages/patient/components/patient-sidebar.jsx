@@ -5,6 +5,7 @@ import {
   Settings,
   Sparkles,
   Stethoscope,
+  UserRound,
 } from 'lucide-react'
 
 import RoleSidebar from '@/components/shared/role-sidebar'
@@ -37,6 +38,12 @@ const PatientSidebar = () => {
       label: t('nav.records'),
       icon: FileText,
       to: '/patient/records',
+    },
+    {
+      id: 'profile',
+      label: t('nav.profile', { defaultValue: 'Profile' }),
+      icon: UserRound,
+      to: '/patient/profile',
     },
   ]
 

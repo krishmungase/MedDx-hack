@@ -34,6 +34,10 @@ import usePatientMedicalRecord from './medical-records/use-patient-medical-recor
 import useTriage from './ai/use-triage'
 import usePrescriptionFormat from './ai/use-prescription-format'
 
+import useMyProfile from './profile/use-my-profile'
+import useUpdateProfile from './profile/use-update-profile'
+import useChangePassword from './profile/use-change-password'
+
 export {
   useLogin,
   useRegister,
@@ -64,4 +68,7 @@ export {
   usePatientMedicalRecord,
   useTriage,
   usePrescriptionFormat,
+  useMyProfile,
+  useUpdateProfile,
+  useChangePassword,
 }

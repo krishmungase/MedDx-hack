@@ -7,6 +7,7 @@ const SECTIONS = {
   '/admin/doctors': 'Doctors',
   '/admin/appointments': 'Appointments',
   '/admin/audit-log': 'Audit log',
+  '/admin/profile': 'Profile',
 }
 
 const AdminLayout = () => (

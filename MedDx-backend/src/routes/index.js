@@ -1,4 +1,5 @@
 import authRoutes from './auth/auth.routes.js'
+import userRoutes from './user/user.routes.js'
 import adminRoutes from './admin/admin.routes.js'
 import slotRoutes from './slot/slot.routes.js'
 import doctorRoutes from './doctor/doctor.routes.js'
@@ -10,6 +11,7 @@ import aiRoutes from './ai/ai.routes.js'
 
 export {
   authRoutes,
+  userRoutes,
   adminRoutes,
   slotRoutes,
   doctorRoutes,

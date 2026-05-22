@@ -9,6 +9,7 @@ const SECTIONS = {
   '/patient/triage': 'nav.triage',
   '/patient/doctors': 'nav.doctors',
   '/patient/records': 'nav.records',
+  '/patient/profile': 'nav.profile',
 }
 
 const PatientLayout = () => (
