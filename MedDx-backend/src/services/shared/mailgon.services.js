@@ -7,8 +7,8 @@ class MailgenService {
     this.mailGenerator = new Mailgen({
       theme: 'default',
       product: {
-        name: ENV.APP_NAME,
-        link: ENV.FRONTEND_URL,
+        name: ENV.APP_NAME || 'MedDx',
+        link: ENV.CLIENT_URL || 'http://localhost:8888',
         logo: ENV.APP_LOGO,
       },
     })

@@ -59,7 +59,7 @@ class AuthController {
       '10m'
     )
 
-    const link = `${ENV.FRONTEND_URL}${URLS.createPasswordUrl}?token=${token}`
+    const link = `${ENV.CLIENT_URL}${URLS.createPasswordUrl}?token=${token}`
     const { emailHTML, emailText } = this.mailgenSvc.verificationEmailHTML({
       name: fullName,
       link,
@@ -190,7 +190,7 @@ class AuthController {
       '2 days'
     )
 
-    const link = `${ENV.FRONTEND_URL}${URLS.resetPasswordUrl}?token=${token}`
+    const link = `${ENV.CLIENT_URL}${URLS.resetPasswordUrl}?token=${token}`
     const { emailHTML, emailText } = this.mailgenSvc.resetPasswordEmailHTML({
       name: user.fullName,
       link,

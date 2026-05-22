@@ -11,7 +11,7 @@ import { UserModel } from './models/index.js'
 import { TokenService } from './services/index.js'
 import { MSG, UserLoginType } from './constants/index.js'
 import { authRoutes, assistantRoutes } from './routes/index.js'
-import { ApiResponse, ApiError, asyncHandler } from './utils/index.js'
+import { ApiError, asyncHandler } from './utils/index.js'
 import { errorHandler, morganMiddleware } from './middlewares/index.js'
 
 class ServerApp {
@@ -109,9 +109,7 @@ class ServerApp {
   }
 
   healthCheck = asyncHandler((_, res) => {
-    return res
-      .status(200)
-      .json(new ApiResponse(200, { msg: 'Hello from server!' }))
+    return res.status(200).json({ ok: true })
   })
 
   googleAuth = passport.authenticate('google', { scope: ['profile', 'email'] })
@@ -150,10 +148,10 @@ class ServerApp {
   }
 
   getRedirectUrl(user, accessToken) {
-    if (!user) return `${ENV.FRONTEND_URL}/auth/sign-up`
+    if (!user) return `${ENV.CLIENT_URL}/auth/sign-up`
     else if (!user.isVerified)
-      return `${ENV.FRONTEND_URL}/guidance/under-review`
-    return `${ENV.FRONTEND_URL}/auth/verify?token=${accessToken}`
+      return `${ENV.CLIENT_URL}/guidance/under-review`
+    return `${ENV.CLIENT_URL}/auth/verify?token=${accessToken}`
   }
 
   async start() {

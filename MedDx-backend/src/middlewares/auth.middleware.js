@@ -13,7 +13,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
   }
 
   try {
-    const decodedToken = jwt.verify(token, ENV.ACCESS_TOKEN_SECRET)
+    const decodedToken = jwt.verify(token, ENV.JWT_SECRET)
     const user = await UserModel.findById(decodedToken?.user?._id).select(
       '-password'
     )
@@ -33,7 +33,7 @@ export const getLoggedInUserOrIgnore = asyncHandler(async (req, res, next) => {
     req.header('Authorization')?.replace('Bearer ', '')
 
   try {
-    const decodedToken = jwt.verify(token, ENV.ACCESS_TOKEN_SECRET)
+    const decodedToken = jwt.verify(token, ENV.JWT_SECRET)
     const user = await UserModel.findById(decodedToken?._id).select('-password')
     req.user = user
     next()
