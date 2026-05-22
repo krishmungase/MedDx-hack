@@ -53,7 +53,7 @@ const PanelContent = ({ token }) => {
   return (
     <>
       <div className="mb-8">
-        <p className="text-xs uppercase tracking-[0.2em] text-clinic font-semibold">
+        <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">
           Doctor invitation
         </p>
         <h1 className="mt-3 font-display text-4xl md:text-5xl tracking-tight leading-tight">

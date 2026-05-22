@@ -16,6 +16,7 @@ import { pageTitle } from '@/constants'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import PrescriptionCard from '@/components/shared/prescription-card'
+import { PageHeader } from '@/components'
 
 const RecordsPage = () => {
   usePageTitle({ title: pageTitle.PATIENT_DASHBOARD })
@@ -38,28 +39,26 @@ const RecordsPage = () => {
 
   return (
     <div className="space-y-8 max-w-3xl">
-      <div className="fade-up flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-display text-4xl md:text-5xl tracking-tight leading-tight">
-            {t('records.title')}
-          </h1>
-          <p className="mt-3 max-w-2xl text-muted-foreground leading-relaxed">
-            {t('records.subtitle')}
-          </p>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="rounded-full"
-          onClick={() => refetch?.()}
-          disabled={isFetching}
-        >
-          <RefreshCw
-            className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`}
-          />
-          {t('common.refresh')}
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow={t('nav.records', { defaultValue: 'Medical records' })}
+        title={t('records.title')}
+        description={t('records.subtitle')}
+        actions={
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-full"
+            onClick={() => refetch?.()}
+            disabled={isFetching}
+          >
+            <RefreshCw
+              className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`}
+            />
+            {t('common.refresh')}
+          </Button>
+        }
+      />
+
 
       {isLoading ? (
         <Loading />
@@ -88,7 +87,7 @@ const RecordsPage = () => {
 
           <section className="fade-up fade-up-delay-2 rounded-2xl border border-border/70 bg-card overflow-hidden">
             <header className="px-6 py-4 border-b border-border/70 flex items-center gap-2">
-              <History className="h-4 w-4 text-clinic" />
+              <History className="h-4 w-4 text-primary" />
               <div>
                 <h2 className="font-display text-xl tracking-tight">
                   {t('records.past_consultations')}
@@ -109,7 +108,7 @@ const RecordsPage = () => {
                   .map((c, i) => (
                     <li key={i} className="px-6 py-5 space-y-3">
                       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <Stethoscope className="h-3 w-3 text-clinic" />
+                        <Stethoscope className="h-3 w-3 text-primary" />
                         <span className="font-mono tabular-nums">
                           {c.date
                             ? format(new Date(c.date), "MMM d, yyyy · h:mm a")
@@ -168,7 +167,7 @@ const RecordsPage = () => {
 }
 
 const TONE = {
-  clinic: 'bg-clinic/10 text-clinic border-clinic/25',
+  clinic: 'bg-primary/10 text-primary border-primary/25',
   destructive: 'bg-destructive/10 text-destructive border-destructive/25',
   sage: 'bg-sage/15 text-sage-foreground border-sage/30',
 }
@@ -177,7 +176,7 @@ const ChipsCard = ({ icon: Icon, label, items, tone = 'clinic' }) => {
   const { t } = useTranslation()
   return (
     <div className="rounded-2xl border border-border/70 bg-card p-4">
-      <div className="flex items-center gap-2 text-clinic">
+      <div className="flex items-center gap-2 text-primary">
         <Icon className="h-3.5 w-3.5" />
         <p className="text-[10px] uppercase tracking-[0.16em] font-semibold">
           {label}
@@ -215,7 +214,7 @@ const Empty = () => {
   const { t } = useTranslation()
   return (
     <div className="py-14 text-center">
-      <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-clinic/10 text-clinic">
+      <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
         <FileText className="h-6 w-6" />
       </span>
       <h3 className="mt-4 font-display text-lg tracking-tight">

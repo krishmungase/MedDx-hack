@@ -44,7 +44,7 @@ const LoginForm = () => {
     <section className="flex items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-md fade-up">
         <div className="mb-8">
-          <p className="text-xs uppercase tracking-[0.2em] text-clinic font-semibold">
+          <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">
             Sign in
           </p>
           <h1 className="mt-3 font-display text-4xl md:text-5xl tracking-tight leading-tight">
@@ -146,7 +146,7 @@ const LoginForm = () => {
               className="block text-center text-sm text-foreground"
             >
               Create a{' '}
-              <span className="font-medium text-clinic underline-offset-4 hover:underline">
+              <span className="font-medium text-primary underline-offset-4 hover:underline">
                 patient account
               </span>
             </Link>

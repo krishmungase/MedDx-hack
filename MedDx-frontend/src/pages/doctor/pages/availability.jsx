@@ -1,5 +1,6 @@
 import { usePageTitle } from '@/hooks'
 import { pageTitle } from '@/constants'
+import { PageHeader } from '@/components'
 
 import AddAvailabilityCard from '../components/add-availability-card'
 import SlotsList from '../components/slots-list'
@@ -9,15 +10,11 @@ const AvailabilityPage = () => {
 
   return (
     <div className="space-y-8">
-      <div className="fade-up">
-        <h1 className="font-display text-4xl md:text-5xl tracking-tight leading-tight">
-          Your availability.
-        </h1>
-        <p className="mt-3 max-w-2xl text-muted-foreground leading-relaxed">
-          Open windows in 30-minute steps. Patients see only your future,
-          unbooked slots when they search for specialists.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Doctor · Availability"
+        title="Your availability."
+        description="Open windows in 30-minute steps. Patients see only your future, unbooked slots when they search for specialists."
+      />
 
       <div className="fade-up fade-up-delay-1">
         <AddAvailabilityCard />

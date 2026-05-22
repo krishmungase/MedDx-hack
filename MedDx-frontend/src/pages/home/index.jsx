@@ -54,7 +54,7 @@ const HomePage = () => {
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button
                   size="lg"
-                  className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-7 text-base shadow-[0_8px_30px_-12px_oklch(0.42_0.08_195/0.4)]"
+                  className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-7 text-base shadow-lg shadow-primary/25"
                   asChild
                 >
                   <Link to={primaryCtaTo}>{primaryCtaLabel}</Link>
@@ -218,7 +218,7 @@ const HomePage = () => {
 const HeroCard = () => (
   <div className="relative">
     <div className="absolute -inset-6 -z-10 rounded-[2rem] bg-gradient-to-br from-sage/30 via-cream to-clinic/15 blur-2xl" />
-    <div className="rounded-3xl border border-border/60 bg-card shadow-[0_30px_80px_-30px_oklch(0.22_0.025_240/0.25)] p-6">
+    <div className="rounded-3xl border border-border/60 bg-card shadow-xl shadow-primary/10 p-6">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
@@ -291,7 +291,7 @@ const HeroCard = () => (
 )
 
 const StepCard = ({ n, icon, title, body }) => (
-  <div className="group relative rounded-2xl border border-border/70 bg-card p-7 transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_60px_-30px_oklch(0.22_0.025_240/0.25)]">
+  <div className="group relative rounded-2xl border border-border/70 bg-card p-7 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/10 hover:border-primary/30">
     <div className="flex items-start justify-between">
       <span className="font-mono text-xs text-muted-foreground/80 tracking-widest">
         {n}

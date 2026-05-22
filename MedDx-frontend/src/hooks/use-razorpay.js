@@ -84,7 +84,7 @@ const useRazorpay = () => {
       name = 'MedDx',
       description = 'Video consult',
       prefill,
-      theme = { color: '#0a3a47' },
+      theme = { color: '#4f46e5' },
     }) =>
       new Promise((resolve, reject) => {
         if (!keyId) {

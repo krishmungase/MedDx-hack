@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { format, isPast } from 'date-fns'
@@ -9,19 +9,20 @@ import {
   Video,
 } from 'lucide-react'
 
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { DataPagination, StatusBadge } from '@/components'
 
 import { useMyAppointments } from '@/apis'
 
 const STATUS_TONE = {
-  scheduled: 'bg-clinic/10 text-clinic border-clinic/25',
-  completed: 'bg-sage/15 text-sage-foreground border-sage/30',
-  cancelled: 'bg-destructive/10 text-destructive border-destructive/25',
+  scheduled: 'primary',
+  completed: 'sage',
+  cancelled: 'destructive',
 }
 
 const JOIN_WINDOW_BEFORE_MS = 5 * 60 * 1000
 const JOIN_WINDOW_AFTER_MS = 60 * 60 * 1000
+const PAST_PAGE_SIZE = 5
 
 const isJoinable = (appt) => {
   if (appt.status !== 'scheduled') return false
@@ -34,6 +35,7 @@ const MyAppointments = () => {
   const navigate = useNavigate()
   const { t } = useTranslation()
   const { appointments, isLoading } = useMyAppointments()
+  const [pastPage, setPastPage] = useState(1)
 
   const { upcoming, past } = useMemo(() => {
     const upcoming = []
@@ -48,11 +50,17 @@ const MyAppointments = () => {
     return { upcoming, past }
   }, [appointments])
 
+  const pastTotalPages = Math.max(1, Math.ceil(past.length / PAST_PAGE_SIZE))
+  const pastPageItems = past.slice(
+    (pastPage - 1) * PAST_PAGE_SIZE,
+    pastPage * PAST_PAGE_SIZE,
+  )
+
   if (isLoading) return <Loading />
 
   return (
-    <section className="rounded-2xl border border-border/70 bg-card overflow-hidden">
-      <header className="px-6 py-4 border-b border-border/70">
+    <section className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-sm">
+      <header className="px-6 py-4 border-b border-border/60">
         <h2 className="font-display text-xl tracking-tight">
           {t('appointments.card_title')}
         </h2>
@@ -99,23 +107,33 @@ const MyAppointments = () => {
 
           {past.length > 0 && (
             <Group title={t('appointments.section_history')}>
-              {past.map((a) => (
-                <Row
-                  key={a._id}
-                  appt={a}
-                  primary={
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="rounded-full"
-                      onClick={() => navigate(`/video/${a._id}`)}
-                    >
-                      {t('appointments.view_notes')}
-                      <ChevronRight className="h-3.5 w-3.5" />
-                    </Button>
-                  }
+              <ul className="space-y-2">
+                {pastPageItems.map((a) => (
+                  <Row
+                    key={a._id}
+                    appt={a}
+                    primary={
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full"
+                        onClick={() => navigate(`/video/${a._id}`)}
+                      >
+                        {t('appointments.view_notes')}
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </Button>
+                    }
+                  />
+                ))}
+              </ul>
+              {pastTotalPages > 1 && (
+                <DataPagination
+                  page={pastPage}
+                  totalPages={pastTotalPages}
+                  onPageChange={setPastPage}
+                  className="mt-4"
                 />
-              ))}
+              )}
             </Group>
           )}
         </div>
@@ -129,7 +147,11 @@ const Group = ({ title, children }) => (
     <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-3">
       {title}
     </p>
-    <ul className="space-y-2">{children}</ul>
+    {Array.isArray(children) || children?.type !== 'ul' ? (
+      <ul className="space-y-2">{children}</ul>
+    ) : (
+      children
+    )}
   </div>
 )
 
@@ -138,8 +160,8 @@ const Row = ({ appt, primary }) => {
   const doctor = appt.doctorId
   const time = format(new Date(appt.datetime), "EEE, MMM d · h:mm a")
   return (
-    <li className="flex flex-wrap items-center gap-4 rounded-xl border border-border/60 bg-background/60 px-4 py-3">
-      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-clinic/10 text-clinic shrink-0">
+    <li className="flex flex-wrap items-center gap-4 rounded-xl border border-border/60 bg-background/60 px-4 py-3 transition-colors hover:border-primary/30">
+      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0">
         {appt.status === 'completed' ? (
           <CheckCircle2 className="h-5 w-5" />
         ) : (
@@ -157,14 +179,9 @@ const Row = ({ appt, primary }) => {
           {time}
         </p>
       </div>
-      <Badge
-        variant="outline"
-        className={`rounded-full text-[10px] uppercase tracking-[0.12em] ${
-          STATUS_TONE[appt.status] || ''
-        }`}
-      >
+      <StatusBadge tone={STATUS_TONE[appt.status] || 'muted'}>
         {t(`status.${appt.status}`, { defaultValue: appt.status })}
-      </Badge>
+      </StatusBadge>
       {primary}
     </li>
   )
@@ -182,7 +199,7 @@ const Empty = () => {
   const { t } = useTranslation()
   return (
     <div className="py-14 text-center">
-      <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-clinic/10 text-clinic">
+      <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
         <CalendarClock className="h-6 w-6" />
       </span>
       <h3 className="mt-4 font-display text-lg tracking-tight">

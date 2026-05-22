@@ -37,22 +37,23 @@ const Header = () => {
         <Logo size="md" />
 
         {!onAuth && !onDashboard && (
-          <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
-            <a
-              href="#how-it-works"
-              className="hover:text-foreground transition-colors"
-            >
-              How it works
-            </a>
-            <a
-              href="#specialists"
-              className="hover:text-foreground transition-colors"
-            >
-              Specialists
-            </a>
-            <a href="#trust" className="hover:text-foreground transition-colors">
-              Why MedDx
-            </a>
+          <nav className="hidden md:flex items-center gap-1 text-sm">
+            {[
+              { href: '#how-it-works', label: 'How it works' },
+              { href: '#specialists', label: 'Specialists' },
+              { href: '#trust', label: 'Why MedDx' },
+            ].map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="rounded-full px-3 py-1.5 text-muted-foreground
+                  transition-colors hover:text-foreground hover:bg-accent/60
+                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+                  focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              >
+                {item.label}
+              </a>
+            ))}
           </nav>
         )}
 
@@ -88,7 +89,7 @@ const Header = () => {
                 </Button>
                 <Button
                   size="sm"
-                  className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+                  className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
                   asChild
                 >
                   <Link to="/auth/sign-up">Get started</Link>

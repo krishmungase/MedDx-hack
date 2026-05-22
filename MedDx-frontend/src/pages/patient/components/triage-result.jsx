@@ -8,13 +8,13 @@ import {
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components'
 
 const TONE = {
-  low: 'bg-sage/15 text-sage-foreground border-sage/30',
-  medium: 'bg-amber-500/15 text-amber-700 border-amber-500/30',
-  high: 'bg-orange-600/15 text-orange-700 border-orange-600/30',
-  emergency: 'bg-destructive/15 text-destructive border-destructive/30',
+  low: 'sage',
+  medium: 'amber',
+  high: 'amber',
+  emergency: 'destructive',
 }
 
 const TriageResult = ({ triage, disclaimer, onReset, onBook }) => {
@@ -42,19 +42,16 @@ const TriageResult = ({ triage, disclaimer, onReset, onBook }) => {
 
       <header className="px-6 py-5 border-b border-border/60">
         <div className="flex flex-wrap items-center gap-3">
-          <Badge
-            variant="outline"
-            className={`rounded-full text-[11px] uppercase tracking-[0.14em] ${TONE[triage.urgency] || ''}`}
-          >
+          <StatusBadge tone={TONE[triage.urgency] || 'muted'}>
             {t('triage.result_urgency', {
               level: t(`urgency.${triage.urgency}`),
             })}
-          </Badge>
+          </StatusBadge>
           <span className="text-xs text-muted-foreground">
             {t('triage.result_specialty_label')}
           </span>
           <span className="inline-flex items-center gap-1.5 text-sm font-medium">
-            <Stethoscope className="h-3.5 w-3.5 text-clinic" />
+            <Stethoscope className="h-3.5 w-3.5 text-primary" />
             {triage.specialty}
           </span>
         </div>
@@ -80,7 +77,7 @@ const TriageResult = ({ triage, disclaimer, onReset, onBook }) => {
         </div>
 
         <div className="rounded-xl border border-border/70 bg-muted/40 p-3 flex items-start gap-2">
-          <ShieldAlert className="h-3.5 w-3.5 text-clinic mt-0.5 shrink-0" />
+          <ShieldAlert className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
           <p className="text-[11px] text-muted-foreground leading-relaxed">
             {t('triage.result_disclaimer')}
           </p>

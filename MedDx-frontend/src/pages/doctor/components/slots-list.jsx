@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react'
 import { format, isSameDay, isToday, isTomorrow } from 'date-fns'
 import { CalendarX, RefreshCw, Trash2 } from 'lucide-react'
 
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { StatusBadge } from '@/components'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,8 +18,8 @@ import {
 import { useDeleteSlot, useMySlots } from '@/apis'
 
 const STATUS_TONE = {
-  available: 'bg-sage/15 text-sage-foreground border-sage/30',
-  booked: 'bg-clinic/10 text-clinic border-clinic/25',
+  available: 'sage',
+  booked: 'primary',
 }
 const STATUS_LABEL = {
   available: 'Available',
@@ -63,8 +63,8 @@ const SlotsList = () => {
   }, [visible])
 
   return (
-    <section className="rounded-2xl border border-border/70 bg-card overflow-hidden">
-      <header className="flex items-center justify-between px-6 py-4 border-b border-border/70">
+    <section className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-sm">
+      <header className="flex items-center justify-between px-6 py-4 border-b border-border/60">
         <div>
           <h2 className="font-display text-xl tracking-tight">
             Upcoming availability
@@ -74,7 +74,7 @@ const SlotsList = () => {
           </p>
         </div>
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           className="rounded-full"
           onClick={() => refetch()}
@@ -161,18 +161,15 @@ const SlotTile = ({ slot, onAskDelete }) => {
     <div
       className={`group relative rounded-xl border px-3 py-2.5 transition-colors ${
         isBooked
-          ? 'border-clinic/25 bg-clinic/5'
-          : 'border-border bg-card hover:border-clinic/40'
+          ? 'border-primary/25 bg-primary/5'
+          : 'border-border bg-card hover:border-primary/40'
       }`}
     >
       <div className="flex items-center justify-between gap-2">
         <span className="font-mono text-sm tabular-nums">{time}</span>
-        <Badge
-          variant="outline"
-          className={`rounded-full border text-[10px] uppercase tracking-[0.12em] ${STATUS_TONE[slot.status] || ''}`}
-        >
+        <StatusBadge tone={STATUS_TONE[slot.status] || 'muted'}>
           {STATUS_LABEL[slot.status] || slot.status}
-        </Badge>
+        </StatusBadge>
       </div>
       {!isBooked && (
         <button
@@ -198,7 +195,7 @@ const Loading = () => (
 
 const Empty = () => (
   <div className="px-6 py-16 text-center">
-    <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-clinic/10 text-clinic">
+    <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
       <CalendarX className="h-6 w-6" />
     </span>
     <h3 className="mt-5 font-display text-xl tracking-tight">

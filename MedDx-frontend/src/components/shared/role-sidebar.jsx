@@ -61,14 +61,14 @@ const RoleSidebar = ({
     <Sidebar
       collapsible="icon"
       variant="inset"
-      className="border-r border-border/70"
+      className="border-r border-border/60"
     >
       <SidebarHeader className="px-3 pt-4 pb-3">
         <div className="flex items-center gap-2.5 px-1">
           <Mark className="h-8 w-8 shrink-0" />
           <div className="min-w-0 group-data-[collapsible=icon]:hidden">
             <p className="font-display text-base leading-none tracking-tight">
-              MedDx<span className="text-clinic">.</span>
+              MedDx<span className="text-primary">.</span>
             </p>
             {eyebrow && (
               <p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
@@ -104,7 +104,7 @@ const RoleSidebar = ({
                               : location.pathname === item.to ||
                                 location.pathname.startsWith(item.to + '/')
                           }
-                          className="h-9 rounded-lg data-[active=true]:bg-clinic/10 data-[active=true]:text-clinic data-[active=true]:font-medium"
+                          className="h-9 rounded-lg data-[active=true]:bg-primary/10 data-[active=true]:text-primary data-[active=true]:font-medium"
                         >
                           <NavLink to={item.to} end={item.end}>
                             {Icon && <Icon className="h-4 w-4" />}
@@ -120,7 +120,7 @@ const RoleSidebar = ({
                     <SidebarMenuItem key={item.id}>
                       <SidebarMenuButton
                         isActive={Boolean(item.active)}
-                        className="h-9 rounded-lg data-[active=true]:bg-clinic/10 data-[active=true]:text-clinic data-[active=true]:font-medium"
+                        className="h-9 rounded-lg data-[active=true]:bg-primary/10 data-[active=true]:text-primary data-[active=true]:font-medium"
                       >
                         {Icon && <Icon className="h-4 w-4" />}
                         <span>{item.label}</span>
@@ -166,7 +166,7 @@ const RoleSidebar = ({
       <SidebarFooter className="border-t border-border/60 p-3 space-y-2">
         {showLanguage && <LanguageSwitcher />}
         <div className="flex items-center gap-2.5 rounded-lg bg-card/60 p-2 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0">
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-clinic text-clinic-foreground text-xs font-semibold shrink-0">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold shrink-0">
             {initials}
           </span>
           <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">

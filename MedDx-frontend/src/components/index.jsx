@@ -5,6 +5,10 @@ import ThemeToggle from './shared/theme-toggle'
 import InputSearch from './shared/input-search'
 import DashboardShell from './shared/dashboard-shell'
 import ConfirmDeleteButton from './shared/confirm-delete-button'
+import DataPagination from './shared/data-pagination'
+import PageHeader from './shared/page-header'
+import StatCard from './shared/stat-card'
+import StatusBadge from './shared/status-badge'
 
 export {
   Header,
@@ -14,4 +18,8 @@ export {
   Logo,
   ThemeToggle,
   DashboardShell,
+  DataPagination,
+  PageHeader,
+  StatCard,
+  StatusBadge,
 }

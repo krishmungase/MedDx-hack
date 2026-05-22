@@ -63,16 +63,17 @@
 }
 
 :root {
-  --radius: 0.875rem;
+  --radius: 0.75rem;
 
-  /* "Quiet Clinic" palette — warm cream base, deep teal anchor, sage healing accent */
-  --cream: oklch(0.975 0.012 85);
-  --ink: oklch(0.215 0.024 240);
-  --clinic: oklch(0.42 0.08 195);
-  --clinic-foreground: oklch(0.98 0.01 85);
-  --sage: oklch(0.78 0.075 165);
-  --sage-foreground: oklch(0.22 0.025 200);
-  --amber-warm: oklch(0.82 0.12 75);
+  /* Calm, trustworthy palette — cool white base, deep indigo anchor,
+     sage retained as positive/success accent so status semantics survive. */
+  --cream: oklch(0.985 0.003 260);
+  --ink: oklch(0.2 0.02 260);
+  --clinic: oklch(0.58 0.17 258);
+  --clinic-foreground: oklch(0.99 0.005 260);
+  --sage: oklch(0.72 0.085 165);
+  --sage-foreground: oklch(0.22 0.04 200);
+  --amber-warm: oklch(0.78 0.13 75);
 
   --background: var(--cream);
   --foreground: var(--ink);
@@ -85,83 +86,83 @@
   --primary: var(--clinic);
   --primary-foreground: var(--clinic-foreground);
 
-  --secondary: oklch(0.945 0.018 80);
-  --secondary-foreground: var(--ink);
+  --secondary: oklch(0.96 0.008 260);
+  --secondary-foreground: oklch(0.3 0.03 260);
 
-  --muted: oklch(0.94 0.014 78);
-  --muted-foreground: oklch(0.5 0.022 235);
+  --muted: oklch(0.96 0.008 260);
+  --muted-foreground: oklch(0.5 0.02 260);
 
-  --accent: oklch(0.92 0.038 170);
-  --accent-foreground: oklch(0.28 0.04 200);
+  --accent: oklch(0.94 0.03 258);
+  --accent-foreground: oklch(0.3 0.08 258);
 
-  --destructive: oklch(0.58 0.215 27);
+  --destructive: oklch(0.577 0.245 27.325);
 
-  --border: oklch(0.9 0.012 75);
-  --input: oklch(0.92 0.01 78);
+  --border: oklch(0.92 0.008 260);
+  --input: oklch(0.92 0.008 260);
   --ring: var(--clinic);
 
-  --chart-1: oklch(0.42 0.08 195);
-  --chart-2: oklch(0.72 0.075 165);
-  --chart-3: oklch(0.78 0.12 75);
-  --chart-4: oklch(0.68 0.085 25);
-  --chart-5: oklch(0.55 0.09 250);
+  --chart-1: oklch(0.58 0.17 258);
+  --chart-2: oklch(0.72 0.085 165);
+  --chart-3: oklch(0.78 0.13 75);
+  --chart-4: oklch(0.68 0.18 25);
+  --chart-5: oklch(0.55 0.12 295);
 
-  --sidebar: oklch(0.99 0.008 85);
-  --sidebar-foreground: var(--ink);
+  --sidebar: oklch(0.99 0.003 260);
+  --sidebar-foreground: oklch(0.25 0.02 260);
   --sidebar-primary: var(--clinic);
   --sidebar-primary-foreground: var(--clinic-foreground);
-  --sidebar-accent: oklch(0.94 0.018 80);
-  --sidebar-accent-foreground: var(--ink);
-  --sidebar-border: oklch(0.9 0.012 75);
+  --sidebar-accent: oklch(0.94 0.03 258);
+  --sidebar-accent-foreground: oklch(0.3 0.08 258);
+  --sidebar-border: oklch(0.92 0.008 260);
   --sidebar-ring: var(--clinic);
 }
 
 .dark {
-  --background: oklch(0.165 0.018 235);
-  --foreground: oklch(0.96 0.008 80);
+  --background: oklch(0.17 0.015 260);
+  --foreground: oklch(0.95 0.005 260);
 
-  --card: oklch(0.225 0.02 235);
-  --card-foreground: oklch(0.96 0.008 80);
-  --popover: oklch(0.225 0.02 235);
-  --popover-foreground: oklch(0.96 0.008 80);
+  --card: oklch(0.22 0.015 260);
+  --card-foreground: oklch(0.95 0.005 260);
+  --popover: oklch(0.22 0.015 260);
+  --popover-foreground: oklch(0.95 0.005 260);
 
-  --primary: oklch(0.72 0.08 178);
-  --primary-foreground: oklch(0.15 0.015 235);
-  --secondary: oklch(0.27 0.02 235);
-  --secondary-foreground: oklch(0.96 0.008 80);
-  --muted: oklch(0.26 0.02 235);
-  --muted-foreground: oklch(0.7 0.018 80);
-  --accent: oklch(0.32 0.035 195);
-  --accent-foreground: oklch(0.96 0.008 80);
+  --primary: oklch(0.72 0.16 258);
+  --primary-foreground: oklch(0.17 0.015 260);
+  --secondary: oklch(0.28 0.02 260);
+  --secondary-foreground: oklch(0.95 0.005 260);
+  --muted: oklch(0.28 0.02 260);
+  --muted-foreground: oklch(0.68 0.02 260);
+  --accent: oklch(0.3 0.04 258);
+  --accent-foreground: oklch(0.95 0.005 260);
 
-  --destructive: oklch(0.7 0.19 22);
+  --destructive: oklch(0.704 0.191 22.216);
 
-  --border: oklch(1 0 0 / 8%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.72 0.08 178);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.72 0.16 258);
 
-  --cream: oklch(0.18 0.018 235);
-  --ink: oklch(0.96 0.008 80);
-  --clinic: oklch(0.72 0.08 178);
-  --clinic-foreground: oklch(0.15 0.015 235);
-  --sage: oklch(0.72 0.07 165);
-  --sage-foreground: oklch(0.15 0.015 235);
-  --amber-warm: oklch(0.82 0.12 75);
+  --cream: oklch(0.17 0.015 260);
+  --ink: oklch(0.95 0.005 260);
+  --clinic: oklch(0.72 0.16 258);
+  --clinic-foreground: oklch(0.17 0.015 260);
+  --sage: oklch(0.7 0.085 165);
+  --sage-foreground: oklch(0.17 0.015 260);
+  --amber-warm: oklch(0.78 0.13 75);
 
-  --chart-1: oklch(0.72 0.08 178);
-  --chart-2: oklch(0.72 0.07 165);
-  --chart-3: oklch(0.82 0.12 75);
-  --chart-4: oklch(0.7 0.1 25);
-  --chart-5: oklch(0.65 0.09 250);
+  --chart-1: oklch(0.72 0.16 258);
+  --chart-2: oklch(0.7 0.085 165);
+  --chart-3: oklch(0.78 0.13 75);
+  --chart-4: oklch(0.68 0.18 25);
+  --chart-5: oklch(0.65 0.15 295);
 
-  --sidebar: oklch(0.21 0.02 235);
-  --sidebar-foreground: oklch(0.96 0.008 80);
-  --sidebar-primary: oklch(0.72 0.08 178);
-  --sidebar-primary-foreground: oklch(0.15 0.015 235);
-  --sidebar-accent: oklch(0.27 0.02 235);
-  --sidebar-accent-foreground: oklch(0.96 0.008 80);
-  --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: oklch(0.72 0.08 178);
+  --sidebar: oklch(0.19 0.015 260);
+  --sidebar-foreground: oklch(0.93 0.005 260);
+  --sidebar-primary: oklch(0.72 0.16 258);
+  --sidebar-primary-foreground: oklch(0.17 0.015 260);
+  --sidebar-accent: oklch(0.28 0.02 260);
+  --sidebar-accent-foreground: oklch(0.95 0.005 260);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.72 0.16 258);
 }
 
 @layer base {
@@ -192,8 +193,16 @@
   }
 
   ::selection {
-    background-color: oklch(0.78 0.075 165 / 0.5);
+    background-color: oklch(0.58 0.17 258 / 0.18);
     color: var(--ink);
+  }
+
+  /* Accessibility — visible focus ring on every focusable element.
+     Uses the ring token so it follows theme + dark mode. */
+  :where(a, button, input, select, textarea, [role='button'], [tabindex]):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
   }
 
   input:-webkit-autofill,
@@ -204,18 +213,18 @@
   }
 }
 
-/* Subtle paper-grain texture overlay — adds warmth to cream surfaces */
+/* Soft mesh tint for surfaces that need a hint of depth (role dashboards). */
 .bg-grain {
   background-image:
     radial-gradient(
-      circle at 20% 25%,
-      oklch(0.42 0.08 195 / 0.04) 0%,
-      transparent 40%
+      circle at 18% 20%,
+      oklch(0.58 0.17 258 / 0.04) 0%,
+      transparent 45%
     ),
     radial-gradient(
-      circle at 85% 75%,
-      oklch(0.78 0.075 165 / 0.05) 0%,
-      transparent 35%
+      circle at 85% 80%,
+      oklch(0.72 0.085 165 / 0.04) 0%,
+      transparent 40%
     );
 }
 
@@ -223,17 +232,17 @@
   background:
     radial-gradient(
       ellipse 60% 80% at 10% 0%,
-      oklch(0.78 0.075 165 / 0.18) 0%,
+      oklch(0.72 0.085 165 / 0.18) 0%,
       transparent 60%
     ),
     radial-gradient(
       ellipse 70% 90% at 90% 100%,
-      oklch(0.42 0.08 195 / 0.22) 0%,
+      oklch(0.58 0.17 258 / 0.28) 0%,
       transparent 65%
     ),
     radial-gradient(
       ellipse 100% 60% at 50% 50%,
-      oklch(0.82 0.12 75 / 0.08) 0%,
+      oklch(0.78 0.13 75 / 0.06) 0%,
       transparent 70%
     ),
     var(--clinic);
@@ -243,7 +252,7 @@
   background-image: linear-gradient(
     90deg,
     transparent 0%,
-    oklch(0.78 0.075 165 / 0.4) 50%,
+    oklch(0.72 0.085 165 / 0.4) 50%,
     transparent 100%
   );
 }
@@ -259,22 +268,34 @@
   }
 }
 .fade-up {
-  animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .fade-up-delay-1 {
-  animation-delay: 0.08s;
+  animation-delay: 0.06s;
 }
 .fade-up-delay-2 {
-  animation-delay: 0.16s;
+  animation-delay: 0.12s;
 }
 .fade-up-delay-3 {
-  animation-delay: 0.24s;
+  animation-delay: 0.18s;
 }
 .fade-up-delay-4 {
-  animation-delay: 0.32s;
+  animation-delay: 0.24s;
 }
 .fade-up-delay-5 {
-  animation-delay: 0.4s;
+  animation-delay: 0.3s;
+}
+
+/* Respect users who prefer no motion. */
+@media (prefers-reduced-motion: reduce) {
+  .fade-up,
+  .fade-up-delay-1,
+  .fade-up-delay-2,
+  .fade-up-delay-3,
+  .fade-up-delay-4,
+  .fade-up-delay-5 {
+    animation: none;
+  }
 }
 
 @keyframes vital-pulse {
@@ -295,7 +316,7 @@
 }
 
 .scrollbar-extra-thin::-webkit-scrollbar-thumb {
-  background-color: oklch(0.5 0.022 235 / 0.4);
+  background-color: oklch(0.5 0.02 260 / 0.4);
   border-radius: 10px;
 }
 

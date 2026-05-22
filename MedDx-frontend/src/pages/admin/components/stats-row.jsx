@@ -1,62 +1,36 @@
-import {
-  CalendarCheck,
-  Stethoscope,
-  Users,
-} from 'lucide-react'
+import { CalendarCheck, Stethoscope, Users } from 'lucide-react'
 
 import { Skeleton } from '@/components/ui/skeleton'
+import { StatCard } from '@/components'
 
-const StatCard = ({ icon, label, value, accent, isLoading }) => (
-  <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card p-6">
-    <div className="flex items-center justify-between">
-      <span
-        className="rounded-full bg-clinic/10 p-2 text-clinic"
-        aria-hidden="true"
-      >
-        {icon}
-      </span>
-      <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-        {accent}
-      </span>
-    </div>
-    <div className="mt-5">
-      <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold">
-        {label}
-      </p>
-      {isLoading ? (
-        <Skeleton className="mt-2 h-9 w-24" />
-      ) : (
-        <p className="mt-2 font-display text-4xl tracking-tight">
-          {Number.isFinite(value) ? value.toLocaleString() : '—'}
-        </p>
-      )}
-    </div>
-  </div>
-)
+const renderValue = (v, isLoading) => {
+  if (isLoading) return <Skeleton className="h-9 w-24" />
+  return Number.isFinite(v) ? v.toLocaleString() : '—'
+}
 
 const StatsRow = ({ stats, isLoading }) => {
   return (
     <div className="grid sm:grid-cols-3 gap-4">
       <StatCard
-        icon={<Users className="h-4 w-4" />}
+        icon={Users}
+        tone="primary"
         label="Patients"
-        value={stats?.patients}
-        accent="Total"
-        isLoading={isLoading}
+        value={renderValue(stats?.patients, isLoading)}
+        hint="Total registered"
       />
       <StatCard
-        icon={<Stethoscope className="h-4 w-4" />}
+        icon={Stethoscope}
+        tone="sage"
         label="Doctors"
-        value={stats?.doctors}
-        accent="On platform"
-        isLoading={isLoading}
+        value={renderValue(stats?.doctors, isLoading)}
+        hint="On platform"
       />
       <StatCard
-        icon={<CalendarCheck className="h-4 w-4" />}
+        icon={CalendarCheck}
+        tone="amber"
         label="Appointments"
-        value={stats?.appointments}
-        accent="All-time"
-        isLoading={isLoading}
+        value={renderValue(stats?.appointments, isLoading)}
+        hint="All-time bookings"
       />
     </div>
   )

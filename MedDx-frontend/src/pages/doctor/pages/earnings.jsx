@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react'
 import { format } from 'date-fns'
 import {
   ArrowDownRight,
@@ -9,8 +10,13 @@ import {
 import { useMyEarnings } from '@/apis'
 import { usePageTitle } from '@/hooks'
 import { pageTitle } from '@/constants'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  DataPagination,
+  PageHeader,
+  StatCard,
+  StatusBadge,
+} from '@/components'
 
 const formatRupees = (paise) =>
   new Intl.NumberFormat('en-IN', {
@@ -19,33 +25,39 @@ const formatRupees = (paise) =>
     maximumFractionDigits: 2,
   }).format((paise || 0) / 100)
 
+const PAGE_SIZE = 10
+
 const EarningsPage = () => {
   usePageTitle({ title: pageTitle.DOCTOR_DASHBOARD })
   const { balancePaise, transactions, isLoading, isFetching, refetch } =
     useMyEarnings()
+  const [page, setPage] = useState(1)
+
+  const totalPages = Math.max(1, Math.ceil(transactions.length / PAGE_SIZE))
+  const pageItems = useMemo(
+    () => transactions.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [transactions, page],
+  )
 
   return (
     <div className="space-y-8">
-      <div className="fade-up">
-        <h1 className="font-display text-4xl md:text-5xl tracking-tight leading-tight">
-          Your earnings.
-        </h1>
-        <p className="mt-3 max-w-2xl text-muted-foreground leading-relaxed">
-          Patients are charged ₹199 per consult. You keep 80%, MedDx keeps 20%
-          for platform costs. Free first consults and emergency triage don't
-          create a transaction.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Doctor · Earnings"
+        title="Your earnings."
+        description="Patients are charged ₹199 per consult. You keep 80%, MedDx keeps 20% for platform costs. Free first consults and emergency triage don't create a transaction."
+      />
 
       <div className="fade-up fade-up-delay-1 grid sm:grid-cols-2 gap-4">
         <StatCard
           icon={Coins}
+          tone="primary"
           label="Wallet balance"
           value={isLoading ? '—' : formatRupees(balancePaise)}
           hint="Available to withdraw"
         />
         <StatCard
           icon={ArrowDownRight}
+          tone="sage"
           label="Paid consultations"
           value={isLoading ? '—' : String(transactions.length)}
           hint={
@@ -56,8 +68,8 @@ const EarningsPage = () => {
         />
       </div>
 
-      <section className="fade-up fade-up-delay-2 rounded-2xl border border-border/70 bg-card overflow-hidden">
-        <header className="flex items-center justify-between px-6 py-4 border-b border-border/70">
+      <section className="fade-up fade-up-delay-2 rounded-2xl border border-border/70 bg-card overflow-hidden shadow-sm">
+        <header className="flex items-center justify-between px-6 py-4 border-b border-border/60">
           <div>
             <h2 className="font-display text-xl tracking-tight">
               Transactions
@@ -67,7 +79,7 @@ const EarningsPage = () => {
             </p>
           </div>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             className="rounded-full"
             onClick={() => refetch()}
@@ -85,69 +97,61 @@ const EarningsPage = () => {
         ) : transactions.length === 0 ? (
           <Empty />
         ) : (
-          <ul className="divide-y divide-border/60">
-            {transactions.map((t) => (
-              <li
-                key={t._id}
-                className="flex flex-wrap items-center gap-4 px-6 py-4"
-              >
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-sage/15 text-sage-foreground shrink-0">
-                  <IndianRupee className="h-4 w-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium">
-                    {t.patient?.name || 'Patient'}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground font-mono tabular-nums mt-0.5">
-                    {format(new Date(t.createdAt), "MMM d, yyyy · h:mm a")}
-                    {t.appointment?.datetime && (
-                      <span className="ml-2 opacity-60">
-                        consult:{' '}
-                        {format(
-                          new Date(t.appointment.datetime),
-                          'MMM d, h:mm a'
-                        )}
-                      </span>
-                    )}
-                  </p>
-                </div>
-                <Badge
-                  variant="outline"
-                  className="rounded-full text-[10px] uppercase tracking-[0.12em] bg-sage/15 text-sage-foreground border-sage/30"
+          <>
+            <ul className="divide-y divide-border/60">
+              {pageItems.map((t) => (
+                <li
+                  key={t._id}
+                  className="flex flex-wrap items-center gap-4 px-6 py-4"
                 >
-                  {t.type}
-                </Badge>
-                <div className="text-right">
-                  <p className="text-sm font-semibold font-mono tabular-nums">
-                    + {formatRupees(t.doctorEarning)}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground font-mono tabular-nums">
-                    {formatRupees(t.amount)} · platform {formatRupees(t.platformFee)}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-sage/15 text-sage-foreground shrink-0">
+                    <IndianRupee className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium">
+                      {t.patient?.name || 'Patient'}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground font-mono tabular-nums mt-0.5">
+                      {format(new Date(t.createdAt), "MMM d, yyyy · h:mm a")}
+                      {t.appointment?.datetime && (
+                        <span className="ml-2 opacity-60">
+                          consult:{' '}
+                          {format(
+                            new Date(t.appointment.datetime),
+                            'MMM d, h:mm a'
+                          )}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <StatusBadge tone="sage">{t.type}</StatusBadge>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold font-mono tabular-nums">
+                      + {formatRupees(t.doctorEarning)}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground font-mono tabular-nums">
+                      {formatRupees(t.amount)} · platform {formatRupees(t.platformFee)}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {totalPages > 1 && (
+              <div className="border-t border-border/60 px-6 py-4">
+                <DataPagination
+                  page={page}
+                  totalPages={totalPages}
+                  onPageChange={setPage}
+                />
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>
   )
 }
-
-const StatCard = ({ icon: Icon, label, value, hint }) => (
-  <div className="rounded-2xl border border-border/70 bg-card p-5">
-    <div className="flex items-center gap-2 text-clinic">
-      <Icon className="h-4 w-4" />
-      <p className="text-[10px] uppercase tracking-[0.16em] font-semibold">
-        {label}
-      </p>
-    </div>
-    <p className="mt-3 font-display text-3xl tabular-nums tracking-tight">
-      {value}
-    </p>
-    <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
-  </div>
-)
 
 const Loading = () => (
   <div className="px-6 py-6 space-y-3">

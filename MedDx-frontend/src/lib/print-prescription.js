@@ -102,7 +102,7 @@ const buildHTML = ({
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    border-bottom: 2px solid #0a3a47;
+    border-bottom: 2px solid #4f46e5;
     padding-bottom: 16px;
     margin-bottom: 24px;
   }
@@ -110,10 +110,10 @@ const buildHTML = ({
     font-size: 28px;
     font-weight: 700;
     letter-spacing: -0.02em;
-    color: #0a3a47;
+    color: #4f46e5;
     margin: 0;
   }
-  .brand-dot { color: #4f8a8b; }
+  .brand-dot { color: #6366f1; }
   .eyebrow {
     text-transform: uppercase;
     letter-spacing: 0.16em;
@@ -147,7 +147,7 @@ const buildHTML = ({
   h2 {
     font-size: 18px;
     margin: 28px 0 12px;
-    color: #0a3a47;
+    color: #4f46e5;
   }
   h3 {
     font-size: 13px;
@@ -197,7 +197,7 @@ const buildHTML = ({
     margin: 0;
   }
   .followup {
-    border-left: 3px solid #0a3a47;
+    border-left: 3px solid #4f46e5;
     padding: 8px 14px;
     background: #f7f2e7;
     font-size: 13px;

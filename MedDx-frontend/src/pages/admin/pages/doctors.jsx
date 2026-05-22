@@ -1,5 +1,6 @@
 import { usePageTitle } from '@/hooks'
 import { pageTitle } from '@/constants'
+import { PageHeader } from '@/components'
 
 import DoctorsTable from '../components/doctors-table'
 import RegisterDoctorDialog from '../components/register-doctor-dialog'
@@ -9,18 +10,12 @@ const DoctorsPage = () => {
 
   return (
     <div className="space-y-8">
-      <div className="fade-up flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-4xl md:text-5xl tracking-tight leading-tight">
-            Doctors.
-          </h1>
-          <p className="mt-3 max-w-2xl text-muted-foreground leading-relaxed">
-            Public registration is patient-only — every doctor on MedDx is
-            verified and onboarded by you.
-          </p>
-        </div>
-        <RegisterDoctorDialog />
-      </div>
+      <PageHeader
+        eyebrow="Admin · Doctors"
+        title="Doctors."
+        description="Public registration is patient-only — every doctor on MedDx is verified and onboarded by you."
+        actions={<RegisterDoctorDialog />}
+      />
 
       <div className="fade-up fade-up-delay-1">
         <DoctorsTable />

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { format, isPast } from 'date-fns'
 import {
@@ -9,26 +9,27 @@ import {
   Video,
 } from 'lucide-react'
 
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { DataPagination, StatusBadge } from '@/components'
 
 import { useDoctorQueue } from '@/apis'
 
 const STATUS_TONE = {
-  scheduled: 'bg-clinic/10 text-clinic border-clinic/25',
-  completed: 'bg-sage/15 text-sage-foreground border-sage/30',
-  cancelled: 'bg-destructive/10 text-destructive border-destructive/25',
+  scheduled: 'primary',
+  completed: 'sage',
+  cancelled: 'destructive',
 }
 
 const URGENCY_TONE = {
-  low: 'bg-sage/15 text-sage-foreground border-sage/30',
-  medium: 'bg-amber-500/15 text-amber-700 border-amber-500/30',
-  high: 'bg-orange-600/15 text-orange-700 border-orange-600/30',
-  emergency: 'bg-destructive/15 text-destructive border-destructive/30',
+  low: 'sage',
+  medium: 'amber',
+  high: 'amber',
+  emergency: 'destructive',
 }
 
 const JOIN_WINDOW_BEFORE_MS = 5 * 60 * 1000
 const JOIN_WINDOW_AFTER_MS = 60 * 60 * 1000
+const DONE_PAGE_SIZE = 5
 
 const isJoinable = (appt) => {
   if (appt.status !== 'scheduled') return false
@@ -40,12 +41,16 @@ const isJoinable = (appt) => {
 const DoctorQueue = () => {
   const navigate = useNavigate()
   const { appointments, isLoading, isFetching, refetch } = useDoctorQueue()
+  const [donePage, setDonePage] = useState(1)
 
   const { upcoming, done } = useMemo(() => {
     const upcoming = []
     const done = []
     for (const a of appointments) {
-      if (a.status === 'completed' || isPast(new Date(a.datetime)) && a.status !== 'scheduled') {
+      if (
+        a.status === 'completed' ||
+        (isPast(new Date(a.datetime)) && a.status !== 'scheduled')
+      ) {
         done.push(a)
       } else {
         upcoming.push(a)
@@ -54,9 +59,15 @@ const DoctorQueue = () => {
     return { upcoming, done }
   }, [appointments])
 
+  const doneTotalPages = Math.max(1, Math.ceil(done.length / DONE_PAGE_SIZE))
+  const donePageItems = done.slice(
+    (donePage - 1) * DONE_PAGE_SIZE,
+    donePage * DONE_PAGE_SIZE,
+  )
+
   return (
-    <section className="rounded-2xl border border-border/70 bg-card overflow-hidden">
-      <header className="flex items-center justify-between px-6 py-4 border-b border-border/70">
+    <section className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-sm">
+      <header className="flex items-center justify-between px-6 py-4 border-b border-border/60">
         <div>
           <h2 className="font-display text-xl tracking-tight">Today's queue</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -64,7 +75,7 @@ const DoctorQueue = () => {
           </p>
         </div>
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           className="rounded-full"
           onClick={() => refetch()}
@@ -121,7 +132,7 @@ const DoctorQueue = () => {
                 Completed
               </p>
               <ul className="space-y-2">
-                {done.map((a) => (
+                {donePageItems.map((a) => (
                   <QueueRow
                     key={a._id}
                     appt={a}
@@ -138,6 +149,14 @@ const DoctorQueue = () => {
                   />
                 ))}
               </ul>
+              {doneTotalPages > 1 && (
+                <DataPagination
+                  page={donePage}
+                  totalPages={doneTotalPages}
+                  onPageChange={setDonePage}
+                  className="mt-4"
+                />
+              )}
             </div>
           )}
         </div>
@@ -149,7 +168,7 @@ const DoctorQueue = () => {
 const QueueRow = ({ appt, primary }) => {
   const patient = appt.patientId
   return (
-    <li className="rounded-xl border border-border/60 bg-background/60 px-4 py-3">
+    <li className="rounded-xl border border-border/60 bg-background/60 px-4 py-3 transition-colors hover:border-primary/30">
       <div className="flex flex-wrap items-center gap-4">
         <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-sage/15 text-sage-foreground shrink-0">
           {appt.status === 'completed' ? (
@@ -170,24 +189,16 @@ const QueueRow = ({ appt, primary }) => {
           </p>
         </div>
         {appt.triageUrgency && (
-          <Badge
-            variant="outline"
-            className={`rounded-full text-[10px] uppercase tracking-[0.12em] ${
-              URGENCY_TONE[appt.triageUrgency] || ''
-            }`}
+          <StatusBadge
+            tone={URGENCY_TONE[appt.triageUrgency] || 'muted'}
             title="AI triage urgency"
           >
             {appt.triageUrgency} urgency
-          </Badge>
+          </StatusBadge>
         )}
-        <Badge
-          variant="outline"
-          className={`rounded-full text-[10px] uppercase tracking-[0.12em] ${
-            STATUS_TONE[appt.status] || ''
-          }`}
-        >
+        <StatusBadge tone={STATUS_TONE[appt.status] || 'muted'}>
           {appt.status}
-        </Badge>
+        </StatusBadge>
         {primary}
       </div>
       {appt.triageSummary && (
@@ -210,7 +221,7 @@ const Loading = () => (
 
 const Empty = () => (
   <div className="py-14 text-center">
-    <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-clinic/10 text-clinic">
+    <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
       <ClipboardList className="h-6 w-6" />
     </span>
     <h3 className="mt-4 font-display text-lg tracking-tight">Quiet for now</h3>

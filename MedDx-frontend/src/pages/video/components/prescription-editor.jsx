@@ -71,29 +71,38 @@ const PrescriptionEditor = ({ value, onChange, defaultLanguage = 'en' }) => {
     }
   }
 
-  const onFormat = async () => {
+  // Runs the AI formatter. Accepts an explicit language so the language
+  // dropdown can trigger a re-translation without needing the local state
+  // to settle first.
+  const runFormat = async (langOverride) => {
     const text = raw.trim()
     if (text.length < 2) {
-      return errorToast({ message: 'Type a prescription first.' })
+      errorToast({ message: 'Type a prescription first.' })
+      return false
     }
+    const lang = langOverride || language
     try {
       const payload = await formatPrescriptionAsync({
-        data: { rawText: text, language },
+        data: { rawText: text, language: lang },
       })
       const shaped = ensureShape({
         ...payload.prescription,
         rawText: text,
-        language: payload.prescription?.language || language,
+        language: payload.prescription?.language || lang,
       })
       emit(shaped)
+      return true
     } catch (err) {
       errorToast({
         message:
           err?.response?.data?.message ||
           'Could not format the prescription. Try again or save as plain text.',
       })
+      return false
     }
   }
+
+  const onFormat = () => runFormat()
 
   const updateMed = (idx, patch) => {
     const next = {
@@ -154,7 +163,17 @@ const PrescriptionEditor = ({ value, onChange, defaultLanguage = 'en' }) => {
             value={language}
             onValueChange={(v) => {
               setLanguage(v)
-              if (structured) emit({ ...structured, language: v })
+              // If we already have a structured prescription, re-run the AI
+              // formatter so the plain-language summary and free-text fields
+              // actually get translated into the new language. Doctor's
+              // manual edits to medication names/doses are preserved by
+              // re-running on the same rawText, but they'll want to scan
+              // the result anyway since the summary will change.
+              if (structured && raw.trim().length >= 2) {
+                runFormat(v)
+              } else if (structured) {
+                emit({ ...structured, language: v })
+              }
             }}
           >
             <SelectTrigger className="h-7 rounded-full text-[11px] bg-card border-border w-[110px]">

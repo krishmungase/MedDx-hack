@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 
 import { useAuth, usePageTitle } from '@/hooks'
 import { pageTitle } from '@/constants'
+import { PageHeader } from '@/components'
 
 import MyAppointments from '../components/my-appointments'
 
@@ -13,14 +14,11 @@ const AppointmentsPage = () => {
 
   return (
     <div className="space-y-8">
-      <div className="fade-up">
-        <h1 className="font-display text-4xl md:text-5xl tracking-tight leading-tight">
-          {t('appointments.greeting', { name: first })}
-        </h1>
-        <p className="mt-3 max-w-2xl text-muted-foreground leading-relaxed">
-          {t('appointments.subtitle')}
-        </p>
-      </div>
+      <PageHeader
+        eyebrow={t('nav.appointments', { defaultValue: 'Appointments' })}
+        title={t('appointments.greeting', { name: first })}
+        description={t('appointments.subtitle')}
+      />
 
       <div className="fade-up fade-up-delay-1">
         <MyAppointments />

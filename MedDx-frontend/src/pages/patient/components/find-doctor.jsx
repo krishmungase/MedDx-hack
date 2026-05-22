@@ -5,6 +5,7 @@ import { Search, Stethoscope, UserSearch, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { DataPagination, StatusBadge } from '@/components'
 
 import { useActiveDoctors } from '@/apis'
 
@@ -20,11 +21,13 @@ const initialsOf = (name = '') =>
     .toUpperCase() || 'DR'
 
 const URGENCY_TONE = {
-  low: 'bg-sage/15 text-sage-foreground border-sage/30',
-  medium: 'bg-amber-500/15 text-amber-700 border-amber-500/30',
-  high: 'bg-orange-600/15 text-orange-700 border-orange-600/30',
-  emergency: 'bg-destructive/15 text-destructive border-destructive/30',
+  low: 'sage',
+  medium: 'amber',
+  high: 'amber',
+  emergency: 'destructive',
 }
+
+const PAGE_SIZE = 8
 
 const FindDoctor = ({
   onBooked,
@@ -36,10 +39,16 @@ const FindDoctor = ({
   const { doctors, isLoading } = useActiveDoctors()
   const [query, setQuery] = useState('')
   const [picked, setPicked] = useState(null)
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     if (specialtyFilter) setQuery(specialtyFilter)
   }, [specialtyFilter])
+
+  // Reset to page 1 whenever the search/filter changes.
+  useEffect(() => {
+    setPage(1)
+  }, [query, specialtyFilter])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -50,6 +59,12 @@ const FindDoctor = ({
         d.specialty?.toLowerCase().includes(q)
     )
   }, [doctors, query])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const pageItems = useMemo(
+    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filtered, page],
+  )
 
   const countLabel = query
     ? t('doctors_page.match_count_q', {
@@ -63,8 +78,8 @@ const FindDoctor = ({
       })
 
   return (
-    <section className="rounded-2xl border border-border/70 bg-card overflow-hidden">
-      <header className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-border/70">
+    <section className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-sm">
+      <header className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-border/60">
         <div className="space-y-1">
           <h2 className="font-display text-xl tracking-tight">
             {t('doctors_page.card_title')}
@@ -72,24 +87,27 @@ const FindDoctor = ({
           <p className="text-xs text-muted-foreground">{countLabel}</p>
         </div>
         <div className="relative w-full sm:w-72">
-          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+            aria-hidden
+          />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('doctors_page.search_placeholder')}
             className="h-10 pl-9 rounded-full bg-background"
+            aria-label={t('doctors_page.search_placeholder')}
           />
         </div>
       </header>
 
       {triage && (
-        <div className="px-6 py-3 border-b border-border/60 bg-clinic/5 flex flex-wrap items-center gap-2 text-xs">
-          <Badge
-            variant="outline"
-            className={`rounded-full text-[10px] uppercase tracking-[0.14em] ${URGENCY_TONE[triage.urgency] || ''}`}
-          >
-            {t('triage.result_urgency', { level: t(`urgency.${triage.urgency}`) })}
-          </Badge>
+        <div className="px-6 py-3 border-b border-border/60 bg-primary/5 flex flex-wrap items-center gap-2 text-xs">
+          <StatusBadge tone={URGENCY_TONE[triage.urgency] || 'muted'}>
+            {t('triage.result_urgency', {
+              level: t(`urgency.${triage.urgency}`),
+            })}
+          </StatusBadge>
           <span className="text-muted-foreground">
             {t('doctors_page.triage_suggestion_prefix')}
           </span>
@@ -108,7 +126,7 @@ const FindDoctor = ({
       )}
 
       {!triage && specialtyFilter && onClearSpecialty && (
-        <div className="px-6 py-2 border-b border-border/60 bg-muted/30 flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="px-6 py-2 border-b border-border/60 bg-muted/40 flex items-center gap-2 text-xs text-muted-foreground">
           <span>{t('doctors_page.filtered_by_specialty')}</span>
           <Badge variant="outline" className="rounded-full">
             {specialtyFilter}
@@ -129,34 +147,46 @@ const FindDoctor = ({
       ) : filtered.length === 0 ? (
         <Empty hasQuery={!!query} />
       ) : (
-        <ul className="divide-y divide-border/60">
-          {filtered.map((d) => (
-            <li
-              key={d._id}
-              className="flex flex-wrap items-center gap-4 px-6 py-4"
-            >
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-clinic/10 text-clinic font-semibold shrink-0">
-                {initialsOf(d.name)}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="font-display text-base tracking-tight">
-                  Dr {d.name}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {d.specialty || t('doctors_page.general_practitioner')}
-                </p>
-              </div>
-              <Button
-                size="sm"
-                className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
-                onClick={() => setPicked(d)}
+        <>
+          <ul className="divide-y divide-border/60">
+            {pageItems.map((d) => (
+              <li
+                key={d._id}
+                className="flex flex-wrap items-center gap-4 px-6 py-4 transition-colors hover:bg-muted/30"
               >
-                <Stethoscope className="h-3.5 w-3.5" />
-                {t('doctors_page.book_slot')}
-              </Button>
-            </li>
-          ))}
-        </ul>
+                <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold shrink-0">
+                  {initialsOf(d.name)}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-display text-base tracking-tight">
+                    Dr {d.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {d.specialty || t('doctors_page.general_practitioner')}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+                  onClick={() => setPicked(d)}
+                >
+                  <Stethoscope className="h-3.5 w-3.5" />
+                  {t('doctors_page.book_slot')}
+                </Button>
+              </li>
+            ))}
+          </ul>
+
+          {totalPages > 1 && (
+            <div className="border-t border-border/60 px-6 py-4">
+              <DataPagination
+                page={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+              />
+            </div>
+          )}
+        </>
       )}
 
       <BookDoctorDialog

@@ -1,31 +1,31 @@
 import { ShieldAlert, Sparkles } from 'lucide-react'
 
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components'
 
 const URGENCY_TONE = {
-  low: 'bg-sage/15 text-sage-foreground border-sage/30',
-  medium: 'bg-amber-500/15 text-amber-700 border-amber-500/30',
-  high: 'bg-orange-600/15 text-orange-700 border-orange-600/30',
-  emergency: 'bg-destructive/15 text-destructive border-destructive/30',
+  low: 'sage',
+  medium: 'amber',
+  high: 'amber',
+  emergency: 'destructive',
 }
 
 const TriageSummaryCard = ({ appointment }) => {
   if (!appointment?.triageSummary && !appointment?.triageUrgency) return null
 
   return (
-    <div className="border-b border-border/60 bg-clinic/5 px-4 py-3 space-y-2">
+    <div className="border-b border-border/60 bg-primary/5 px-4 py-3 space-y-2">
       <div className="flex items-center gap-2">
-        <Sparkles className="h-3.5 w-3.5 text-clinic" />
+        <Sparkles className="h-3.5 w-3.5 text-primary" />
         <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">
           AI triage (not a diagnosis)
         </p>
         {appointment.triageUrgency && (
-          <Badge
-            variant="outline"
-            className={`ml-auto rounded-full text-[10px] uppercase tracking-[0.14em] ${URGENCY_TONE[appointment.triageUrgency] || ''}`}
+          <StatusBadge
+            tone={URGENCY_TONE[appointment.triageUrgency] || 'muted'}
+            className="ml-auto"
           >
             {appointment.triageUrgency}
-          </Badge>
+          </StatusBadge>
         )}
       </div>
       {appointment.triageSummary && (

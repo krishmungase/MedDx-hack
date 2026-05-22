@@ -5,6 +5,7 @@ import { useTriage } from '@/apis'
 import { usePageTitle } from '@/hooks'
 import { pageTitle } from '@/constants'
 import { errorToast } from '@/lib'
+import { PageHeader } from '@/components'
 
 import TriageForm from '../components/triage-form'
 import TriageResult from '../components/triage-result'
@@ -47,14 +48,11 @@ const TriagePage = () => {
 
   return (
     <div className="space-y-8 max-w-3xl">
-      <div className="fade-up">
-        <h1 className="font-display text-4xl md:text-5xl tracking-tight leading-tight">
-          {t('triage.page_title')}
-        </h1>
-        <p className="mt-3 max-w-2xl text-muted-foreground leading-relaxed">
-          {t('triage.page_subtitle')}
-        </p>
-      </div>
+      <PageHeader
+        eyebrow={t('nav.triage', { defaultValue: 'Symptom check' })}
+        title={t('triage.page_title')}
+        description={t('triage.page_subtitle')}
+      />
 
       {!triage ? (
         <div className="fade-up fade-up-delay-1">
