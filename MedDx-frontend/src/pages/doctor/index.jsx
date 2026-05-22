@@ -1,44 +1,62 @@
-import { useDispatch } from 'react-redux'
-import { useNavigate } from 'react-router'
-
-import { logout } from '@/store'
 import { useAuth, usePageTitle } from '@/hooks'
 import { pageTitle } from '@/constants'
-import { Button } from '@/components/ui/button'
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@/components/ui/sidebar'
+
+import DoctorSidebar from './components/doctor-sidebar'
+import AddAvailabilityCard from './components/add-availability-card'
+import SlotsList from './components/slots-list'
 
 const DoctorHomePage = () => {
   usePageTitle({ title: pageTitle.DOCTOR_DASHBOARD })
   const { user } = useAuth()
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
-
-  const onLogout = () => {
-    dispatch(logout())
-    navigate('/auth/sign-in', { replace: true })
-  }
+  const first = user?.name?.split(' ')[0] || ''
 
   return (
-    <div className="bg-grain min-h-[calc(100vh-4rem)] flex items-center justify-center px-6 py-16">
-      <div className="w-full max-w-md text-center fade-up">
-        <p className="text-xs uppercase tracking-[0.2em] text-clinic font-semibold">
-          Doctor
-        </p>
-        <h1 className="mt-3 font-display text-4xl tracking-tight leading-tight">
-          Welcome, Dr. {user?.name?.split(' ')[0] || ''}.
-        </h1>
-        <p className="mt-3 text-muted-foreground leading-relaxed">
-          Your workspace — availability, queue, consultations, and earnings —
-          lands in Phase 3 and beyond.
-        </p>
-        <Button
-          variant="outline"
-          className="mt-8 rounded-full"
-          onClick={onLogout}
-        >
-          Sign out
-        </Button>
-      </div>
-    </div>
+    <SidebarProvider
+      defaultOpen
+      style={{ '--sidebar-width': '17rem', '--sidebar-width-icon': '3.25rem' }}
+    >
+      <DoctorSidebar />
+
+      <SidebarInset className="bg-grain">
+        {/* Inset top bar */}
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/60 bg-background/85 px-4 backdrop-blur-md sm:px-6">
+          <SidebarTrigger className="h-8 w-8 rounded-full" />
+          <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
+            <span className="text-xs uppercase tracking-[0.18em] font-semibold">
+              Doctor · Workspace
+            </span>
+            <span className="opacity-50">/</span>
+            <span className="text-foreground">Availability</span>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+          <div className="fade-up">
+            <h1 className="font-display text-4xl md:text-5xl tracking-tight leading-tight">
+              Welcome back, Dr. {first}.
+            </h1>
+            <p className="mt-3 max-w-2xl text-muted-foreground leading-relaxed">
+              Open availability windows in 30-minute steps. Patients will see
+              only your future, unbooked slots when they search by specialty.
+            </p>
+          </div>
+
+          <div className="fade-up fade-up-delay-1">
+            <AddAvailabilityCard />
+          </div>
+
+          <div className="fade-up fade-up-delay-2">
+            <SlotsList />
+          </div>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
 

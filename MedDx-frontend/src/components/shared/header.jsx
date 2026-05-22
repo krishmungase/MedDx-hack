@@ -16,10 +16,14 @@ const Header = () => {
   const onDashboard =
     isAuth && user?.role && location.pathname.startsWith(`/${user.role}`)
 
-  // The admin console has its own sidebar shell that brands itself and
-  // provides sign-out. Skip the global header there so the sidebar can
-  // own the full viewport.
-  if (location.pathname.startsWith('/admin')) return null
+  // Role dashboards have their own sidebar shells that brand themselves
+  // and provide sign-out. Skip the global header on those routes so the
+  // sidebar can own the full viewport.
+  const onRoleDashboard =
+    location.pathname.startsWith('/admin') ||
+    location.pathname.startsWith('/doctor') ||
+    location.pathname.startsWith('/patient')
+  if (onRoleDashboard) return null
 
   const onLogout = () => {
     dispatch(logout())

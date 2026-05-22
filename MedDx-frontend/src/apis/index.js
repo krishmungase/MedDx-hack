@@ -9,6 +9,10 @@ import useRegisterDoctor from './admin/use-register-doctor'
 import useRemoveDoctor from './admin/use-remove-doctor'
 import useUpdateDoctorStatus from './admin/use-update-doctor-status'
 
+import useMySlots from './slots/use-my-slots'
+import useGenerateSlots from './slots/use-generate-slots'
+import useDeleteSlot from './slots/use-delete-slot'
+
 export {
   useLogin,
   useRegister,
@@ -19,4 +23,7 @@ export {
   useRegisterDoctor,
   useRemoveDoctor,
   useUpdateDoctorStatus,
+  useMySlots,
+  useGenerateSlots,
+  useDeleteSlot,
 }

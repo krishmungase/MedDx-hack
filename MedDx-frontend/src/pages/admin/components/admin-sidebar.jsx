@@ -1,36 +1,15 @@
-import { useDispatch } from 'react-redux'
-import { useNavigate } from 'react-router'
 import {
-  Activity,
-  BarChart3,
   CalendarCheck,
-  LayoutDashboard,
-  LogOut,
   ScrollText,
   Settings,
   ShieldCheck,
   Stethoscope,
 } from 'lucide-react'
 
-import { useAuth } from '@/hooks'
-import { logout } from '@/store'
-import { Mark } from '@/components/shared/logo'
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarSeparator,
-} from '@/components/ui/sidebar'
+import RoleSidebar from '@/components/shared/role-sidebar'
 
 const consoleItems = [
-  { id: 'doctors', label: 'Doctors', icon: Stethoscope, active: 'true' },
+  { id: 'doctors', label: 'Doctors', icon: Stethoscope, active: true },
 ]
 
 const futureItems = [
@@ -50,133 +29,13 @@ const futureItems = [
   { id: 'settings', label: 'Settings', icon: Settings, soon: '—' },
 ]
 
-const AdminSidebar = () => {
-  const { user } = useAuth()
-  const navigate = useNavigate()
-  const dispatch = useDispatch()
-
-  const onLogout = () => {
-    dispatch(logout())
-    navigate('/auth/sign-in', { replace: true })
-  }
-
-  const initials = (user?.name || 'A')
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((s) => s[0])
-    .join('')
-    .toUpperCase()
-
-  return (
-    <Sidebar
-      collapsible="icon"
-      variant="inset"
-      className="border-r border-border/70"
-    >
-      <SidebarHeader className="px-3 pt-4 pb-3">
-        <div className="flex items-center gap-2.5 px-1">
-          <Mark className="h-8 w-8 shrink-0" />
-          <div className="min-w-0 group-data-[collapsible=icon]:hidden">
-            <p className="font-display text-base leading-none tracking-tight">
-              MedDx<span className="text-clinic">.</span>
-            </p>
-            
-          </div>
-        </div>
-      </SidebarHeader>
-
-      <SidebarSeparator />
-
-      <SidebarContent className="px-2 py-3">
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/80">
-            Console
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {consoleItems.map((item) => {
-                const Icon = item.icon
-                const content = (
-                  <SidebarMenuButton
-                    isActive={item.active}
-                    className="h-9 rounded-lg data-[active=true]:bg-clinic/10 data-[active=true]:text-clinic data-[active=true]:font-medium"
-                    asChild={Boolean(item.anchor)}
-                  >
-                    {item.anchor ? (
-                      <a href={item.anchor}>
-                        <Icon className="h-4 w-4" />
-                        <span>{item.label}</span>
-                      </a>
-                    ) : (
-                      <>
-                        <Icon className="h-4 w-4" />
-                        <span>{item.label}</span>
-                      </>
-                    )}
-                  </SidebarMenuButton>
-                )
-                return (
-                  <SidebarMenuItem key={item.id}>{content}</SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup className="mt-2">
-          <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/80">
-            Coming up
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {futureItems.map((item) => {
-                const Icon = item.icon
-                return (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      disabled
-                      className="h-9 rounded-lg opacity-60 cursor-not-allowed"
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span className="flex-1">{item.label}</span>
-                      <span className="ml-auto text-[9px] uppercase tracking-[0.14em] text-muted-foreground/80 group-data-[collapsible=icon]:hidden">
-                        {item.soon}
-                      </span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-
-      <SidebarFooter className="border-t border-border/60 p-3">
-        <div className="flex items-center gap-2.5 rounded-lg bg-card/60 p-2 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0">
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-clinic text-clinic-foreground text-xs font-semibold shrink-0">
-            {initials}
-          </span>
-          <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
-            <p className="truncate text-sm font-medium leading-tight">
-              {user?.name || 'Admin'}
-            </p>
-            <p className="truncate text-[11px] text-muted-foreground">
-              {user?.email}
-            </p>
-          </div>
-          <button
-            onClick={onLogout}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors shrink-0"
-            aria-label="Sign out"
-            title="Sign out"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-        </div>
-      </SidebarFooter>
-    </Sidebar>
-  )
-}
+const AdminSidebar = () => (
+  <RoleSidebar
+    eyebrow="Admin Console"
+    versionLabel="v0.1 · Phase 2"
+    consoleItems={consoleItems}
+    futureItems={futureItems}
+  />
+)
 
 export default AdminSidebar
