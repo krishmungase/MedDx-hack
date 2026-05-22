@@ -10,6 +10,7 @@ import TokenService from './shared/token.services.js'
 import UploadService from './shared/upload.services.js'
 import MailgenService from './shared/mailgon.services.js'
 import NotificationService from './shared/notification.services.js'
+import IcsService from './shared/ics.services.js'
 
 export {
   UserService,
@@ -21,5 +22,6 @@ export {
   HashService,
   NotificationService,
   MailgenService,
+  IcsService,
   UploadService,
 }

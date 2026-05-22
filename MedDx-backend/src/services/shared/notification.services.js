@@ -19,7 +19,7 @@ class NotificationService {
     }
   }
 
-  async send({ to, subject, text, html, from }) {
+  async send({ to, subject, text, html, from, icalEvent, attachments }) {
     if (!this.isConfigured) {
       logger.warn({
         msg: 'Email not configured (missing GMAIL_USER / GMAIL_APP_PASSWORD); skipping send',
@@ -36,6 +36,8 @@ class NotificationService {
         text,
         html,
       }
+      if (icalEvent) mailOptions.icalEvent = icalEvent
+      if (attachments) mailOptions.attachments = attachments
 
       await this.transporter.sendMail(mailOptions)
       return { sent: true }

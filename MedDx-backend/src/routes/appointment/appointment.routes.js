@@ -10,7 +10,10 @@ import { asyncHandler } from '../../utils/index.js'
 import { UserRoles } from '../../constants/index.js'
 import {
   AppointmentService,
+  IcsService,
+  MailgenService,
   MedicalRecordService,
+  NotificationService,
   SlotService,
 } from '../../services/index.js'
 import { AppointmentController } from '../../controllers/index.js'
@@ -24,16 +27,27 @@ import {
   idParamValidator,
   submitConsultationValidator,
 } from '../../validators/appointment/appointment.validators.js'
+import { ENV } from '../../config/index.js'
 
 const appointmentRoutes = express.Router()
 
 const apptService = new AppointmentService(AppointmentModel)
 const slotService = new SlotService(SlotModel)
 const mrService = new MedicalRecordService(MedicalRecordModel)
+const notificationService = new NotificationService()
+const mailgenService = new MailgenService()
+const icsService = new IcsService({
+  appName: ENV.APP_NAME || 'MedDx',
+  organizerEmail: ENV.GMAIL_USER,
+})
+
 const apptController = new AppointmentController(
   apptService,
   slotService,
   mrService,
+  notificationService,
+  mailgenService,
+  icsService,
   logger
 )
 

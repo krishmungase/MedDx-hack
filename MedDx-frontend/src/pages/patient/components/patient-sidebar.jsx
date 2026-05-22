@@ -2,23 +2,32 @@ import {
   CalendarClock,
   FileText,
   Languages,
-  LayoutDashboard,
-  MessageSquareText,
   Settings,
   Sparkles,
+  Stethoscope,
 } from 'lucide-react'
 
 import RoleSidebar from '@/components/shared/role-sidebar'
 
 const consoleItems = [
-  { id: 'home', label: 'Home', icon: LayoutDashboard, active: true },
+  {
+    id: 'appointments',
+    label: 'My appointments',
+    icon: CalendarClock,
+    to: '/patient',
+    end: true,
+  },
+  {
+    id: 'doctors',
+    label: 'Find a doctor',
+    icon: Stethoscope,
+    to: '/patient/doctors',
+  },
 ]
 
 const futureItems = [
   { id: 'triage', label: 'Symptom check', icon: Sparkles, soon: 'Phase 5' },
-  { id: 'book', label: 'Book a doctor', icon: CalendarClock, soon: 'Phase 4' },
-  { id: 'records', label: 'My records', icon: FileText, soon: 'Phase 4' },
-  { id: 'messages', label: 'Consult notes', icon: MessageSquareText, soon: 'Phase 4' },
+  { id: 'records', label: 'My records', icon: FileText, soon: 'Phase 7' },
   { id: 'language', label: 'Language', icon: Languages, soon: 'Phase 8' },
   { id: 'settings', label: 'Settings', icon: Settings, soon: '—' },
 ]
@@ -26,7 +35,6 @@ const futureItems = [
 const PatientSidebar = () => (
   <RoleSidebar
     eyebrow="Patient"
-    versionLabel="v0.1 · Phase 3"
     consoleItems={consoleItems}
     futureItems={futureItems}
   />

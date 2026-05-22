@@ -1,6 +1,6 @@
 import { useDispatch } from 'react-redux'
-import { useNavigate } from 'react-router'
-import { Activity, LogOut } from 'lucide-react'
+import { NavLink, useLocation, useNavigate } from 'react-router'
+import { LogOut } from 'lucide-react'
 
 import { useAuth } from '@/hooks'
 import { logout } from '@/store'
@@ -22,17 +22,16 @@ import {
 /**
  * Generic role-aware dashboard sidebar shell.
  *
- * Props:
- *   eyebrow         — short label under the wordmark (e.g. "Admin Console")
- *   versionLabel    — small status line in the footer (e.g. "v0.1 · Phase 3")
- *   consoleLabel    — heading for the active group (default "Console")
- *   consoleItems    — [{ id, label, icon, active?, anchor? }]
- *   futureLabel     — heading for the disabled group (default "Coming up")
- *   futureItems     — [{ id, label, icon, soon }]
+ * consoleItems / futureItems entries:
+ *   { id, label, icon, to?, end?, soon? }
+ *
+ *   - `to`     navigates via NavLink and auto-sets isActive (preferred)
+ *   - `end`    pass true on the index/home item so it doesn't stay "active"
+ *              for every nested route
+ *   - `soon`   marks the item as disabled (renders the phase chip on the right)
  */
 const RoleSidebar = ({
   eyebrow,
-  versionLabel = 'v0.1',
   consoleLabel = 'Console',
   consoleItems = [],
   futureLabel = 'Coming up',
@@ -41,6 +40,7 @@ const RoleSidebar = ({
   const { user } = useAuth()
   const navigate = useNavigate()
   const dispatch = useDispatch()
+  const location = useLocation()
 
   const onLogout = () => {
     dispatch(logout())
@@ -89,24 +89,39 @@ const RoleSidebar = ({
               <SidebarMenu>
                 {consoleItems.map((item) => {
                   const Icon = item.icon
+
+                  // NavLink path — preferred
+                  if (item.to) {
+                    return (
+                      <SidebarMenuItem key={item.id}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={
+                            item.end
+                              ? location.pathname === item.to
+                              : location.pathname === item.to ||
+                                location.pathname.startsWith(item.to + '/')
+                          }
+                          className="h-9 rounded-lg data-[active=true]:bg-clinic/10 data-[active=true]:text-clinic data-[active=true]:font-medium"
+                        >
+                          <NavLink to={item.to} end={item.end}>
+                            {Icon && <Icon className="h-4 w-4" />}
+                            <span>{item.label}</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    )
+                  }
+
+                  // Static (non-nav) — kept for forwards compat
                   return (
                     <SidebarMenuItem key={item.id}>
                       <SidebarMenuButton
                         isActive={Boolean(item.active)}
                         className="h-9 rounded-lg data-[active=true]:bg-clinic/10 data-[active=true]:text-clinic data-[active=true]:font-medium"
-                        asChild={Boolean(item.anchor)}
                       >
-                        {item.anchor ? (
-                          <a href={item.anchor}>
-                            {Icon && <Icon className="h-4 w-4" />}
-                            <span>{item.label}</span>
-                          </a>
-                        ) : (
-                          <>
-                            {Icon && <Icon className="h-4 w-4" />}
-                            <span>{item.label}</span>
-                          </>
-                        )}
+                        {Icon && <Icon className="h-4 w-4" />}
+                        <span>{item.label}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   )

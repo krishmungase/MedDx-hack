@@ -1,5 +1,6 @@
 import {
   CalendarCheck,
+  LayoutDashboard,
   ScrollText,
   Settings,
   ShieldCheck,
@@ -9,7 +10,19 @@ import {
 import RoleSidebar from '@/components/shared/role-sidebar'
 
 const consoleItems = [
-  { id: 'doctors', label: 'Doctors', icon: Stethoscope, active: true },
+  {
+    id: 'overview',
+    label: 'Overview',
+    icon: LayoutDashboard,
+    to: '/admin',
+    end: true,
+  },
+  {
+    id: 'doctors',
+    label: 'Doctors',
+    icon: Stethoscope,
+    to: '/admin/doctors',
+  },
 ]
 
 const futureItems = [
@@ -17,7 +30,7 @@ const futureItems = [
     id: 'appointments',
     label: 'Appointments',
     icon: CalendarCheck,
-    soon: 'Phase 4',
+    soon: 'Phase 5',
   },
   { id: 'audit', label: 'Audit log', icon: ScrollText, soon: 'Always-on' },
   {
@@ -32,7 +45,6 @@ const futureItems = [
 const AdminSidebar = () => (
   <RoleSidebar
     eyebrow="Admin Console"
-    versionLabel="v0.1 · Phase 2"
     consoleItems={consoleItems}
     futureItems={futureItems}
   />

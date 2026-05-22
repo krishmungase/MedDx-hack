@@ -2,13 +2,19 @@ import { BrowserRouter, Routes, Route } from 'react-router'
 
 import { ProtectedRoute } from './components/auth'
 import {
-  AdminHomePage,
+  AdminDoctorsPage,
+  AdminLayout,
+  AdminOverviewPage,
   AppLayout,
   AuthLayout,
-  DoctorHomePage,
+  DoctorAvailabilityPage,
+  DoctorLayout,
+  DoctorQueuePage,
   HomePage,
   NotFoundPage,
-  PatientHomePage,
+  PatientAppointmentsPage,
+  PatientDoctorsPage,
+  PatientLayout,
   SetPasswordPage,
   SignInPage,
   SignUpPage,
@@ -29,15 +35,24 @@ const AppRoutes = () => {
           <Route path="set-password" element={<SetPasswordPage />} />
 
           <Route element={<ProtectedRoute role="patient" />}>
-            <Route path="patient" element={<PatientHomePage />} />
+            <Route path="patient" element={<PatientLayout />}>
+              <Route index element={<PatientAppointmentsPage />} />
+              <Route path="doctors" element={<PatientDoctorsPage />} />
+            </Route>
           </Route>
 
           <Route element={<ProtectedRoute role="doctor" />}>
-            <Route path="doctor" element={<DoctorHomePage />} />
+            <Route path="doctor" element={<DoctorLayout />}>
+              <Route index element={<DoctorQueuePage />} />
+              <Route path="availability" element={<DoctorAvailabilityPage />} />
+            </Route>
           </Route>
 
           <Route element={<ProtectedRoute role="admin" />}>
-            <Route path="admin" element={<AdminHomePage />} />
+            <Route path="admin" element={<AdminLayout />}>
+              <Route index element={<AdminOverviewPage />} />
+              <Route path="doctors" element={<AdminDoctorsPage />} />
+            </Route>
           </Route>
 
           {/* Authed (any role) — server checks ownership */}

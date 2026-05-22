@@ -3,9 +3,17 @@ import HomePage from './home'
 import SignInPage from './auth/sign-in'
 import SignUpPage from './auth/sign-up'
 
-import PatientHomePage from './patient'
-import DoctorHomePage from './doctor'
-import AdminHomePage from './admin'
+import PatientLayout from './patient'
+import PatientAppointmentsPage from './patient/pages/appointments'
+import PatientDoctorsPage from './patient/pages/doctors'
+
+import DoctorLayout from './doctor'
+import DoctorQueuePage from './doctor/pages/queue'
+import DoctorAvailabilityPage from './doctor/pages/availability'
+
+import AdminLayout from './admin'
+import AdminOverviewPage from './admin/pages/overview'
+import AdminDoctorsPage from './admin/pages/doctors'
 
 import VideoConsultPage from './video'
 
@@ -20,7 +28,17 @@ export { HomePage }
 
 export { SignInPage, SignUpPage }
 
-export { PatientHomePage, DoctorHomePage, AdminHomePage }
+export {
+  PatientLayout,
+  PatientAppointmentsPage,
+  PatientDoctorsPage,
+  DoctorLayout,
+  DoctorQueuePage,
+  DoctorAvailabilityPage,
+  AdminLayout,
+  AdminOverviewPage,
+  AdminDoctorsPage,
+}
 
 export { VideoConsultPage }
 

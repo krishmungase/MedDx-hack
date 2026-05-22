@@ -1,3 +1,4 @@
+import { ENV } from '../../config/index.js'
 import { ApiError, ApiResponse } from '../../utils/index.js'
 import {
   AppointmentStatus,
@@ -8,10 +9,21 @@ import {
 } from '../../constants/index.js'
 
 class AppointmentController {
-  constructor(appointmentService, slotService, medicalRecordService, logger) {
+  constructor(
+    appointmentService,
+    slotService,
+    medicalRecordService,
+    notificationService,
+    mailgenService,
+    icsService,
+    logger
+  ) {
     this.apptSvc = appointmentService
     this.slotSvc = slotService
     this.mrSvc = medicalRecordService
+    this.notificationSvc = notificationService
+    this.mailgenSvc = mailgenService
+    this.icsSvc = icsService
     this.log = logger
   }
 
@@ -64,13 +76,20 @@ class AppointmentController {
     })
 
     const populated = await this.apptSvc.findByIdPopulated(appointment._id)
+
+    // Best-effort: fire the calendar invites + emails. Never fail booking
+    // because email/Gmail had a bad day.
+    this.sendBookingInvites(populated).catch((err) =>
+      this.log.warn({ msg: 'Booking invite send failed', error: err?.message })
+    )
+
     return res
       .status(201)
       .json(
         new ApiResponse(
           201,
           { appointment: populated },
-          'Appointment confirmed.'
+          'Appointment confirmed. Calendar invite is on its way.'
         )
       )
   }
@@ -172,6 +191,95 @@ class AppointmentController {
           'Consultation saved and added to the patient’s record.'
         )
       )
+  }
+
+  // ── Calendar invite + email ─────────────────────────────────────────────
+  async sendBookingInvites(populated) {
+    if (!this.notificationSvc || !this.icsSvc || !this.mailgenSvc) return
+
+    const slotStart = new Date(populated.datetime)
+    const durationMins = populated.slotId?.durationMins || 30
+    const slotEnd = new Date(slotStart.getTime() + durationMins * 60_000)
+    const videoUrl = `${ENV.CLIENT_URL || ''}/video/${populated._id}`
+    const appName = ENV.APP_NAME || 'MedDx'
+
+    const doctor = populated.doctorId
+    const patient = populated.patientId
+    const doctorLabel = doctor?.name ? `Dr ${doctor.name}` : 'your doctor'
+    const patientLabel = patient?.name || 'your patient'
+
+    const formattedTime = slotStart.toLocaleString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    })
+
+    const recipients = [
+      {
+        role: 'patient',
+        user: patient,
+        summary: `${appName} consult with ${doctorLabel}`,
+        intro: `Your ${appName} video consult with ${doctorLabel}${doctor?.specialty ? ` (${doctor.specialty})` : ''} is confirmed for ${formattedTime}.`,
+      },
+      {
+        role: 'doctor',
+        user: doctor,
+        summary: `${appName} consult — ${patientLabel}`,
+        intro: `${patientLabel} just booked a ${appName} video consult with you for ${formattedTime}.`,
+      },
+    ]
+
+    for (const r of recipients) {
+      if (!r.user?.email) continue
+
+      const ics = this.icsSvc.buildInvite({
+        uid: `${populated._id}-${r.role}`,
+        start: slotStart,
+        end: slotEnd,
+        summary: r.summary,
+        description: `${r.summary}\n\nJoin the room: ${videoUrl}\n\nYour calendar will remind you 10 minutes and 5 minutes before the call.`,
+        location: videoUrl,
+        attendee: { name: r.user.name, email: r.user.email },
+      })
+
+      const { emailHTML, emailText } = this.mailgenSvc.generateEmail({
+        name: r.user.name,
+        intro: r.intro,
+        actionInstructions:
+          'Tap below to open the video room. The attached invite drops the meeting into your calendar with reminders 10 minutes and 5 minutes before.',
+        actionText: 'Open the video room',
+        actionLink: videoUrl,
+        outro: `If you need to reschedule, sign in to ${appName} and let us know.`,
+      })
+
+      try {
+        await this.notificationSvc.send({
+          to: r.user.email,
+          subject: r.summary,
+          text: emailText,
+          html: emailHTML,
+          icalEvent: {
+            method: 'REQUEST',
+            filename: 'invite.ics',
+            content: ics,
+          },
+        })
+        this.log.info({
+          msg: 'Booking invite sent',
+          data: { to: r.user.email, role: r.role, appointmentId: populated._id },
+        })
+      } catch (err) {
+        this.log.warn({
+          msg: 'Booking invite send failed',
+          error: err?.message,
+          to: r.user.email,
+          role: r.role,
+        })
+      }
+    }
   }
 
   // Helpers ────────────────────────────────────────────────────────────────

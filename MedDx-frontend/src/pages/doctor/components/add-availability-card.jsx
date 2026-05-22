@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
-import { CalendarDays, Clock, Plus } from 'lucide-react'
-import { format } from 'date-fns'
+import { useEffect, useMemo, useState } from 'react'
+import { CalendarDays, Plus } from 'lucide-react'
+import { format, isSameDay } from 'date-fns'
 
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
@@ -10,70 +10,38 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import TimePicker from '@/components/shared/time-picker'
 
 import { errorToast } from '@/lib'
 import { useGenerateSlots } from '@/apis'
 
-// Build a Date in the user's local timezone from a YYYY-MM-DD date and HH:mm.
+const SLOT_MINUTES = 30
+const MAX_MINS = 24 * 60 - 1 // 23:59 — latest end-of-day we let doctors pick
+
+const hhmmToMins = (s) => {
+  const [h, m] = (s || '00:00').split(':').map(Number)
+  return (h || 0) * 60 + (m || 0)
+}
+const pad = (n) => String(n).padStart(2, '0')
+
+// Combine a date + "HH:mm" into a local Date.
 const combine = (date, hhmm) => {
-  const [h, m] = hhmm.split(':').map(Number)
+  const mins = hhmmToMins(hhmm)
   const d = new Date(date)
-  d.setHours(h || 0, m || 0, 0, 0)
-  return d
-}
-
-// Generate 30-min increments across the full day, formatted for display.
-const buildTimeOptions = () => {
-  const opts = []
-  for (let h = 0; h < 24; h++) {
-    for (const m of [0, 30]) {
-      const value = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-      const period = h >= 12 ? 'PM' : 'AM'
-      const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h
-      const label = `${h12}:${String(m).padStart(2, '0')} ${period}`
-      opts.push({ value, label })
-    }
-  }
-  return opts
-}
-
-const TimeSelect = ({ value, onChange, ariaLabel }) => {
-  const options = useMemo(buildTimeOptions, [])
-  return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger
-        aria-label={ariaLabel}
-        className="h-11 w-full rounded-xl bg-card border-border data-[size=default]:h-11 [&>span]:flex [&>span]:items-center [&>span]:gap-2"
-      >
-        <SelectValue>
-          <Clock className="h-4 w-4 text-muted-foreground" />
-          <span className="tabular-nums">
-            {options.find((o) => o.value === value)?.label || 'Pick a time'}
-          </span>
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent className="max-h-64">
-        {options.map((o) => (
-          <SelectItem key={o.value} value={o.value} className="tabular-nums">
-            {o.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  )
+  d.setHours(0, 0, 0, 0)
+  return new Date(d.getTime() + mins * 60 * 1000)
 }
 
 const AddAvailabilityCard = () => {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const tomorrow = new Date(today.getTime() + 86_400_000)
+  const today = useMemo(() => {
+    const t = new Date()
+    t.setHours(0, 0, 0, 0)
+    return t
+  }, [])
+  const tomorrow = useMemo(
+    () => new Date(today.getTime() + 86_400_000),
+    [today]
+  )
 
   const [date, setDate] = useState(tomorrow)
   const [start, setStart] = useState('10:00')
@@ -82,21 +50,56 @@ const AddAvailabilityCard = () => {
 
   const { isLoading, generateSlots } = useGenerateSlots()
 
-  // Preview count (does NOT include conflict check)
-  const preview = (() => {
-    if (!date || !start || !end) return null
-    const s = combine(date, start)
-    const e = combine(date, end)
-    if (!(e > s)) return null
-    return Math.floor((e - s) / (30 * 60 * 1000))
-  })()
+  // Earliest valid Start on the selected date. For "today" we clamp to a few
+  // minutes from now so doctors can't open slots that are already happening
+  // (backend enforces this independently too).
+  const isTodaySelected = date ? isSameDay(date, new Date()) : false
+  const minStartMins = useMemo(() => {
+    if (!isTodaySelected) return 0
+    const now = new Date()
+    return Math.min(MAX_MINS, now.getHours() * 60 + now.getMinutes() + 5)
+  }, [isTodaySelected, date])
+
+  // End must be strictly after Start, and the range must fit at least one
+  // 30-min slot.
+  const startMins = hhmmToMins(start)
+  const minEndMins = Math.min(MAX_MINS, startMins + SLOT_MINUTES)
+
+  // Snap Start forward when the selected date pushes minStartMins past it.
+  useEffect(() => {
+    if (startMins < minStartMins) {
+      const newStartMins = Math.min(MAX_MINS - SLOT_MINUTES, minStartMins)
+      setStart(`${pad(Math.floor(newStartMins / 60))}:${pad(newStartMins % 60)}`)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [minStartMins])
+
+  // Bump End forward when Start moves past it.
+  useEffect(() => {
+    const endMins = hhmmToMins(end)
+    if (endMins < minEndMins) {
+      const newEndMins = Math.min(MAX_MINS, startMins + 2 * 60)
+      setEnd(`${pad(Math.floor(newEndMins / 60))}:${pad(newEndMins % 60)}`)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [start])
+
+  // Preview count of 30-min slots — partial trailing time is dropped.
+  const endMins = hhmmToMins(end)
+  const rangeMins = endMins - startMins
+  const preview = rangeMins >= SLOT_MINUTES ? Math.floor(rangeMins / SLOT_MINUTES) : 0
+  const trailingMins = rangeMins > 0 ? rangeMins - preview * SLOT_MINUTES : 0
+
+  const noTimeLeftToday = isTodaySelected && minStartMins >= MAX_MINS - SLOT_MINUTES
 
   const onSubmit = (e) => {
     e.preventDefault()
     if (!date) return errorToast({ message: 'Pick a date.' })
+    if (rangeMins < SLOT_MINUTES) {
+      return errorToast({ message: 'Window must be at least 30 minutes.' })
+    }
     const s = combine(date, start)
     const en = combine(date, end)
-    if (!(en > s)) return errorToast({ message: 'End must be after start.' })
     if (s.getTime() < Date.now()) {
       return errorToast({ message: 'Start time must be in the future.' })
     }
@@ -123,8 +126,8 @@ const AddAvailabilityCard = () => {
         Open a window for patients to book.
       </h2>
       <p className="mt-1.5 text-sm text-muted-foreground">
-        Pick a date and a time range — we'll split it into clean 30-minute
-        slots.
+        Pick a date and a time range with minute precision — we'll split it
+        into 30-minute slots starting from your chosen time.
       </p>
 
       <div className="mt-6 grid sm:grid-cols-[1.2fr_1fr_1fr] gap-3">
@@ -148,6 +151,7 @@ const AddAvailabilityCard = () => {
                 mode="single"
                 selected={date}
                 onSelect={(d) => {
+                  if (!d) return
                   setDate(d)
                   setOpen(false)
                 }}
@@ -162,10 +166,13 @@ const AddAvailabilityCard = () => {
           <label className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold">
             Start
           </label>
-          <TimeSelect
+          <TimePicker
             ariaLabel="Start time"
             value={start}
             onChange={setStart}
+            minMins={minStartMins}
+            maxMins={MAX_MINS - SLOT_MINUTES}
+            disabled={noTimeLeftToday}
           />
         </div>
 
@@ -173,17 +180,35 @@ const AddAvailabilityCard = () => {
           <label className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold">
             End
           </label>
-          <TimeSelect ariaLabel="End time" value={end} onChange={setEnd} />
+          <TimePicker
+            ariaLabel="End time"
+            value={end}
+            onChange={setEnd}
+            minMins={minEndMins}
+            maxMins={MAX_MINS}
+            disabled={noTimeLeftToday}
+          />
         </div>
       </div>
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs text-muted-foreground">
-          {preview != null && preview > 0 ? (
+          {noTimeLeftToday ? (
+            <>No time left today — pick a future date.</>
+          ) : preview > 0 ? (
             <>
               This will create{' '}
               <span className="font-semibold text-foreground">{preview}</span>{' '}
-              slot{preview === 1 ? '' : 's'} of 30 minutes each.
+              slot{preview === 1 ? '' : 's'} of 30 minutes each
+              {trailingMins > 0 ? (
+                <>
+                  {' '}
+                  <span className="text-muted-foreground">
+                    (last {trailingMins} min not used)
+                  </span>
+                </>
+              ) : null}
+              .
             </>
           ) : (
             <>Pick a valid range to preview slots.</>
@@ -191,7 +216,7 @@ const AddAvailabilityCard = () => {
         </p>
         <Button
           type="submit"
-          disabled={isLoading || !preview}
+          disabled={isLoading || preview === 0 || noTimeLeftToday}
           className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-6"
         >
           {isLoading ? <Spinner /> : <Plus className="h-4 w-4" />}

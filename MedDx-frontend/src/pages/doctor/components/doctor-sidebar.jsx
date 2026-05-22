@@ -11,17 +11,17 @@ import RoleSidebar from '@/components/shared/role-sidebar'
 
 const consoleItems = [
   {
+    id: 'queue',
+    label: "Today's queue",
+    icon: ClipboardList,
+    to: '/doctor',
+    end: true,
+  },
+  {
     id: 'availability',
     label: 'Availability',
     icon: CalendarRange,
-    anchor: '#availability',
-    active: true,
-  },
-  {
-    id: 'queue',
-    label: 'Patient queue',
-    icon: ClipboardList,
-    anchor: '#queue',
+    to: '/doctor/availability',
   },
 ]
 
@@ -35,7 +35,6 @@ const futureItems = [
 const DoctorSidebar = () => (
   <RoleSidebar
     eyebrow="Doctor Workspace"
-    versionLabel="v0.1 · Phase 4"
     consoleItems={consoleItems}
     futureItems={futureItems}
   />
