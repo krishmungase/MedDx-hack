@@ -213,6 +213,72 @@
   }
 }
 
+/*
+ * Sidebar layout — bulletproof version.
+ *
+ * Shadcn's flex-gap mechanism (gap <div> with w-(--sidebar-width)) doesn't
+ * reliably reserve flex-basis on the wrapper in our setup. Instead of
+ * fighting flex, we treat the sidebar as `position: fixed` on the
+ * left edge and give the SidebarInset an explicit margin-left so the
+ * content always sits beside it. No flex magic, works on every page.
+ */
+@media (min-width: 768px) {
+  /* Pin the sidebar wrapper to the viewport's left edge. */
+  [data-slot='sidebar-wrapper'] {
+    position: relative;
+  }
+  [data-slot='sidebar'] {
+    position: fixed;
+    inset-block: 0;
+    left: 0;
+    width: var(--sidebar-width);
+    z-index: 40;
+    transition: width 200ms ease;
+  }
+  [data-slot='sidebar'][data-state='collapsed'][data-collapsible='icon'] {
+    width: var(--sidebar-width-icon);
+  }
+  [data-slot='sidebar'][data-state='collapsed'][data-collapsible='offcanvas'] {
+    width: 0;
+  }
+  [data-slot='sidebar'][data-state='collapsed'][data-collapsible='icon'][data-variant='inset'],
+  [data-slot='sidebar'][data-state='collapsed'][data-collapsible='icon'][data-variant='floating'] {
+    width: calc(var(--sidebar-width-icon) + 1rem);
+  }
+
+  /* Push the inset to the right of the sidebar via margin (not flex). */
+  [data-slot='sidebar-inset'] {
+    margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+    transition: margin-left 200ms ease, width 200ms ease;
+  }
+  [data-slot='sidebar-wrapper']:has(
+      [data-slot='sidebar'][data-state='collapsed'][data-collapsible='icon']
+    )
+    [data-slot='sidebar-inset'] {
+    margin-left: var(--sidebar-width-icon);
+    width: calc(100% - var(--sidebar-width-icon));
+  }
+  [data-slot='sidebar-wrapper']:has(
+      [data-slot='sidebar'][data-state='collapsed'][data-collapsible='offcanvas']
+    )
+    [data-slot='sidebar-inset'] {
+    margin-left: 0;
+    width: 100%;
+  }
+  [data-slot='sidebar-wrapper']:has(
+      [data-slot='sidebar'][data-state='collapsed'][data-collapsible='icon'][data-variant='inset']
+    )
+    [data-slot='sidebar-inset'],
+  [data-slot='sidebar-wrapper']:has(
+      [data-slot='sidebar'][data-state='collapsed'][data-collapsible='icon'][data-variant='floating']
+    )
+    [data-slot='sidebar-inset'] {
+    margin-left: calc(var(--sidebar-width-icon) + 1rem);
+    width: calc(100% - var(--sidebar-width-icon) - 1rem);
+  }
+}
+
 /* Soft mesh tint for surfaces that need a hint of depth (role dashboards). */
 .bg-grain {
   background-image:
@@ -246,6 +312,53 @@
       transparent 70%
     ),
     var(--clinic);
+}
+
+/* Hero mesh — rich layered gradient for marquee surfaces (next-up cards,
+   admin dashboards). Built from the primary + sage tokens so it stays in
+   theme. */
+.bg-hero-mesh {
+  background:
+    radial-gradient(
+      circle at 0% 0%,
+      oklch(0.58 0.17 258 / 0.95) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 100% 0%,
+      oklch(0.55 0.2 285 / 0.75) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 50% 100%,
+      oklch(0.65 0.13 200 / 0.55) 0%,
+      transparent 60%
+    ),
+    linear-gradient(135deg, oklch(0.48 0.18 262) 0%, oklch(0.42 0.16 260) 100%);
+}
+
+.bg-soft-mesh {
+  background:
+    radial-gradient(
+      circle at 8% 12%,
+      oklch(0.58 0.17 258 / 0.08) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 92% 88%,
+      oklch(0.72 0.085 165 / 0.1) 0%,
+      transparent 45%
+    ),
+    var(--card);
+}
+
+/* Dotted grid background — subtle texture for hero surfaces */
+.bg-dot-grid {
+  background-image: radial-gradient(
+    oklch(1 0 0 / 0.07) 1px,
+    transparent 1px
+  );
+  background-size: 18px 18px;
 }
 
 .pulse-line {

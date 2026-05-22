@@ -1,6 +1,16 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Mic, MicOff, Send, ShieldAlert, Sparkles } from 'lucide-react'
+import {
+  Activity,
+  Languages,
+  Mic,
+  MicOff,
+  Send,
+  ShieldAlert,
+  Sparkles,
+  Thermometer,
+  UserRound,
+} from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -33,6 +43,20 @@ const DURATION_KEYS = [
   { value: '>1 month', tKey: 'duration.gt_1m' },
 ]
 
+// Severity tone — gradient from sage (mild) → amber → destructive (severe).
+const severityTone = (s) => {
+  if (s <= 3) return { label: 'Mild', color: 'sage' }
+  if (s <= 6) return { label: 'Moderate', color: 'amber' }
+  if (s <= 8) return { label: 'Severe', color: 'amber' }
+  return { label: 'Critical', color: 'destructive' }
+}
+
+const TONE_PILL = {
+  sage: 'bg-sage/15 text-sage-foreground border-sage/30',
+  amber: 'bg-amber-warm/15 text-amber-warm border-amber-warm/30',
+  destructive: 'bg-destructive/10 text-destructive border-destructive/25',
+}
+
 const TriageForm = ({ onSubmit, isLoading }) => {
   const { t, i18n } = useTranslation()
 
@@ -43,16 +67,11 @@ const TriageForm = ({ onSubmit, isLoading }) => {
   const [sex, setSex] = useState('prefer_not_to_say')
   const [extra, setExtra] = useState('')
 
-  // Speech-to-text for the symptoms field. Uses the user's current i18n
-  // language so a Hindi speaker gets Hindi transcription, etc. When the
-  // browser doesn't support Web Speech, the mic button hides itself.
   const speech = useSpeechRecognition({
     language: i18n.language,
     onResult: (chunk, { final }) => {
       if (final) {
-        setSymptoms((prev) =>
-          prev ? `${prev.trim()} ${chunk}` : chunk
-        )
+        setSymptoms((prev) => (prev ? `${prev.trim()} ${chunk}` : chunk))
       }
     },
   })
@@ -77,44 +96,38 @@ const TriageForm = ({ onSubmit, isLoading }) => {
     })
   }
 
-  return (
-    <form
-      onSubmit={submit}
-      className="rounded-2xl border border-border/70 bg-card p-6 md:p-7 space-y-6"
-    >
-      <header>
-        <div className="flex items-center gap-2 text-clinic">
-          <Sparkles className="h-4 w-4" />
-          <span className="text-xs uppercase tracking-[0.16em] font-semibold">
-            {t('triage.card_eyebrow')}
-          </span>
-        </div>
-        <h2 className="mt-3 font-display text-2xl tracking-tight">
-          {t('triage.card_title')}
-        </h2>
-        <p className="mt-1.5 text-sm text-muted-foreground">
-          {t('triage.card_subtitle')}
-        </p>
-      </header>
+  const tone = severityTone(severity)
 
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <Label
-            htmlFor="symptoms"
-            className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold"
-          >
-            {t('triage.symptoms_label')}
-          </Label>
+  return (
+    <form onSubmit={submit} className="space-y-5">
+      {/* ── Section 1: Describe ───────────────────────────────────────────── */}
+      <Section
+        step={1}
+        icon={Activity}
+        title={t('triage.symptoms_label')}
+        description={t('triage.card_subtitle')}
+      >
+        <div className="relative">
+          <Textarea
+            id="symptoms"
+            rows={5}
+            required
+            value={symptoms}
+            onChange={(e) => setSymptoms(e.target.value)}
+            placeholder={t('triage.symptoms_placeholder')}
+            className={`rounded-xl resize-none text-base bg-background pr-32 ${
+              speech.listening ? 'ring-2 ring-primary/40' : ''
+            }`}
+          />
           {speech.isSupported && (
             <Button
               type="button"
-              variant="ghost"
               size="sm"
               onClick={speech.toggle}
-              className={`rounded-full h-7 px-3 text-[11px] ${
+              className={`absolute right-3 top-3 h-8 rounded-full px-3 text-xs font-semibold shadow-sm ${
                 speech.listening
-                  ? 'bg-destructive/10 text-destructive hover:bg-destructive/20'
-                  : 'text-clinic hover:bg-clinic/10'
+                  ? 'bg-destructive text-white hover:bg-destructive/90'
+                  : 'bg-primary text-primary-foreground hover:bg-primary/90'
               }`}
               aria-pressed={speech.listening}
               title={
@@ -125,165 +138,217 @@ const TriageForm = ({ onSubmit, isLoading }) => {
             >
               {speech.listening ? (
                 <>
-                  <MicOff className="h-3 w-3" />
-                  {t('triage.mic_listening')}
+                  <MicOff className="h-3.5 w-3.5" />
+                  Stop
                 </>
               ) : (
                 <>
-                  <Mic className="h-3 w-3" />
-                  {t('triage.mic_start')}
+                  <Mic className="h-3.5 w-3.5" />
+                  Speak
                 </>
               )}
             </Button>
           )}
         </div>
-        <Textarea
-          id="symptoms"
-          rows={5}
-          required
-          value={symptoms}
-          onChange={(e) => setSymptoms(e.target.value)}
-          placeholder={t('triage.symptoms_placeholder')}
-          className={`rounded-xl resize-none ${
-            speech.listening ? 'ring-2 ring-clinic/40' : ''
-          }`}
-        />
-        {!speech.isSupported && (
-          <p className="text-[10px] text-muted-foreground">
-            {t('triage.mic_unsupported')}
-          </p>
-        )}
-      </div>
+        <p className="text-[11px] text-muted-foreground inline-flex items-center gap-1.5">
+          <Languages className="h-3 w-3" />
+          {speech.isSupported
+            ? 'You can type or speak — in Hindi, Marathi, or English'
+            : t('triage.mic_unsupported')}
+        </p>
+      </Section>
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <Label className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold">
-            {t('triage.duration_label')}
-          </Label>
-          <Select value={duration} onValueChange={setDuration}>
-            <SelectTrigger className="h-11 rounded-xl bg-card border-border data-[size=default]:h-11">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {DURATION_KEYS.map((d) => (
-                <SelectItem key={d.value} value={d.value}>
-                  {t(d.tKey)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <div className="flex items-baseline justify-between">
+      {/* ── Section 2: Duration + severity ────────────────────────────────── */}
+      <Section
+        step={2}
+        icon={Thermometer}
+        title="How long, how bad?"
+        description="A quick read on the timeline and intensity helps us route correctly."
+      >
+        <div className="grid sm:grid-cols-2 gap-5">
+          <div className="space-y-2">
             <Label className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold">
-              {t('triage.severity_label')}
+              {t('triage.duration_label')}
             </Label>
-            <span className="text-xs font-mono tabular-nums text-muted-foreground">
-              {severity} / 10
-            </span>
+            <Select value={duration} onValueChange={setDuration}>
+              <SelectTrigger className="h-11 rounded-xl bg-background border-border data-[size=default]:h-11">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DURATION_KEYS.map((d) => (
+                  <SelectItem key={d.value} value={d.value}>
+                    {t(d.tKey)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <Slider
-            value={[severity]}
-            onValueChange={(v) => setSeverity(v[0])}
-            min={0}
-            max={10}
-            step={1}
-            className="py-3"
-          />
-          <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70 flex justify-between">
-            <span>{t('triage.severity_mild')}</span>
-            <span>{t('triage.severity_severe')}</span>
-          </p>
-        </div>
-      </div>
 
-      <div className="grid sm:grid-cols-[140px_1fr] gap-4 items-start">
-        <div className="space-y-1.5">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+                {t('triage.severity_label')}
+              </Label>
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${TONE_PILL[tone.color]}`}
+              >
+                {tone.label}
+                <span className="font-mono tabular-nums opacity-70">
+                  {severity}/10
+                </span>
+              </span>
+            </div>
+            <Slider
+              value={[severity]}
+              onValueChange={(v) => setSeverity(v[0])}
+              min={0}
+              max={10}
+              step={1}
+              className="py-3"
+            />
+            <div className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70 flex justify-between">
+              <span>{t('triage.severity_mild')}</span>
+              <span>{t('triage.severity_severe')}</span>
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* ── Section 3: About you ──────────────────────────────────────────── */}
+      <Section
+        step={3}
+        icon={UserRound}
+        title="About you"
+        description="Optional context that helps the doctor prepare for the call."
+      >
+        <div className="grid sm:grid-cols-[140px_1fr] gap-4 items-start">
+          <div className="space-y-2">
+            <Label
+              htmlFor="age"
+              className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold"
+            >
+              {t('triage.age_label')}
+            </Label>
+            <Input
+              id="age"
+              type="number"
+              min={0}
+              max={130}
+              value={age}
+              onChange={(e) => setAge(e.target.value)}
+              placeholder="32"
+              className="h-11 rounded-xl bg-background"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+              {t('triage.sex_label')}
+            </Label>
+            <RadioGroup
+              value={sex}
+              onValueChange={setSex}
+              className="grid grid-cols-2 sm:grid-cols-4 gap-2"
+            >
+              {[
+                { v: 'male', l: t('triage.sex_male') },
+                { v: 'female', l: t('triage.sex_female') },
+                { v: 'other', l: t('triage.sex_other') },
+                { v: 'prefer_not_to_say', l: t('triage.sex_skip') },
+              ].map((opt) => (
+                <label
+                  key={opt.v}
+                  htmlFor={`sex-${opt.v}`}
+                  className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 cursor-pointer transition-all ${
+                    sex === opt.v
+                      ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                      : 'border-border bg-background hover:border-primary/30 hover:bg-muted/60'
+                  }`}
+                >
+                  <RadioGroupItem value={opt.v} id={`sex-${opt.v}`} />
+                  <span className="text-sm">{opt.l}</span>
+                </label>
+              ))}
+            </RadioGroup>
+          </div>
+        </div>
+
+        <div className="space-y-2">
           <Label
-            htmlFor="age"
+            htmlFor="extra"
             className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold"
           >
-            {t('triage.age_label')}
+            {t('triage.extra_label')}
           </Label>
-          <Input
-            id="age"
-            type="number"
-            min={0}
-            max={130}
-            value={age}
-            onChange={(e) => setAge(e.target.value)}
-            placeholder="32"
-            className="h-11 rounded-xl"
+          <Textarea
+            id="extra"
+            rows={2}
+            value={extra}
+            onChange={(e) => setExtra(e.target.value)}
+            placeholder={t('triage.extra_placeholder')}
+            className="rounded-xl resize-none bg-background"
           />
         </div>
+      </Section>
 
-        <div className="space-y-1.5">
-          <Label className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold">
-            {t('triage.sex_label')}
-          </Label>
-          <RadioGroup
-            value={sex}
-            onValueChange={setSex}
-            className="grid grid-cols-2 sm:grid-cols-4 gap-2"
-          >
-            {[
-              { v: 'male', l: t('triage.sex_male') },
-              { v: 'female', l: t('triage.sex_female') },
-              { v: 'other', l: t('triage.sex_other') },
-              { v: 'prefer_not_to_say', l: t('triage.sex_skip') },
-            ].map((opt) => (
-              <label
-                key={opt.v}
-                htmlFor={`sex-${opt.v}`}
-                className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 cursor-pointer transition-colors ${
-                  sex === opt.v
-                    ? 'border-clinic bg-clinic/10 text-clinic'
-                    : 'border-border bg-card hover:bg-muted/60'
-                }`}
-              >
-                <RadioGroupItem value={opt.v} id={`sex-${opt.v}`} />
-                <span className="text-sm">{opt.l}</span>
-              </label>
-            ))}
-          </RadioGroup>
-        </div>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label
-          htmlFor="extra"
-          className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold"
-        >
-          {t('triage.extra_label')}
-        </Label>
-        <Textarea
-          id="extra"
-          rows={2}
-          value={extra}
-          onChange={(e) => setExtra(e.target.value)}
-          placeholder={t('triage.extra_placeholder')}
-          className="rounded-xl resize-none"
-        />
-      </div>
-
-      <div className="rounded-xl border border-border/70 bg-muted/40 p-4 flex items-start gap-3">
-        <ShieldAlert className="h-4 w-4 text-clinic mt-0.5 shrink-0" />
+      {/* ── Disclaimer + submit ───────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-border/70 bg-soft-mesh p-4 flex items-start gap-3">
+        <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
+          <ShieldAlert className="h-4 w-4" />
+        </span>
         <p className="text-xs text-muted-foreground leading-relaxed">
           {t('triage.disclaimer')}
         </p>
       </div>
 
-      <Button
-        type="submit"
-        disabled={isLoading}
-        className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-6 w-full sm:w-auto"
-      >
-        {isLoading ? <Spinner /> : <Send className="h-4 w-4" />}
-        {t('triage.submit')}
-      </Button>
+      <div className="flex flex-wrap gap-3">
+        <Button
+          type="submit"
+          disabled={isLoading}
+          size="lg"
+          className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-7 w-full sm:w-auto shadow-md shadow-primary/20"
+        >
+          {isLoading ? <Spinner /> : <Send className="h-4 w-4" />}
+          {t('triage.submit')}
+        </Button>
+      </div>
     </form>
   )
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+
+const Section = ({ step, icon: Icon, title, description, children }) => (
+  <section className="relative overflow-hidden rounded-3xl border border-border/70 bg-card p-6 sm:p-7 space-y-5 shadow-sm">
+    <span
+      className="absolute left-0 top-0 bottom-0 w-1 bg-linear-to-b from-primary to-primary/30"
+      aria-hidden
+    />
+    <header className="flex items-start gap-3 pl-1">
+      <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0 ring-1 ring-primary/15">
+        <Icon className="h-4 w-4" />
+      </span>
+      <div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] uppercase tracking-[0.18em] font-bold text-primary tabular-nums">
+            Step {step}
+          </span>
+          <span className="h-1 w-1 rounded-full bg-muted-foreground/40" />
+          <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">
+            <Sparkles className="inline h-3 w-3 mr-1" />
+            AI-assisted
+          </span>
+        </div>
+        <h3 className="mt-0.5 font-display text-xl tracking-tight">{title}</h3>
+        {description && (
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+            {description}
+          </p>
+        )}
+      </div>
+    </header>
+    <div className="space-y-3 pl-1">{children}</div>
+  </section>
+)
 
 export default TriageForm

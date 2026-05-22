@@ -60,7 +60,7 @@ const RoleSidebar = ({
   return (
     <Sidebar
       collapsible="icon"
-      variant="inset"
+      variant="sidebar"
       className="border-r border-border/60"
     >
       <SidebarHeader className="px-3 pt-4 pb-3">

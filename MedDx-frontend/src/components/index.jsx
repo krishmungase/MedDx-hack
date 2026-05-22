@@ -9,6 +9,8 @@ import DataPagination from './shared/data-pagination'
 import PageHeader from './shared/page-header'
 import StatCard from './shared/stat-card'
 import StatusBadge from './shared/status-badge'
+import VitalLine from './shared/vital-line'
+import DoctorAvatar from './shared/doctor-avatar'
 
 export {
   Header,
@@ -22,4 +24,6 @@ export {
   PageHeader,
   StatCard,
   StatusBadge,
+  VitalLine,
+  DoctorAvatar,
 }

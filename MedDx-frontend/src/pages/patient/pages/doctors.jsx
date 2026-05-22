@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 
 import { usePageTitle } from '@/hooks'
 import { pageTitle } from '@/constants'
-import { PageHeader } from '@/components'
 
 import FindDoctor from '../components/find-doctor'
 
@@ -30,29 +29,25 @@ const DoctorsPage = () => {
   }
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        eyebrow={t('nav.doctors', { defaultValue: 'Doctors' })}
-        title={
-          triage
+    <div className="space-y-6">
+      {/* Compact greeting strip — FindDoctor's own search hero leads visually */}
+      <div className="fade-up flex flex-col gap-1">
+        <p className="text-[11px] uppercase tracking-[0.22em] text-primary/80 font-semibold">
+          {t('nav.doctors', { defaultValue: 'Doctors' })}
+        </p>
+        <h1 className="font-display text-2xl sm:text-3xl tracking-tight">
+          {triage
             ? t('doctors_page.title_triage', { specialty: triage.specialty })
-            : t('doctors_page.title_default')
-        }
-        description={
-          triage
-            ? t('doctors_page.subtitle_triage')
-            : t('doctors_page.subtitle_default')
-        }
-      />
-
-      <div className="fade-up fade-up-delay-1">
-        <FindDoctor
-          specialtyFilter={specialtyFilter}
-          onClearSpecialty={clearSpecialty}
-          triage={triage}
-          onBooked={() => navigate('/patient')}
-        />
+            : t('doctors_page.title_default')}
+        </h1>
       </div>
+
+      <FindDoctor
+        specialtyFilter={specialtyFilter}
+        onClearSpecialty={clearSpecialty}
+        triage={triage}
+        onBooked={() => navigate('/patient')}
+      />
     </div>
   )
 }

@@ -11,13 +11,10 @@ import {
 /**
  * Standard chrome for a role dashboard: sidebar + sticky inset header + outlet.
  *
- * Props:
- *   sidebar       — the sidebar element to render (PatientSidebar/DoctorSidebar/etc.)
- *   eyebrow       — small label in the header breadcrumb (e.g. "Doctor · Workspace")
- *   sections      — map of pathname → display label, used to render the right side
- *                   of the breadcrumb based on the current URL.
- *   headerExtra   — optional node rendered on the right side of the header
- *                   (e.g. admin's "Register doctor" action).
+ * The sidebar reserves flex space via a CSS rule in index.css that pins
+ * `[data-slot="sidebar"]` to var(--sidebar-width). Without that, the inset
+ * renders at full viewport width and the fixed-positioned sidebar overlays
+ * the content.
  */
 const RoleShell = ({ sidebar, eyebrow, sections = {}, headerExtra = null }) => {
   const { pathname } = useLocation()
@@ -31,10 +28,9 @@ const RoleShell = ({ sidebar, eyebrow, sections = {}, headerExtra = null }) => {
   return (
     <SidebarProvider
       defaultOpen
-      style={{ '--sidebar-width': '17rem', '--sidebar-width-icon': '3.25rem' }}
+      style={{ '--sidebar-width': '17rem', '--sidebar-width-icon': '3.5rem' }}
     >
       {sidebar}
-
       <SidebarInset className="bg-grain">
         <header
           className="sticky top-0 z-30 flex h-14 items-center gap-3
