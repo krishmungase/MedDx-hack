@@ -16,12 +16,14 @@ class AdminController {
     notificationService,
     mailgenService,
     appointmentModel,
+    medicalRecordModel,
     logger
   ) {
     this.userSvc = userService
     this.notificationSvc = notificationService
     this.mailgenSvc = mailgenService
     this.appointmentModel = appointmentModel
+    this.medicalRecordModel = medicalRecordModel
     this.log = logger
   }
 
@@ -125,6 +127,114 @@ class AdminController {
           'Doctors fetched.'
         )
       )
+  }
+
+  // ── All appointments (platform-wide) ──────────────────────────────────
+  // GET /admin/appointments?status=&limit=
+  async listAppointments(req, res) {
+    const { status, limit = 100 } = req.query
+    const filter = {}
+    if (status) filter.status = status
+
+    const appointments = await this.appointmentModel
+      .find(filter)
+      .sort({ datetime: -1 })
+      .limit(Math.min(Number(limit) || 100, 500))
+      .populate('patientId', 'name email')
+      .populate('doctorId', 'name email specialty')
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, { appointments }, 'Appointments fetched.')
+      )
+  }
+
+  // ── Audit log (record access) ─────────────────────────────────────────
+  // GET /admin/audit-log?limit=
+  // Flattens the auditLog arrays embedded on every MedicalRecord into a
+  // single chronological list. Uses $unwind so we can join in viewer and
+  // patient names without a separate per-entry query.
+  async listAuditLog(req, res) {
+    if (!this.medicalRecordModel) {
+      return res
+        .status(200)
+        .json(new ApiResponse(200, { entries: [] }, 'Audit log empty.'))
+    }
+    const limit = Math.min(Number(req.query.limit) || 200, 1000)
+
+    const entries = await this.medicalRecordModel.aggregate([
+      { $unwind: '$auditLog' },
+      {
+        $project: {
+          _id: 0,
+          patientId: 1,
+          viewerId: '$auditLog.viewerId',
+          viewedAt: '$auditLog.viewedAt',
+        },
+      },
+      { $sort: { viewedAt: -1 } },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'viewerId',
+          foreignField: '_id',
+          as: 'viewer',
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'patientId',
+          foreignField: '_id',
+          as: 'patient',
+        },
+      },
+      {
+        $project: {
+          viewedAt: 1,
+          viewer: {
+            $arrayElemAt: [
+              {
+                $map: {
+                  input: '$viewer',
+                  as: 'v',
+                  in: {
+                    _id: '$$v._id',
+                    name: '$$v.name',
+                    email: '$$v.email',
+                    role: '$$v.role',
+                    specialty: '$$v.specialty',
+                  },
+                },
+              },
+              0,
+            ],
+          },
+          patient: {
+            $arrayElemAt: [
+              {
+                $map: {
+                  input: '$patient',
+                  as: 'p',
+                  in: {
+                    _id: '$$p._id',
+                    name: '$$p.name',
+                    email: '$$p.email',
+                  },
+                },
+              },
+              0,
+            ],
+          },
+        },
+      },
+    ])
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { entries }, 'Audit log fetched.'))
   }
 
   // ── Platform stats ────────────────────────────────────────────────────

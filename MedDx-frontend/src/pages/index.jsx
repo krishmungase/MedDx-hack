@@ -13,10 +13,13 @@ import DoctorLayout from './doctor'
 import DoctorQueuePage from './doctor/pages/queue'
 import DoctorAvailabilityPage from './doctor/pages/availability'
 import DoctorEarningsPage from './doctor/pages/earnings'
+import DoctorPrescriptionsPage from './doctor/pages/prescriptions'
 
 import AdminLayout from './admin'
 import AdminOverviewPage from './admin/pages/overview'
 import AdminDoctorsPage from './admin/pages/doctors'
+import AdminAppointmentsPage from './admin/pages/appointments'
+import AdminAuditLogPage from './admin/pages/audit-log'
 
 import VideoConsultPage from './video'
 
@@ -41,9 +44,12 @@ export {
   DoctorQueuePage,
   DoctorAvailabilityPage,
   DoctorEarningsPage,
+  DoctorPrescriptionsPage,
   AdminLayout,
   AdminOverviewPage,
   AdminDoctorsPage,
+  AdminAppointmentsPage,
+  AdminAuditLogPage,
 }
 
 export { VideoConsultPage }

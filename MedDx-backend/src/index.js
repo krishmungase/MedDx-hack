@@ -14,6 +14,7 @@ import {
   medicalRecordRoutes,
   slotRoutes,
 } from './routes/index.js'
+import razorpayStaticRoutes from './routes/static/razorpay.routes.js'
 import { asyncHandler } from './utils/index.js'
 import { errorHandler, morganMiddleware } from './middlewares/index.js'
 
@@ -50,6 +51,10 @@ class ServerApp {
     this.app.use('/api/v1/appointments', appointmentRoutes)
     this.app.use('/api/v1/medical-records', medicalRecordRoutes)
     this.app.use('/api/v1/ai', aiRoutes)
+
+    // Same-origin proxy for Razorpay's checkout.js — bypasses ad-blockers
+    // that target the razorpay.com domain.
+    this.app.use('/static/razorpay', razorpayStaticRoutes)
 
     this.app.use(errorHandler)
   }

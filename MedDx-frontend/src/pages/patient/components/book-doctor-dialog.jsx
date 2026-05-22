@@ -102,11 +102,45 @@ const BookDoctorDialog = ({
     return acc
   }, [slots])
 
-  const finishBooking = (appointment) => {
-    successToast({ message: t('book_dialog.confirm_booking') })
+  const finishBooking = (appointment, demoBypass = false) => {
+    successToast({
+      message: demoBypass
+        ? 'Appointment confirmed (demo payment).'
+        : 'Appointment confirmed.',
+    })
     onBooked?.(appointment)
     onOpenChange(false)
     setSelected(null)
+  }
+
+  // Re-attempt the booking with the demoSkipPayment flag. Backend honors it
+  // only when NODE_ENV !== 'production'. Used as a fallback when Razorpay's
+  // CDN is blocked by browser extensions / DNS so the demo still works.
+  const tryDemoBypass = async () => {
+    setIsPaying(true)
+    try {
+      const demoResponse = await bookAppointmentAsync({
+        data: {
+          slotId: selected._id,
+          demoSkipPayment: true,
+          ...(triage?.summary ? { triageSummary: triage.summary } : {}),
+          ...(triage?.urgency ? { triageUrgency: triage.urgency } : {}),
+        },
+      })
+      if (demoResponse?.appointment) {
+        finishBooking(demoResponse.appointment, true)
+      } else {
+        errorToast({ message: 'Demo bypass failed.' })
+      }
+    } catch (err) {
+      errorToast({
+        message:
+          err?.response?.data?.message ||
+          'Demo bypass not available — payments are configured for production.',
+      })
+    } finally {
+      setIsPaying(false)
+    }
   }
 
   const onConfirm = async () => {
@@ -131,11 +165,20 @@ const BookDoctorDialog = ({
 
     // Free / emergency path: backend already confirmed.
     if (!response.paymentRequired) {
-      return finishBooking(response.appointment)
+      return finishBooking(response.appointment, !!response.demoBypass)
     }
 
-    // Paid path: open Razorpay checkout, then verify.
+    // Paid path: close OUR dialog first — Radix Dialog is `aria-modal=true`
+    // and traps focus / inerts everything outside the portal. That makes
+    // Razorpay's checkout iframe render but be completely un-clickable. By
+    // dismissing the dialog before .open(), Razorpay owns the page and
+    // receives clicks/typing normally.
     setIsPaying(true)
+    onOpenChange(false)
+    // Microtask gap so Radix has a tick to remove its inert/aria-hidden
+    // attributes before we splash Razorpay's iframe in.
+    await new Promise((r) => setTimeout(r, 50))
+
     let payResult
     try {
       payResult = await openCheckout({
@@ -146,12 +189,23 @@ const BookDoctorDialog = ({
         prefill: {
           name: user?.name || '',
           email: user?.email || '',
+          contact: user?.phone || '9999999999',
         },
       })
     } catch (err) {
       setIsPaying(false)
+      const msg = err?.message || ''
+      // eslint-disable-next-line no-console
+      console.warn('[razorpay] checkout did not complete:', msg)
+      // Only fall back to demo when Razorpay's script genuinely couldn't
+      // load — ad-blockers, DNS rules, etc. User-dismissed modals and
+      // payment-failed events surface as their own messages and shouldn't
+      // silently book.
+      if (/failed to load|script|razorpay global missing/i.test(msg)) {
+        return tryDemoBypass()
+      }
       return errorToast({
-        message: err?.message || 'Payment was cancelled.',
+        message: msg || 'Payment cancelled.',
       })
     }
 
@@ -166,7 +220,9 @@ const BookDoctorDialog = ({
           ...(triage?.urgency ? { triageUrgency: triage.urgency } : {}),
         },
       })
-      finishBooking(verified.appointment)
+      successToast({ message: 'Appointment confirmed.' })
+      onBooked?.(verified.appointment)
+      setSelected(null)
     } catch (err) {
       errorToast({
         message:
@@ -262,41 +318,39 @@ const BookDoctorDialog = ({
           )}
         </div>
 
-        <DialogFooter className="px-6 py-4 border-t border-border/60 bg-card/50">
-          <div className="flex w-full items-center justify-between gap-3">
-            <p className="text-xs text-muted-foreground max-w-[55%]">
-              {selected
-                ? t('book_dialog.selected', {
-                    when: format(
-                      new Date(selected.datetime),
-                      "EEE, MMM d 'at' h:mm a"
-                    ),
-                  })
-                : pricing.note}
-            </p>
-            <div className="flex items-center gap-2">
-              <DialogClose asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="rounded-full"
-                  disabled={busy}
-                >
-                  {t('common.cancel')}
-                </Button>
-              </DialogClose>
+        <DialogFooter className="px-6 py-4 border-t border-border/60 bg-card/50 flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <p className="text-xs text-muted-foreground sm:max-w-[55%]">
+            {selected
+              ? t('book_dialog.selected', {
+                  when: format(
+                    new Date(selected.datetime),
+                    "EEE, MMM d 'at' h:mm a"
+                  ),
+                })
+              : pricing.note}
+          </p>
+          <div className="flex flex-wrap items-center gap-2 justify-end">
+            <DialogClose asChild>
               <Button
                 type="button"
-                className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-5"
-                disabled={!selected || busy}
-                onClick={onConfirm}
+                variant="ghost"
+                className="rounded-full"
+                disabled={busy}
               >
-                {busy ? <Spinner /> : null}
-                {pricing.kind === 'paid'
-                  ? t('book_dialog.pay_and_book', { amount: CONSULT_RUPEES })
-                  : t('book_dialog.confirm_booking')}
+                {t('common.cancel')}
               </Button>
-            </div>
+            </DialogClose>
+            <Button
+              type="button"
+              className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-5"
+              disabled={!selected || busy}
+              onClick={onConfirm}
+            >
+              {busy ? <Spinner /> : null}
+              {pricing.kind === 'paid'
+                ? t('book_dialog.pay_and_book', { amount: CONSULT_RUPEES })
+                : t('book_dialog.confirm_booking')}
+            </Button>
           </div>
         </DialogFooter>
       </DialogContent>

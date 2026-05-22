@@ -4,7 +4,6 @@ import {
   Coins,
   Notebook,
   Settings,
-  Users,
 } from 'lucide-react'
 
 import RoleSidebar from '@/components/shared/role-sidebar'
@@ -24,6 +23,12 @@ const consoleItems = [
     to: '/doctor/availability',
   },
   {
+    id: 'prescriptions',
+    label: 'Prescriptions',
+    icon: Notebook,
+    to: '/doctor/prescriptions',
+  },
+  {
     id: 'earnings',
     label: 'Earnings',
     icon: Coins,
@@ -32,13 +37,6 @@ const consoleItems = [
 ]
 
 const futureItems = [
-  { id: 'history', label: 'Patient history', icon: Users, soon: 'In-call' },
-  {
-    id: 'prescriptions',
-    label: 'Prescriptions',
-    icon: Notebook,
-    soon: 'Phase 7',
-  },
   { id: 'settings', label: 'Settings', icon: Settings, soon: '—' },
 ]
 

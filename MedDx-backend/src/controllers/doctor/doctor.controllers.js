@@ -2,9 +2,10 @@ import { ApiError, ApiResponse } from '../../utils/index.js'
 import { AccountStatus, UserRoles } from '../../constants/index.js'
 
 class DoctorController {
-  constructor(userService, transactionService) {
+  constructor(userService, transactionService, appointmentModel) {
     this.userSvc = userService
     this.transactionSvc = transactionService
+    this.appointmentModel = appointmentModel
   }
 
   serialize(doc) {
@@ -55,6 +56,51 @@ class DoctorController {
       .json(
         new ApiResponse(200, { doctor: this.serialize(doctor) }, 'Doctor fetched.')
       )
+  }
+
+  // GET /doctors/me/prescriptions — every completed consult I've issued a
+  // prescription on. Returned newest-first so the doctor can reuse Rx text
+  // and review what they handed out.
+  async getMyPrescriptions(req, res) {
+    if (req.user.role !== UserRoles.DOCTOR) {
+      throw new ApiError(403, 'Only doctors can view prescriptions.')
+    }
+    if (!this.appointmentModel) {
+      return res
+        .status(200)
+        .json(new ApiResponse(200, { items: [] }, 'Prescriptions fetched.'))
+    }
+
+    const appts = await this.appointmentModel
+      .find({
+        doctorId: req.user._id,
+        status: 'completed',
+        prescription: { $ne: null },
+      })
+      .sort({ datetime: -1 })
+      .limit(200)
+      .populate('patientId', 'name email language')
+
+    const items = appts.map((a) => ({
+      _id: a._id,
+      datetime: a.datetime,
+      status: a.status,
+      doctorNotes: a.doctorNotes || null,
+      prescription: a.prescription,
+      triageUrgency: a.triageUrgency || null,
+      patient: a.patientId
+        ? {
+            _id: a.patientId._id,
+            name: a.patientId.name,
+            email: a.patientId.email,
+            language: a.patientId.language || 'en',
+          }
+        : null,
+    }))
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { items }, 'Prescriptions fetched.'))
   }
 
   // GET /doctors/me/earnings — wallet balance + recent transactions.

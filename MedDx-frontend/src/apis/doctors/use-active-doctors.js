@@ -10,7 +10,8 @@ const useActiveDoctors = () => {
       return res?.data?.data?.doctors || []
     },
     retry: false,
-    staleTime: 30_000,
+    staleTime: 5_000,
+    refetchOnMount: 'always',
   })
 
   return { doctors: data || [], isLoading, isFetching, error, refetch }

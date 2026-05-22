@@ -4,7 +4,11 @@ import { logger } from '../../logger/index.js'
 import { asyncHandler } from '../../utils/index.js'
 import { UserRoles } from '../../constants/index.js'
 import { AdminController } from '../../controllers/index.js'
-import { AppointmentModel, UserModel } from '../../models/index.js'
+import {
+  AppointmentModel,
+  MedicalRecordModel,
+  UserModel,
+} from '../../models/index.js'
 import {
   MailgenService,
   NotificationService,
@@ -32,6 +36,7 @@ const adminController = new AdminController(
   notificationService,
   mailgenService,
   AppointmentModel,
+  MedicalRecordModel,
   logger
 )
 
@@ -56,6 +61,18 @@ const routeDefinitions = [
     method: 'get',
     validators: [],
     handler: adminController.getStats.bind(adminController),
+  },
+  {
+    path: '/appointments',
+    method: 'get',
+    validators: [],
+    handler: adminController.listAppointments.bind(adminController),
+  },
+  {
+    path: '/audit-log',
+    method: 'get',
+    validators: [],
+    handler: adminController.listAuditLog.bind(adminController),
   },
   {
     path: '/doctors/:id',

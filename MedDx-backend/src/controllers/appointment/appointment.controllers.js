@@ -52,15 +52,19 @@ class AppointmentController {
   }
 
   // ── Book a slot (patient only) ─────────────────────────────────────────
-  // POST /appointments/book { slotId, triageSummary?, triageUrgency? }
+  // POST /appointments/book { slotId, triageSummary?, triageUrgency?, demoSkipPayment? }
   //
   // Two response shapes:
   //   { paymentRequired: false, appointment }   — free path, slot locked, done
   //   { paymentRequired: true,  order, ... }    — Razorpay order created;
   //                                              client opens checkout, then
   //                                              calls /payments/verify
+  //
+  // `demoSkipPayment` is honored only when NODE_ENV !== 'production'. It lets
+  // hackathon demos walk through the paid flow even when the patient's
+  // browser blocks Razorpay's CDN (ad-blockers, corporate DNS, etc).
   async book(req, res) {
-    const { slotId, triageSummary, triageUrgency } = req.body
+    const { slotId, triageSummary, triageUrgency, demoSkipPayment } = req.body
     const patient = req.user
 
     const slot = await this.slotSvc.findById(slotId)
@@ -73,9 +77,22 @@ class AppointmentController {
     }
 
     const free = this.isFreeConsult(patient, triageUrgency)
+    const isDev = ENV.NODE_ENV !== 'production'
 
     if (free) {
       return this.confirmFreeBooking(req, res, {
+        slot,
+        triageSummary,
+        triageUrgency,
+      })
+    }
+
+    // Dev-mode escape hatch: confirm a paid booking without going through
+    // Razorpay. Slot still locks, an appointment is created with
+    // paymentStatus='paid', and a Transaction row is written so doctor
+    // earnings + the admin dashboard still look right.
+    if (demoSkipPayment && isDev) {
+      return this.confirmPaidBookingDemo(req, res, {
         slot,
         triageSummary,
         triageUrgency,
@@ -178,6 +195,66 @@ class AppointmentController {
         201,
         { paymentRequired: false, appointment: populated },
         'Appointment confirmed.'
+      )
+    )
+  }
+
+  // ── Dev-only: confirm a paid booking without Razorpay ────────────────
+  // Same accounting as the real verify path (80/20 split, transaction row,
+  // wallet credit) so the rest of the app stays consistent. Gated by
+  // NODE_ENV !== 'production' inside book().
+  async confirmPaidBookingDemo(req, res, { slot, triageSummary, triageUrgency }) {
+    slot.status = SlotStatus.BOOKED
+    await slot.save()
+
+    let appointment
+    try {
+      appointment = await this.apptSvc.create({
+        patientId: req.user._id,
+        doctorId: slot.doctorId,
+        slotId: slot._id,
+        datetime: slot.datetime,
+        status: AppointmentStatus.SCHEDULED,
+        paymentStatus: PaymentStatus.PAID,
+        mode: ConsultationMode.VIDEO,
+        triageSummary: triageSummary || null,
+        triageUrgency: triageUrgency || null,
+      })
+    } catch (err) {
+      slot.status = SlotStatus.AVAILABLE
+      await slot.save()
+      throw err
+    }
+
+    const { platformFee, doctorEarning } = splitFee(CONSULT_FEE_PAISE)
+    await this.transactionSvc.create({
+      appointmentId: appointment._id,
+      patientId: req.user._id,
+      doctorId: slot.doctorId,
+      amount: CONSULT_FEE_PAISE,
+      platformFee,
+      doctorEarning,
+      type: TransactionType.CONSULTATION,
+    })
+    await this.userSvc.updateById(slot.doctorId, {
+      $inc: { walletBalance: doctorEarning },
+    })
+
+    this.log.warn({
+      msg: 'Appointment booked (demo paid path — Razorpay skipped)',
+      data: { appointmentId: appointment._id, doctorEarning, platformFee },
+    })
+
+    const populated = await this.apptSvc.findByIdPopulated(appointment._id)
+    this.sendBookingInvites(populated).catch((err) =>
+      this.log.warn({ msg: 'Booking invite send failed', error: err?.message })
+    )
+
+    return res.status(201).json(
+      new ApiResponse(
+        201,
+        { paymentRequired: false, appointment: populated, demoBypass: true },
+        'Appointment confirmed (demo payment).'
       )
     )
   }

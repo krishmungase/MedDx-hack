@@ -10,7 +10,8 @@ const useMyAppointments = () => {
       return res?.data?.data?.appointments || []
     },
     retry: false,
-    staleTime: 10_000,
+    staleTime: 5_000,
+    refetchOnMount: 'always',
   })
 
   return { appointments: data || [], isLoading, isFetching, error, refetch }

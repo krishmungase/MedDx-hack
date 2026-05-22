@@ -8,6 +8,8 @@ import useDoctors from './admin/use-doctors'
 import useRegisterDoctor from './admin/use-register-doctor'
 import useRemoveDoctor from './admin/use-remove-doctor'
 import useUpdateDoctorStatus from './admin/use-update-doctor-status'
+import usePlatformAppointments from './admin/use-platform-appointments'
+import useAuditLog from './admin/use-audit-log'
 
 import useMySlots from './slots/use-my-slots'
 import useGenerateSlots from './slots/use-generate-slots'
@@ -17,6 +19,7 @@ import useDoctorSlots from './slots/use-doctor-slots'
 import useActiveDoctors from './doctors/use-active-doctors'
 import useDoctorById from './doctors/use-doctor-by-id'
 import useMyEarnings from './doctors/use-my-earnings'
+import useMyPrescriptions from './doctors/use-my-prescriptions'
 
 import useBookAppointment from './appointments/use-book-appointment'
 import useMyAppointments from './appointments/use-my-appointments'
@@ -41,6 +44,8 @@ export {
   useRegisterDoctor,
   useRemoveDoctor,
   useUpdateDoctorStatus,
+  usePlatformAppointments,
+  useAuditLog,
   useMySlots,
   useGenerateSlots,
   useDeleteSlot,
@@ -48,6 +53,7 @@ export {
   useActiveDoctors,
   useDoctorById,
   useMyEarnings,
+  useMyPrescriptions,
   useBookAppointment,
   useMyAppointments,
   useDoctorQueue,

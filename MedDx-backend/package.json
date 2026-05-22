@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "nodemon api/index.js",
     "start": "node api/index.js",
+    "seed:doctors": "node scripts/seed-doctors.js",
     "vercel-build": "echo hello",
     "format:check": "prettier . --check",
     "format:write": "prettier . --write"

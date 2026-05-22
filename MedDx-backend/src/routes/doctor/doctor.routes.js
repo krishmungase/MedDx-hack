@@ -1,7 +1,11 @@
 import express from 'express'
 import { param } from 'express-validator'
 
-import { TransactionModel, UserModel } from '../../models/index.js'
+import {
+  AppointmentModel,
+  TransactionModel,
+  UserModel,
+} from '../../models/index.js'
 import { asyncHandler } from '../../utils/index.js'
 import { validate, verifyJWT } from '../../middlewares/index.js'
 import { TransactionService, UserService } from '../../services/index.js'
@@ -11,7 +15,11 @@ const doctorRoutes = express.Router()
 
 const userService = new UserService(UserModel)
 const transactionService = new TransactionService(TransactionModel)
-const doctorController = new DoctorController(userService, transactionService)
+const doctorController = new DoctorController(
+  userService,
+  transactionService,
+  AppointmentModel
+)
 
 // Public list (used by patients searching for specialists)
 doctorRoutes.get(
@@ -25,6 +33,15 @@ doctorRoutes.get(
   verifyJWT,
   asyncHandler((req, res, next) =>
     doctorController.getMyEarnings(req, res, next)
+  )
+)
+
+// Doctor's own prescription history (authenticated)
+doctorRoutes.get(
+  '/me/prescriptions',
+  verifyJWT,
+  asyncHandler((req, res, next) =>
+    doctorController.getMyPrescriptions(req, res, next)
   )
 )
 

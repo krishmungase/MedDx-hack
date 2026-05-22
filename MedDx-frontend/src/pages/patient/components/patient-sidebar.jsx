@@ -49,6 +49,7 @@ const PatientSidebar = () => {
       eyebrow="Patient"
       consoleItems={consoleItems}
       futureItems={futureItems}
+      showLanguage
     />
   )
 }

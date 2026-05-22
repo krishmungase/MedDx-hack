@@ -37,6 +37,7 @@ const RoleSidebar = ({
   consoleItems = [],
   futureLabel = 'Coming up',
   futureItems = [],
+  showLanguage = false,
 }) => {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -163,7 +164,7 @@ const RoleSidebar = ({
       </SidebarContent>
 
       <SidebarFooter className="border-t border-border/60 p-3 space-y-2">
-        <LanguageSwitcher />
+        {showLanguage && <LanguageSwitcher />}
         <div className="flex items-center gap-2.5 rounded-lg bg-card/60 p-2 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0">
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-clinic text-clinic-foreground text-xs font-semibold shrink-0">
             {initials}

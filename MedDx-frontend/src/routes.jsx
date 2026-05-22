@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route } from 'react-router'
 
 import { ProtectedRoute } from './components/auth'
 import {
+  AdminAppointmentsPage,
+  AdminAuditLogPage,
   AdminDoctorsPage,
   AdminLayout,
   AdminOverviewPage,
@@ -10,6 +12,7 @@ import {
   DoctorAvailabilityPage,
   DoctorEarningsPage,
   DoctorLayout,
+  DoctorPrescriptionsPage,
   DoctorQueuePage,
   HomePage,
   NotFoundPage,
@@ -50,6 +53,10 @@ const AppRoutes = () => {
             <Route path="doctor" element={<DoctorLayout />}>
               <Route index element={<DoctorQueuePage />} />
               <Route path="availability" element={<DoctorAvailabilityPage />} />
+              <Route
+                path="prescriptions"
+                element={<DoctorPrescriptionsPage />}
+              />
               <Route path="earnings" element={<DoctorEarningsPage />} />
             </Route>
           </Route>
@@ -58,6 +65,8 @@ const AppRoutes = () => {
             <Route path="admin" element={<AdminLayout />}>
               <Route index element={<AdminOverviewPage />} />
               <Route path="doctors" element={<AdminDoctorsPage />} />
+              <Route path="appointments" element={<AdminAppointmentsPage />} />
+              <Route path="audit-log" element={<AdminAuditLogPage />} />
             </Route>
           </Route>
 

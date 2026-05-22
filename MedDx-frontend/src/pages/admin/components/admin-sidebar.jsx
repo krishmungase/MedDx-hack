@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   ScrollText,
   Settings,
-  ShieldCheck,
   Stethoscope,
 } from 'lucide-react'
 
@@ -23,22 +22,21 @@ const consoleItems = [
     icon: Stethoscope,
     to: '/admin/doctors',
   },
-]
-
-const futureItems = [
   {
     id: 'appointments',
     label: 'Appointments',
     icon: CalendarCheck,
-    soon: 'Phase 5',
+    to: '/admin/appointments',
   },
-  { id: 'audit', label: 'Audit log', icon: ScrollText, soon: 'Always-on' },
   {
-    id: 'compliance',
-    label: 'Safety rails',
-    icon: ShieldCheck,
-    soon: 'Always-on',
+    id: 'audit',
+    label: 'Audit log',
+    icon: ScrollText,
+    to: '/admin/audit-log',
   },
+]
+
+const futureItems = [
   { id: 'settings', label: 'Settings', icon: Settings, soon: '—' },
 ]
 

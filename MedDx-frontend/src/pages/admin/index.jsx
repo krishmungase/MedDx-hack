@@ -5,6 +5,8 @@ import AdminSidebar from './components/admin-sidebar'
 const SECTIONS = {
   '/admin': 'Overview',
   '/admin/doctors': 'Doctors',
+  '/admin/appointments': 'Appointments',
+  '/admin/audit-log': 'Audit log',
 }
 
 const AdminLayout = () => (
