@@ -12,6 +12,18 @@ import useUpdateDoctorStatus from './admin/use-update-doctor-status'
 import useMySlots from './slots/use-my-slots'
 import useGenerateSlots from './slots/use-generate-slots'
 import useDeleteSlot from './slots/use-delete-slot'
+import useDoctorSlots from './slots/use-doctor-slots'
+
+import useActiveDoctors from './doctors/use-active-doctors'
+import useDoctorById from './doctors/use-doctor-by-id'
+
+import useBookAppointment from './appointments/use-book-appointment'
+import useMyAppointments from './appointments/use-my-appointments'
+import useDoctorQueue from './appointments/use-doctor-queue'
+import useAppointment from './appointments/use-appointment'
+import useSubmitConsultation from './appointments/use-submit-consultation'
+
+import usePatientMedicalRecord from './medical-records/use-patient-medical-record'
 
 export {
   useLogin,
@@ -26,4 +38,13 @@ export {
   useMySlots,
   useGenerateSlots,
   useDeleteSlot,
+  useDoctorSlots,
+  useActiveDoctors,
+  useDoctorById,
+  useBookAppointment,
+  useMyAppointments,
+  useDoctorQueue,
+  useAppointment,
+  useSubmitConsultation,
+  usePatientMedicalRecord,
 }

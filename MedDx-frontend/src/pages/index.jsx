@@ -7,6 +7,8 @@ import PatientHomePage from './patient'
 import DoctorHomePage from './doctor'
 import AdminHomePage from './admin'
 
+import VideoConsultPage from './video'
+
 import SetPasswordPage from './set-password'
 
 import NotFoundPage from './not-found'
@@ -19,6 +21,8 @@ export { HomePage }
 export { SignInPage, SignUpPage }
 
 export { PatientHomePage, DoctorHomePage, AdminHomePage }
+
+export { VideoConsultPage }
 
 export { SetPasswordPage }
 

@@ -12,6 +12,7 @@ import {
   SetPasswordPage,
   SignInPage,
   SignUpPage,
+  VideoConsultPage,
 } from './pages'
 
 const AppRoutes = () => {
@@ -37,6 +38,11 @@ const AppRoutes = () => {
 
           <Route element={<ProtectedRoute role="admin" />}>
             <Route path="admin" element={<AdminHomePage />} />
+          </Route>
+
+          {/* Authed (any role) — server checks ownership */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="video/:id" element={<VideoConsultPage />} />
           </Route>
 
           <Route index element={<HomePage />} />

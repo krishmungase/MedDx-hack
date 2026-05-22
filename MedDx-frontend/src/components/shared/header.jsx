@@ -22,7 +22,8 @@ const Header = () => {
   const onRoleDashboard =
     location.pathname.startsWith('/admin') ||
     location.pathname.startsWith('/doctor') ||
-    location.pathname.startsWith('/patient')
+    location.pathname.startsWith('/patient') ||
+    location.pathname.startsWith('/video')
   if (onRoleDashboard) return null
 
   const onLogout = () => {

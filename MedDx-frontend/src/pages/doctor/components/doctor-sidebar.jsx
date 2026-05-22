@@ -14,13 +14,19 @@ const consoleItems = [
     id: 'availability',
     label: 'Availability',
     icon: CalendarRange,
+    anchor: '#availability',
     active: true,
+  },
+  {
+    id: 'queue',
+    label: 'Patient queue',
+    icon: ClipboardList,
+    anchor: '#queue',
   },
 ]
 
 const futureItems = [
-  { id: 'queue', label: 'Patient queue', icon: ClipboardList, soon: 'Phase 4' },
-  { id: 'history', label: 'Patient history', icon: Users, soon: 'Phase 4' },
+  { id: 'history', label: 'Patient history', icon: Users, soon: 'In-call' },
   { id: 'prescriptions', label: 'Prescriptions', icon: Notebook, soon: 'Phase 7' },
   { id: 'earnings', label: 'Earnings', icon: Coins, soon: 'Phase 6' },
   { id: 'settings', label: 'Settings', icon: Settings, soon: '—' },
@@ -29,7 +35,7 @@ const futureItems = [
 const DoctorSidebar = () => (
   <RoleSidebar
     eyebrow="Doctor Workspace"
-    versionLabel="v0.1 · Phase 3"
+    versionLabel="v0.1 · Phase 4"
     consoleItems={consoleItems}
     futureItems={futureItems}
   />
