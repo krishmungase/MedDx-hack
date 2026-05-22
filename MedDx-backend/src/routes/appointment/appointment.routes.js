@@ -10,6 +10,7 @@ import { asyncHandler } from '../../utils/index.js'
 import { UserRoles } from '../../constants/index.js'
 import {
   AppointmentService,
+  DailyService,
   IcsService,
   MailgenService,
   MedicalRecordService,
@@ -40,6 +41,7 @@ const icsService = new IcsService({
   appName: ENV.APP_NAME || 'MedDx',
   organizerEmail: ENV.GMAIL_USER,
 })
+const dailyService = new DailyService()
 
 const apptController = new AppointmentController(
   apptService,
@@ -48,6 +50,7 @@ const apptController = new AppointmentController(
   notificationService,
   mailgenService,
   icsService,
+  dailyService,
   logger
 )
 
@@ -82,6 +85,16 @@ appointmentRoutes.get(
   idParamValidator,
   validate,
   asyncHandler((req, res, next) => apptController.getById(req, res, next))
+)
+
+// Video session URL + token (Daily.co, with Jitsi fallback)
+appointmentRoutes.get(
+  '/:id/video-session',
+  idParamValidator,
+  validate,
+  asyncHandler((req, res, next) =>
+    apptController.getVideoSession(req, res, next)
+  )
 )
 
 // Doctor: submit consultation notes

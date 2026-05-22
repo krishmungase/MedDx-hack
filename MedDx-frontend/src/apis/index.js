@@ -22,6 +22,7 @@ import useMyAppointments from './appointments/use-my-appointments'
 import useDoctorQueue from './appointments/use-doctor-queue'
 import useAppointment from './appointments/use-appointment'
 import useSubmitConsultation from './appointments/use-submit-consultation'
+import useVideoSession from './appointments/use-video-session'
 
 import usePatientMedicalRecord from './medical-records/use-patient-medical-record'
 
@@ -46,5 +47,6 @@ export {
   useDoctorQueue,
   useAppointment,
   useSubmitConsultation,
+  useVideoSession,
   usePatientMedicalRecord,
 }

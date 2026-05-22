@@ -7,6 +7,7 @@ const urls = {
   queue: '/appointments/queue',
   byId: (id) => `/appointments/${id}`,
   consultation: (id) => `/appointments/${id}/consultation`,
+  videoSession: (id) => `/appointments/${id}/video-session`,
 }
 
 const apis = {
@@ -24,6 +25,8 @@ const apis = {
       method: REQUEST_METHOD.PATCH,
       data,
     }),
+  getVideoSession: ({ id }) =>
+    apiRequest({ url: urls.videoSession(id), method: REQUEST_METHOD.GET }),
 }
 
 export default apis

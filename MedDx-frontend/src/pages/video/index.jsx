@@ -3,8 +3,13 @@ import { useNavigate, useParams } from 'react-router'
 import { format } from 'date-fns'
 import { ArrowLeft, PhoneOff, Stethoscope, User } from 'lucide-react'
 
-import { useAppointment } from '@/apis'
-import { useAuth, useJitsi, usePageTitle } from '@/hooks'
+import { useAppointment, useVideoSession } from '@/apis'
+import {
+  useAuth,
+  useDailyVideo,
+  useJitsi,
+  usePageTitle,
+} from '@/hooks'
 import { errorToast } from '@/lib'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
@@ -13,38 +18,57 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import PatientRecordPanel from './components/patient-record-panel'
 import ConsultationNotesForm from './components/consultation-notes-form'
 
-const ROOM_PREFIX = 'meddx-'
-
 const VideoConsultPage = () => {
   usePageTitle({ title: 'Video consult · MedDx' })
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const jitsiRef = useRef(null)
+  const stageRef = useRef(null)
 
   const { appointment, isLoading, error, refetch } = useAppointment({ id })
+  const { session, isLoading: sessionLoading, error: sessionError } =
+    useVideoSession({ id, enabled: !!appointment })
+
   const [activeTab, setActiveTab] = useState('history')
 
   const isDoctor = user?.role === 'doctor'
   const isPatient = user?.role === 'patient'
 
-  const displayName =
-    user?.name ||
-    (isDoctor ? 'Doctor' : isPatient ? 'Patient' : 'Guest')
+  const displayName = isDoctor
+    ? `Dr ${user?.name || 'Doctor'}`
+    : user?.name || 'Patient'
 
-  const { loading: jitsiLoading, error: jitsiError, hangup } = useJitsi({
-    containerRef: jitsiRef,
-    roomName: appointment ? `${ROOM_PREFIX}${appointment._id}` : null,
-    displayName: isDoctor ? `Dr ${displayName}` : displayName,
-    email: user?.email,
-    enabled: !!appointment,
+  const isDaily = session?.provider === 'daily'
+
+  // Daily path — preferred.
+  const dailyState = useDailyVideo({
+    containerRef: stageRef,
+    url: isDaily ? session?.url : null,
+    token: isDaily ? session?.token : null,
+    displayName,
+    enabled: !!isDaily,
     onLeft: () => {
-      // Patient leaving the call returns to dashboard; doctor stays for notes.
       if (isPatient) navigate('/patient', { replace: true })
     },
   })
 
-  if (isLoading) {
+  // Jitsi fallback (used only when Daily isn't configured server-side).
+  const jitsiState = useJitsi({
+    containerRef: stageRef,
+    roomName: !isDaily && session ? session.roomName : null,
+    displayName,
+    email: user?.email,
+    enabled: !isDaily && !!session,
+    onLeft: () => {
+      if (isPatient) navigate('/patient', { replace: true })
+    },
+  })
+
+  const videoLoading = isDaily ? dailyState.loading : jitsiState.loading
+  const videoError = isDaily ? dailyState.error : jitsiState.error
+  const hangup = isDaily ? dailyState.hangup : jitsiState.hangup
+
+  if (isLoading || (appointment && sessionLoading)) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Spinner />
@@ -54,26 +78,27 @@ const VideoConsultPage = () => {
 
   if (error || !appointment) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background p-6">
-        <div className="text-center max-w-sm">
-          <h1 className="font-display text-2xl tracking-tight">
-            Couldn't open this consultation
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {error?.response?.data?.message ||
-              "We couldn't load the appointment. It may have been cancelled or you don't have access."}
-          </p>
-          <Button
-            className="mt-5 rounded-full"
-            onClick={() => {
-              if (refetch) refetch()
-              else navigate(-1)
-            }}
-          >
-            Try again
-          </Button>
-        </div>
-      </div>
+      <ErrorState
+        title="Couldn't open this consultation"
+        message={
+          error?.response?.data?.message ||
+          "We couldn't load the appointment. It may have been cancelled or you don't have access."
+        }
+        onRetry={() => refetch?.()}
+      />
+    )
+  }
+
+  if (sessionError || !session) {
+    return (
+      <ErrorState
+        title="Video session unavailable"
+        message={
+          sessionError?.response?.data?.message ||
+          "We couldn't start the video room. Check your network and try again."
+        }
+        onRetry={() => refetch?.()}
+      />
     )
   }
 
@@ -117,6 +142,20 @@ const VideoConsultPage = () => {
             <span className="font-mono tabular-nums text-xs text-muted-foreground">
               {slotTime}
             </span>
+            <span
+              className={`text-[10px] uppercase tracking-[0.14em] rounded-full px-2 py-0.5 ${
+                isDaily
+                  ? 'bg-sage/15 text-sage-foreground border border-sage/30'
+                  : 'bg-muted text-muted-foreground border border-border'
+              }`}
+              title={
+                isDaily
+                  ? 'Powered by Daily.co — adaptive bitrate'
+                  : 'Jitsi fallback (configure Daily for low-bandwidth mode)'
+              }
+            >
+              {isDaily ? 'daily' : 'jitsi'}
+            </span>
           </div>
 
           <Button
@@ -137,18 +176,18 @@ const VideoConsultPage = () => {
         </header>
 
         <div className="relative flex-1 bg-black">
-          {jitsiLoading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center text-sm text-muted-foreground">
+          {videoLoading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center text-sm text-muted-foreground bg-black/80">
               <Spinner />
               <span className="ml-2">Connecting to the room…</span>
             </div>
           )}
-          {jitsiError && (
+          {videoError && (
             <div className="absolute inset-0 z-10 flex items-center justify-center text-sm text-destructive bg-background/95 p-6 text-center">
-              {jitsiError}
+              {videoError}
             </div>
           )}
-          <div ref={jitsiRef} className="h-full w-full" />
+          <div ref={stageRef} className="h-full w-full" />
         </div>
       </div>
 
@@ -192,7 +231,18 @@ const VideoConsultPage = () => {
   )
 }
 
-// Patient's side panel: appointment summary + last consult notes if completed.
+const ErrorState = ({ title, message, onRetry }) => (
+  <div className="flex h-screen w-screen items-center justify-center bg-background p-6">
+    <div className="text-center max-w-sm">
+      <h1 className="font-display text-2xl tracking-tight">{title}</h1>
+      <p className="mt-2 text-sm text-muted-foreground">{message}</p>
+      <Button className="mt-5 rounded-full" onClick={onRetry}>
+        Try again
+      </Button>
+    </div>
+  </div>
+)
+
 const PatientSidePanel = ({ appointment, peer }) => (
   <div className="overflow-y-auto h-full">
     <header className="px-4 py-3 border-b border-border/60 sticky top-0 bg-card z-10">
@@ -208,7 +258,10 @@ const PatientSidePanel = ({ appointment, peer }) => (
     </header>
 
     <div className="p-4 space-y-4">
-      <Row label="When" value={format(new Date(appointment.datetime), "EEE, MMM d · h:mm a")} />
+      <Row
+        label="When"
+        value={format(new Date(appointment.datetime), "EEE, MMM d · h:mm a")}
+      />
       <Row label="Status" value={appointment.status} />
       <Row label="Mode" value={appointment.mode || 'video'} />
       <Row label="Payment" value={appointment.paymentStatus || 'free'} />
@@ -222,7 +275,7 @@ const PatientSidePanel = ({ appointment, peer }) => (
             {appointment.doctorNotes || 'No notes were added.'}
           </div>
           {appointment.prescription && (
-            <pre className="rounded-xl border border-border/60 bg-muted/60 p-3 text-[11px] font-mono whitespace-pre-wrap break-words">
+            <pre className="rounded-xl border border-border/60 bg-muted/60 p-3 text-[11px] font-mono whitespace-pre-wrap wrap-break-word">
               {typeof appointment.prescription === 'string'
                 ? appointment.prescription
                 : JSON.stringify(appointment.prescription, null, 2)}

@@ -16,6 +16,7 @@ class AppointmentController {
     notificationService,
     mailgenService,
     icsService,
+    dailyService,
     logger
   ) {
     this.apptSvc = appointmentService
@@ -24,6 +25,7 @@ class AppointmentController {
     this.notificationSvc = notificationService
     this.mailgenSvc = mailgenService
     this.icsSvc = icsService
+    this.dailySvc = dailyService
     this.log = logger
   }
 
@@ -191,6 +193,69 @@ class AppointmentController {
           'Consultation saved and added to the patient’s record.'
         )
       )
+  }
+
+  // ── Video session (Daily.co) ─────────────────────────────────────────────
+  // GET /appointments/:id/video-session
+  // Returns { provider, url, token } for the frontend to mount the call.
+  // Falls back to Jitsi public room if Daily isn't configured, so the demo
+  // still works without API keys.
+  async getVideoSession(req, res) {
+    const appt = await this.apptSvc.findByIdPopulated(req.params.id)
+    if (!appt) throw new ApiError(404, 'Appointment not found.')
+    if (!this.canAccess(appt, req.user)) {
+      throw new ApiError(403, 'You do not have access to this appointment.')
+    }
+
+    const roomName = `meddx-${appt._id}`
+    const slotStartMs = new Date(appt.datetime).getTime()
+    // Room expires 90 minutes after the slot — long enough to run over.
+    const expSec = Math.floor((slotStartMs + 90 * 60 * 1000) / 1000)
+
+    if (!this.dailySvc?.isConfigured) {
+      this.log.warn({
+        msg: 'Daily not configured — falling back to Jitsi public room',
+      })
+      return res.status(200).json(
+        new ApiResponse(
+          200,
+          {
+            provider: 'jitsi',
+            url: `https://meet.jit.si/${roomName}`,
+            roomName,
+            token: null,
+          },
+          'Video session ready (Jitsi fallback).'
+        )
+      )
+    }
+
+    try {
+      const { url } = await this.dailySvc.ensureRoom({ name: roomName, expSec })
+      const isDoctor = req.user.role === UserRoles.DOCTOR
+      const displayName = isDoctor
+        ? `Dr ${req.user.name || 'Doctor'}`
+        : req.user.name || 'Patient'
+      const token = await this.dailySvc.createMeetingToken({
+        roomName,
+        userName: displayName,
+        isOwner: isDoctor,
+        expSec,
+      })
+      return res.status(200).json(
+        new ApiResponse(
+          200,
+          { provider: 'daily', url, roomName, token },
+          'Video session ready.'
+        )
+      )
+    } catch (err) {
+      this.log.error({
+        msg: 'Daily session create failed',
+        error: err?.message,
+      })
+      throw new ApiError(502, 'Could not start the video session.')
+    }
   }
 
   // ── Calendar invite + email ─────────────────────────────────────────────

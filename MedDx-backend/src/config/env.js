@@ -28,6 +28,9 @@ const {
   RAZORPAY_KEY_SECRET,
 
   CLOUDINARY_URL,
+
+  DAILY_API_KEY,
+  DAILY_DOMAIN,
 } = process.env
 
 const ENV = {
@@ -57,6 +60,9 @@ const ENV = {
   RAZORPAY_KEY_SECRET,
 
   CLOUDINARY_URL,
+
+  DAILY_API_KEY,
+  DAILY_DOMAIN,
 }
 
 export default ENV
