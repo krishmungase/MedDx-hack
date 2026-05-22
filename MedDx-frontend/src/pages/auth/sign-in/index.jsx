@@ -8,7 +8,7 @@ const SignInPage = () => {
   usePageTitle({ title: pageTitle.SIGN_IN_PAGE })
 
   return (
-    <div className="grid min-h-[calc(100vh-4rem)] lg:grid-cols-[1.05fr_1fr] bg-grain">
+    <div className="grid h-[calc(100vh-4rem)] overflow-hidden lg:grid-cols-[1.1fr_1fr]">
       <AuthAside
         title="Welcome back to"
         italicWord="quieter care."

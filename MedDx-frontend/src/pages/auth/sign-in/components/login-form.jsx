@@ -2,7 +2,14 @@ import * as z from 'zod'
 import { Link } from 'react-router'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { ArrowRight, Eye, EyeOff } from 'lucide-react'
+import {
+  ArrowRight,
+  Eye,
+  EyeOff,
+  HeartPulse,
+  Lock,
+  Mail,
+} from 'lucide-react'
 import { zodResolver } from '@hookform/resolvers/zod'
 
 import { Input } from '@/components/ui/input'
@@ -18,6 +25,7 @@ import {
 } from '@/components/ui/form'
 
 import { useLogin } from '@/apis'
+import { Mark } from '@/components/shared/logo'
 
 const formSchema = z.object({
   email: z
@@ -41,37 +49,51 @@ const LoginForm = () => {
   const onSubmit = (data) => login({ data })
 
   return (
-    <section className="flex items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-md fade-up">
-        <div className="mb-8">
-          <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">
-            Sign in
-          </p>
-          <h1 className="mt-3 font-display text-4xl md:text-5xl tracking-tight leading-tight">
-            Welcome back.
+    <section className="relative flex items-center justify-center px-6 py-8 lg:p-10 bg-aurora overflow-hidden">
+      <div className="relative w-full max-w-md fade-up">
+        {/* Mobile brand */}
+        <div className="mb-6 flex items-center gap-2 lg:hidden">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <Mark className="h-5 w-5" />
+          </span>
+          <span className="font-display text-lg font-bold tracking-tight">
+            MedDx<span className="text-primary">.</span>
+          </span>
+        </div>
+
+        {/* Heading */}
+        <div className="mb-6">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
+            <HeartPulse className="h-3 w-3" />
+            Welcome back
+          </span>
+          <h1 className="mt-3 font-display text-3xl md:text-4xl tracking-tight leading-[1.05]">
+            Sign in to{' '}
+            <span className="italic text-primary">your care.</span>
           </h1>
-          <p className="mt-3 text-muted-foreground">
-            Continue to your patient, doctor, or admin dashboard.
-          </p>
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+                  <FormLabel className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground font-bold">
                     Email
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="you@example.com"
-                      className="h-12 rounded-xl bg-card border-border focus-visible:ring-2 focus-visible:ring-ring/40"
-                      {...field}
-                    />
+                    <div className="relative">
+                      <Mail className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="email"
+                        placeholder="you@example.com"
+                        autoComplete="email"
+                        className="h-11 pl-11 rounded-xl bg-card border-border focus-visible:ring-4 focus-visible:ring-primary/15 focus-visible:border-primary/40"
+                        {...field}
+                      />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -83,15 +105,17 @@ const LoginForm = () => {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+                  <FormLabel className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground font-bold">
                     Password
                   </FormLabel>
                   <FormControl>
                     <div className="relative">
+                      <Lock className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         type={showPassword ? 'text' : 'password'}
                         placeholder="Enter your password"
-                        className="h-12 rounded-xl bg-card border-border pr-11 focus-visible:ring-2 focus-visible:ring-ring/40"
+                        autoComplete="current-password"
+                        className="h-11 pl-11 pr-11 rounded-xl bg-card border-border focus-visible:ring-4 focus-visible:ring-primary/15 focus-visible:border-primary/40"
                         {...field}
                       />
                       <button
@@ -100,7 +124,7 @@ const LoginForm = () => {
                           showPassword ? 'Hide password' : 'Show password'
                         }
                         onClick={() => setShowPassword((p) => !p)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                       >
                         {showPassword ? (
                           <EyeOff className="h-4 w-4" />
@@ -118,7 +142,7 @@ const LoginForm = () => {
             <Button
               type="submit"
               disabled={isLoading}
-              className="group w-full h-12 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 text-base font-medium"
+              className="group w-full h-11 mt-2 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-semibold shadow-lg shadow-primary/25"
             >
               {isLoading ? (
                 <Spinner />
@@ -130,31 +154,14 @@ const LoginForm = () => {
               )}
             </Button>
 
-            <div className="relative my-2">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-background px-3 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                  New to MedDx
-                </span>
-              </div>
-            </div>
-
-            <Link
-              to="/auth/sign-up"
-              className="block text-center text-sm text-foreground"
-            >
-              Create a{' '}
-              <span className="font-medium text-primary underline-offset-4 hover:underline">
-                patient account
-              </span>
-            </Link>
-
-            <p className="mt-6 text-center text-[11px] text-muted-foreground leading-relaxed">
-              Doctors are registered by an admin and cannot self-register.
-              <br />
-              First consultation is always free.
+            <p className="text-center text-sm text-muted-foreground pt-1">
+              New here?{' '}
+              <Link
+                to="/auth/sign-up"
+                className="font-bold text-primary underline-offset-4 hover:underline"
+              >
+                Create a free account
+              </Link>
             </p>
           </form>
         </Form>
