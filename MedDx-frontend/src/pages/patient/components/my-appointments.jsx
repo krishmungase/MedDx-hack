@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { format, isPast } from 'date-fns'
 import {
   CalendarClock,
@@ -19,7 +20,6 @@ const STATUS_TONE = {
   cancelled: 'bg-destructive/10 text-destructive border-destructive/25',
 }
 
-// A slot is "joinable" from 5 minutes before until 60 minutes after start.
 const JOIN_WINDOW_BEFORE_MS = 5 * 60 * 1000
 const JOIN_WINDOW_AFTER_MS = 60 * 60 * 1000
 
@@ -32,14 +32,15 @@ const isJoinable = (appt) => {
 
 const MyAppointments = () => {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { appointments, isLoading } = useMyAppointments()
 
   const { upcoming, past } = useMemo(() => {
     const upcoming = []
     const past = []
     for (const a of appointments) {
-      const t = new Date(a.datetime)
-      if (a.status === 'completed' || isPast(t)) past.push(a)
+      const dt = new Date(a.datetime)
+      if (a.status === 'completed' || isPast(dt)) past.push(a)
       else upcoming.push(a)
     }
     upcoming.sort((a, b) => new Date(a.datetime) - new Date(b.datetime))
@@ -52,9 +53,14 @@ const MyAppointments = () => {
   return (
     <section className="rounded-2xl border border-border/70 bg-card overflow-hidden">
       <header className="px-6 py-4 border-b border-border/70">
-        <h2 className="font-display text-xl tracking-tight">My appointments</h2>
+        <h2 className="font-display text-xl tracking-tight">
+          {t('appointments.card_title')}
+        </h2>
         <p className="text-xs text-muted-foreground mt-0.5">
-          {upcoming.length} upcoming · {past.length} completed
+          {t('appointments.summary', {
+            upcoming: upcoming.length,
+            completed: past.length,
+          })}
         </p>
       </header>
 
@@ -63,7 +69,7 @@ const MyAppointments = () => {
       ) : (
         <div className="divide-y divide-border/60">
           {upcoming.length > 0 && (
-            <Group title="Upcoming">
+            <Group title={t('appointments.section_upcoming')}>
               {upcoming.map((a) => (
                 <Row
                   key={a._id}
@@ -76,12 +82,14 @@ const MyAppointments = () => {
                       disabled={!isJoinable(a)}
                       title={
                         !isJoinable(a)
-                          ? 'You can join 5 minutes before your slot.'
-                          : 'Join the video call'
+                          ? t('appointments.join_too_early')
+                          : t('appointments.join_open')
                       }
                     >
                       <Video className="h-3.5 w-3.5" />
-                      {isJoinable(a) ? 'Join call' : 'Not yet'}
+                      {isJoinable(a)
+                        ? t('appointments.join_call')
+                        : t('appointments.not_yet')}
                     </Button>
                   }
                 />
@@ -90,7 +98,7 @@ const MyAppointments = () => {
           )}
 
           {past.length > 0 && (
-            <Group title="History">
+            <Group title={t('appointments.section_history')}>
               {past.map((a) => (
                 <Row
                   key={a._id}
@@ -102,7 +110,7 @@ const MyAppointments = () => {
                       className="rounded-full"
                       onClick={() => navigate(`/video/${a._id}`)}
                     >
-                      View notes
+                      {t('appointments.view_notes')}
                       <ChevronRight className="h-3.5 w-3.5" />
                     </Button>
                   }
@@ -126,6 +134,7 @@ const Group = ({ title, children }) => (
 )
 
 const Row = ({ appt, primary }) => {
+  const { t } = useTranslation()
   const doctor = appt.doctorId
   const time = format(new Date(appt.datetime), "EEE, MMM d · h:mm a")
   return (
@@ -139,9 +148,9 @@ const Row = ({ appt, primary }) => {
       </span>
       <div className="min-w-0 flex-1">
         <p className="font-medium text-sm truncate">
-          Dr {doctor?.name || 'Unknown'}{' '}
+          Dr {doctor?.name || '—'}{' '}
           <span className="text-muted-foreground font-normal">
-            · {doctor?.specialty || 'Consultation'}
+            · {doctor?.specialty || ''}
           </span>
         </p>
         <p className="text-xs text-muted-foreground font-mono tabular-nums mt-0.5">
@@ -154,7 +163,7 @@ const Row = ({ appt, primary }) => {
           STATUS_TONE[appt.status] || ''
         }`}
       >
-        {appt.status}
+        {t(`status.${appt.status}`, { defaultValue: appt.status })}
       </Badge>
       {primary}
     </li>
@@ -169,18 +178,21 @@ const Loading = () => (
   </section>
 )
 
-const Empty = () => (
-  <div className="py-14 text-center">
-    <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-clinic/10 text-clinic">
-      <CalendarClock className="h-6 w-6" />
-    </span>
-    <h3 className="mt-4 font-display text-lg tracking-tight">
-      No appointments yet
-    </h3>
-    <p className="mt-1 text-sm text-muted-foreground max-w-sm mx-auto">
-      Pick a specialist below to book your first 30-minute video consult.
-    </p>
-  </div>
-)
+const Empty = () => {
+  const { t } = useTranslation()
+  return (
+    <div className="py-14 text-center">
+      <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-clinic/10 text-clinic">
+        <CalendarClock className="h-6 w-6" />
+      </span>
+      <h3 className="mt-4 font-display text-lg tracking-tight">
+        {t('appointments.empty_title')}
+      </h3>
+      <p className="mt-1 text-sm text-muted-foreground max-w-sm mx-auto">
+        {t('appointments.empty_body')}
+      </p>
+    </div>
+  )
+}
 
 export default MyAppointments

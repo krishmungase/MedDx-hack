@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Search, Stethoscope, UserSearch, X } from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
@@ -27,16 +28,15 @@ const URGENCY_TONE = {
 
 const FindDoctor = ({
   onBooked,
-  specialtyFilter, // string from ?specialty=...
-  onClearSpecialty, // called when user clicks the X chip
-  triage, // optional triage context {summary, urgency, specialty, reason}
+  specialtyFilter,
+  onClearSpecialty,
+  triage,
 }) => {
+  const { t } = useTranslation()
   const { doctors, isLoading } = useActiveDoctors()
   const [query, setQuery] = useState('')
   const [picked, setPicked] = useState(null)
 
-  // Whenever the specialty filter changes (e.g. user came from triage),
-  // pre-populate the search box so the chip + input stay in sync.
   useEffect(() => {
     if (specialtyFilter) setQuery(specialtyFilter)
   }, [specialtyFilter])
@@ -51,23 +51,32 @@ const FindDoctor = ({
     )
   }, [doctors, query])
 
+  const countLabel = query
+    ? t('doctors_page.match_count_q', {
+        shown: filtered.length,
+        total: doctors.length,
+        q: query,
+      })
+    : t('doctors_page.match_count', {
+        shown: filtered.length,
+        total: doctors.length,
+      })
+
   return (
     <section className="rounded-2xl border border-border/70 bg-card overflow-hidden">
       <header className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-border/70">
         <div className="space-y-1">
-          <h2 className="font-display text-xl tracking-tight">Find a doctor</h2>
-          <p className="text-xs text-muted-foreground">
-            {filtered.length} of {doctors.length} specialist
-            {doctors.length === 1 ? '' : 's'} match
-            {specialtyFilter ? ` "${specialtyFilter}"` : ''}
-          </p>
+          <h2 className="font-display text-xl tracking-tight">
+            {t('doctors_page.card_title')}
+          </h2>
+          <p className="text-xs text-muted-foreground">{countLabel}</p>
         </div>
         <div className="relative w-full sm:w-72">
           <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name or specialty"
+            placeholder={t('doctors_page.search_placeholder')}
             className="h-10 pl-9 rounded-full bg-background"
           />
         </div>
@@ -79,10 +88,10 @@ const FindDoctor = ({
             variant="outline"
             className={`rounded-full text-[10px] uppercase tracking-[0.14em] ${URGENCY_TONE[triage.urgency] || ''}`}
           >
-            {triage.urgency} urgency
+            {t('triage.result_urgency', { level: t(`urgency.${triage.urgency}`) })}
           </Badge>
           <span className="text-muted-foreground">
-            Suggested by your symptom check —
+            {t('doctors_page.triage_suggestion_prefix')}
           </span>
           <span className="font-medium text-foreground">{triage.specialty}</span>
           {specialtyFilter && onClearSpecialty && (
@@ -92,7 +101,7 @@ const FindDoctor = ({
               className="ml-auto inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
             >
               <X className="h-3 w-3" />
-              Show all
+              {t('common.show_all')}
             </button>
           )}
         </div>
@@ -100,7 +109,7 @@ const FindDoctor = ({
 
       {!triage && specialtyFilter && onClearSpecialty && (
         <div className="px-6 py-2 border-b border-border/60 bg-muted/30 flex items-center gap-2 text-xs text-muted-foreground">
-          <span>Filtered by specialty:</span>
+          <span>{t('doctors_page.filtered_by_specialty')}</span>
           <Badge variant="outline" className="rounded-full">
             {specialtyFilter}
           </Badge>
@@ -110,7 +119,7 @@ const FindDoctor = ({
             className="ml-auto inline-flex items-center gap-1 hover:text-foreground transition-colors"
           >
             <X className="h-3 w-3" />
-            Clear
+            {t('common.clear')}
           </button>
         </div>
       )}
@@ -134,7 +143,7 @@ const FindDoctor = ({
                   Dr {d.name}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {d.specialty || 'General practitioner'}
+                  {d.specialty || t('doctors_page.general_practitioner')}
                 </p>
               </div>
               <Button
@@ -143,7 +152,7 @@ const FindDoctor = ({
                 onClick={() => setPicked(d)}
               >
                 <Stethoscope className="h-3.5 w-3.5" />
-                Book a slot
+                {t('doctors_page.book_slot')}
               </Button>
             </li>
           ))}
@@ -176,20 +185,25 @@ const Loading = () => (
   </ul>
 )
 
-const Empty = ({ hasQuery }) => (
-  <div className="py-14 text-center">
-    <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
-      <UserSearch className="h-6 w-6" />
-    </span>
-    <h3 className="mt-4 font-display text-lg tracking-tight">
-      {hasQuery ? 'No matches' : 'No doctors yet'}
-    </h3>
-    <p className="mt-1 text-sm text-muted-foreground max-w-sm mx-auto">
-      {hasQuery
-        ? 'Try a different name or specialty.'
-        : 'New specialists are onboarded by admins. Check back soon.'}
-    </p>
-  </div>
-)
+const Empty = ({ hasQuery }) => {
+  const { t } = useTranslation()
+  return (
+    <div className="py-14 text-center">
+      <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
+        <UserSearch className="h-6 w-6" />
+      </span>
+      <h3 className="mt-4 font-display text-lg tracking-tight">
+        {hasQuery
+          ? t('doctors_page.empty_no_match_title')
+          : t('doctors_page.empty_no_doctors_title')}
+      </h3>
+      <p className="mt-1 text-sm text-muted-foreground max-w-sm mx-auto">
+        {hasQuery
+          ? t('doctors_page.empty_no_match_body')
+          : t('doctors_page.empty_no_doctors_body')}
+      </p>
+    </div>
+  )
+}
 
 export default FindDoctor

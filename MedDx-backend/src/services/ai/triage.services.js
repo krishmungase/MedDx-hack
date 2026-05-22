@@ -5,6 +5,14 @@ import { TriageUrgency } from '../../constants/index.js'
 
 const MODEL = 'llama-3.3-70b-versatile'
 
+// Languages the patient-facing summary + reason should be written in.
+// JSON keys stay constant; only the prose inside them changes.
+const ALLOWED_LANGUAGES = {
+  en: 'English',
+  hi: 'Hindi (हिंदी, Devanagari script)',
+  mr: 'Marathi (मराठी, Devanagari script)',
+}
+
 // Specialties the LLM is allowed to recommend. Kept aligned with the
 // onboarding wizard the admin uses for doctors.
 const ALLOWED_SPECIALTIES = [
@@ -24,14 +32,14 @@ const ALLOWED_SPECIALTIES = [
 
 const VALID_URGENCIES = Object.values(TriageUrgency)
 
-const SYSTEM_PROMPT = `You are MedDx's triage assistant. You receive a patient's reported symptoms and triage them.
+const buildSystemPrompt = (langLabel) => `You are MedDx's triage assistant. You receive a patient's reported symptoms and triage them.
 
 CRITICAL RULES — read carefully:
 - You DO NOT diagnose, prescribe, or give treatment plans.
 - You only:
   1. Estimate an urgency level
   2. Suggest a medical specialty
-  3. Summarise the symptoms back to the patient in plain English
+  3. Summarise the symptoms back to the patient
 
 URGENCY definitions:
 - "emergency" — only for: chest pain, severe bleeding, loss of consciousness, severe trauma, suspected stroke (face droop / weakness / speech), anaphylaxis, suicidal intent, sudden vision loss, severe shortness of breath. Recommend the patient call emergency services immediately.
@@ -42,12 +50,14 @@ URGENCY definitions:
 ALLOWED specialties (pick exactly one): ${ALLOWED_SPECIALTIES.join(', ')}.
 If no specialty clearly fits, default to "General Medicine".
 
+LANGUAGE — write the values of the "reason" and "english_summary" fields in ${langLabel}. Use simple, everyday words (class-6 reading level). The JSON keys MUST stay exactly as shown below in English; only the prose values change language. The "urgency_level" and "recommended_specialty" values MUST remain in English (lowercase enum and the exact specialty string from the list above).
+
 OUTPUT FORMAT — return ONLY a single JSON object, no markdown, no commentary, no code fences:
 {
   "urgency_level": "low" | "medium" | "high" | "emergency",
-  "recommended_specialty": "<one of the allowed specialties>",
-  "reason": "<one sentence explaining why you chose that urgency + specialty>",
-  "english_summary": "<two-sentence neutral summary of what the patient described>"
+  "recommended_specialty": "<one of the allowed specialties, in English>",
+  "reason": "<one sentence in ${langLabel} explaining why you chose that urgency + specialty>",
+  "english_summary": "<two-sentence neutral summary in ${langLabel} of what the patient described>"
 }`
 
 const buildUserPrompt = ({ symptoms, duration, severity, age, sex, extra }) => {
@@ -89,9 +99,11 @@ class TriageService {
   }
 
   async assess(input) {
+    const lang = ALLOWED_LANGUAGES[input.language] ? input.language : 'en'
+    const langLabel = ALLOWED_LANGUAGES[lang]
     const userPrompt = buildUserPrompt(input)
     const response = await this.llm.invoke([
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: buildSystemPrompt(langLabel) },
       { role: 'user', content: userPrompt },
     ])
 

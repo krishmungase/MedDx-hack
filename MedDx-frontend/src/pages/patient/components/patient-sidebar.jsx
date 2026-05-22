@@ -1,7 +1,7 @@
+import { useTranslation } from 'react-i18next'
 import {
   CalendarClock,
   FileText,
-  Languages,
   Settings,
   Sparkles,
   Stethoscope,
@@ -9,45 +9,48 @@ import {
 
 import RoleSidebar from '@/components/shared/role-sidebar'
 
-const consoleItems = [
-  {
-    id: 'appointments',
-    label: 'My appointments',
-    icon: CalendarClock,
-    to: '/patient',
-    end: true,
-  },
-  {
-    id: 'triage',
-    label: 'Symptom check',
-    icon: Sparkles,
-    to: '/patient/triage',
-  },
-  {
-    id: 'doctors',
-    label: 'Find a doctor',
-    icon: Stethoscope,
-    to: '/patient/doctors',
-  },
-  {
-    id: 'records',
-    label: 'My records',
-    icon: FileText,
-    to: '/patient/records',
-  },
-]
+const PatientSidebar = () => {
+  const { t } = useTranslation()
 
-const futureItems = [
-  { id: 'language', label: 'Language', icon: Languages, soon: 'Phase 8' },
-  { id: 'settings', label: 'Settings', icon: Settings, soon: '—' },
-]
+  const consoleItems = [
+    {
+      id: 'appointments',
+      label: t('nav.appointments'),
+      icon: CalendarClock,
+      to: '/patient',
+      end: true,
+    },
+    {
+      id: 'triage',
+      label: t('nav.triage'),
+      icon: Sparkles,
+      to: '/patient/triage',
+    },
+    {
+      id: 'doctors',
+      label: t('nav.doctors'),
+      icon: Stethoscope,
+      to: '/patient/doctors',
+    },
+    {
+      id: 'records',
+      label: t('nav.records'),
+      icon: FileText,
+      to: '/patient/records',
+    },
+  ]
 
-const PatientSidebar = () => (
-  <RoleSidebar
-    eyebrow="Patient"
-    consoleItems={consoleItems}
-    futureItems={futureItems}
-  />
-)
+  const futureItems = [
+    { id: 'settings', label: t('nav.settings'), icon: Settings, soon: '—' },
+  ]
+
+  return (
+    <RoleSidebar
+      eyebrow="Patient"
+      consoleItems={consoleItems}
+      futureItems={futureItems}
+    />
+  )
+}
 
 export default PatientSidebar

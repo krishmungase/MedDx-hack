@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 
 import { useTriage } from '@/apis'
 import { usePageTitle } from '@/hooks'
@@ -11,6 +12,7 @@ import TriageResult from '../components/triage-result'
 const TriagePage = () => {
   usePageTitle({ title: pageTitle.PATIENT_DASHBOARD })
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   const { assess, isLoading, triage, disclaimer, reset, error } = useTriage()
 
@@ -47,11 +49,10 @@ const TriagePage = () => {
     <div className="space-y-8 max-w-3xl">
       <div className="fade-up">
         <h1 className="font-display text-4xl md:text-5xl tracking-tight leading-tight">
-          Symptom check.
+          {t('triage.page_title')}
         </h1>
         <p className="mt-3 max-w-2xl text-muted-foreground leading-relaxed">
-          A quick AI-assisted triage. We never diagnose — we just suggest how
-          urgent your case is and which kind of doctor to see.
+          {t('triage.page_subtitle')}
         </p>
       </div>
 

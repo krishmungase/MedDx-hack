@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { format, isSameDay, isToday, isTomorrow } from 'date-fns'
 import { CalendarX, Clock, IndianRupee, Stethoscope } from 'lucide-react'
 
@@ -25,28 +26,36 @@ import { errorToast, successToast } from '@/lib'
 
 const CONSULT_RUPEES = 199
 
-const dayHeading = (date) => {
-  if (isToday(date)) return 'Today'
-  if (isTomorrow(date)) return 'Tomorrow'
+const dayHeading = (date, t) => {
+  if (isToday(date)) return t('book_dialog.day_today')
+  if (isTomorrow(date)) return t('book_dialog.day_tomorrow')
   return format(date, 'EEE, MMM d')
 }
 
 // Decide the price label for the chip + button before we even hit the server.
 // Backend remains the source of truth — this is just so the patient isn't
 // surprised when Razorpay either opens or doesn't.
-const computePricing = ({ user, triage }) => {
+const computePricing = ({ user, triage, t }) => {
   const isEmergency = triage?.urgency === 'emergency'
   const firstFree = !user?.freeConsultationUsed
   if (isEmergency) {
-    return { kind: 'free', label: 'Free · emergency', note: 'Free emergency consult.' }
+    return {
+      kind: 'free',
+      label: t('book_dialog.free_emergency'),
+      note: t('book_dialog.free_emergency_note'),
+    }
   }
   if (firstFree) {
-    return { kind: 'free', label: 'Free · first consult', note: 'Your first MedDx consult is on us.' }
+    return {
+      kind: 'free',
+      label: t('book_dialog.free_first'),
+      note: t('book_dialog.free_first_note'),
+    }
   }
   return {
     kind: 'paid',
     label: `₹${CONSULT_RUPEES}`,
-    note: '₹199 · 30-minute video consult. Paid via Razorpay (test mode).',
+    note: t('book_dialog.paid_note'),
   }
 }
 
@@ -57,6 +66,7 @@ const BookDoctorDialog = ({
   onBooked,
   triage,
 }) => {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [selected, setSelected] = useState(null)
   const { slots, isLoading } = useDoctorSlots({
@@ -71,7 +81,10 @@ const BookDoctorDialog = ({
   const [isPaying, setIsPaying] = useState(false)
 
   const busy = isBooking || isVerifying || isPaying
-  const pricing = useMemo(() => computePricing({ user, triage }), [user, triage])
+  const pricing = useMemo(
+    () => computePricing({ user, triage, t }),
+    [user, triage, t]
+  )
 
   // Group future + available slots by day.
   const groups = useMemo(() => {
@@ -90,7 +103,7 @@ const BookDoctorDialog = ({
   }, [slots])
 
   const finishBooking = (appointment) => {
-    successToast({ message: 'Appointment confirmed.' })
+    successToast({ message: t('book_dialog.confirm_booking') })
     onBooked?.(appointment)
     onOpenChange(false)
     setSelected(null)
@@ -181,10 +194,12 @@ const BookDoctorDialog = ({
             </span>
             <div className="min-w-0 flex-1">
               <DialogTitle className="font-display text-xl tracking-tight">
-                Book {doctor?.name}
+                {t('book_dialog.title', { name: doctor?.name || '' })}
               </DialogTitle>
               <DialogDescription className="mt-0.5 text-sm">
-                {doctor?.specialty} · pick an open slot below
+                {t('book_dialog.description', {
+                  specialty: doctor?.specialty || '',
+                })}
               </DialogDescription>
             </div>
             <Badge
@@ -214,7 +229,7 @@ const BookDoctorDialog = ({
                 <div key={g.date.toISOString()}>
                   <div className="flex items-baseline gap-3 mb-2.5">
                     <p className="font-display text-base tracking-tight">
-                      {dayHeading(g.date)}
+                      {dayHeading(g.date, t)}
                     </p>
                     <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                       {format(g.date, 'MMMM d, yyyy')}
@@ -251,7 +266,12 @@ const BookDoctorDialog = ({
           <div className="flex w-full items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground max-w-[55%]">
               {selected
-                ? `Selected: ${format(new Date(selected.datetime), "EEE, MMM d 'at' h:mm a")}`
+                ? t('book_dialog.selected', {
+                    when: format(
+                      new Date(selected.datetime),
+                      "EEE, MMM d 'at' h:mm a"
+                    ),
+                  })
                 : pricing.note}
             </p>
             <div className="flex items-center gap-2">
@@ -262,7 +282,7 @@ const BookDoctorDialog = ({
                   className="rounded-full"
                   disabled={busy}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </DialogClose>
               <Button
@@ -273,8 +293,8 @@ const BookDoctorDialog = ({
               >
                 {busy ? <Spinner /> : null}
                 {pricing.kind === 'paid'
-                  ? `Pay ₹${CONSULT_RUPEES} & book`
-                  : 'Confirm booking'}
+                  ? t('book_dialog.pay_and_book', { amount: CONSULT_RUPEES })
+                  : t('book_dialog.confirm_booking')}
               </Button>
             </div>
           </div>
@@ -302,19 +322,21 @@ const Loading = () => (
   </div>
 )
 
-const Empty = () => (
-  <div className="py-10 text-center">
-    <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-      <CalendarX className="h-5 w-5" />
-    </span>
-    <h3 className="mt-4 font-display text-lg tracking-tight">
-      No open slots yet
-    </h3>
-    <p className="mt-1 text-sm text-muted-foreground max-w-sm mx-auto">
-      This doctor hasn't published availability — try another specialist or
-      check back soon.
-    </p>
-  </div>
-)
+const Empty = () => {
+  const { t } = useTranslation()
+  return (
+    <div className="py-10 text-center">
+      <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+        <CalendarX className="h-5 w-5" />
+      </span>
+      <h3 className="mt-4 font-display text-lg tracking-tight">
+        {t('book_dialog.no_slots_title')}
+      </h3>
+      <p className="mt-1 text-sm text-muted-foreground max-w-sm mx-auto">
+        {t('book_dialog.no_slots_body')}
+      </p>
+    </div>
+  )
+}
 
 export default BookDoctorDialog

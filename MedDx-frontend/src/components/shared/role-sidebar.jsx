@@ -5,6 +5,7 @@ import { LogOut } from 'lucide-react'
 import { useAuth } from '@/hooks'
 import { logout } from '@/store'
 import { Mark } from '@/components/shared/logo'
+import LanguageSwitcher from '@/components/shared/language-switcher'
 import {
   Sidebar,
   SidebarContent,
@@ -161,7 +162,8 @@ const RoleSidebar = ({
         )}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-border/60 p-3">
+      <SidebarFooter className="border-t border-border/60 p-3 space-y-2">
+        <LanguageSwitcher />
         <div className="flex items-center gap-2.5 rounded-lg bg-card/60 p-2 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0">
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-clinic text-clinic-foreground text-xs font-semibold shrink-0">
             {initials}

@@ -1,4 +1,5 @@
 import { useLocation, Outlet } from 'react-router'
+import { useTranslation } from 'react-i18next'
 
 import {
   SidebarInset,
@@ -19,7 +20,14 @@ import {
  */
 const RoleShell = ({ sidebar, eyebrow, sections = {}, headerExtra = null }) => {
   const { pathname } = useLocation()
-  const section = sections[pathname] || ''
+  const { t } = useTranslation()
+  const rawSection = sections[pathname] || ''
+  // Allow callers to pass i18n keys (e.g. "nav.appointments"). If the key
+  // resolves, use the translation; otherwise treat the value as a literal.
+  const section = rawSection
+    ? t(rawSection, { defaultValue: rawSection })
+    : ''
+  const eyebrowText = eyebrow ? t(eyebrow, { defaultValue: eyebrow }) : ''
 
   return (
     <SidebarProvider
@@ -33,7 +41,7 @@ const RoleShell = ({ sidebar, eyebrow, sections = {}, headerExtra = null }) => {
           <SidebarTrigger className="h-8 w-8 rounded-full" />
           <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
             <span className="text-xs uppercase tracking-[0.18em] font-semibold">
-              {eyebrow}
+              {eyebrowText}
             </span>
             {section && (
               <>
