@@ -1,0 +1,42 @@
+{
+  "name": "wedogood",
+  "version": "1.0.0",
+  "description": "wedogood backend",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "nodemon api/index.js",
+    "start": "node api/index.js",
+    "vercel-build": "echo hello",
+    "format:check": "prettier . --check",
+    "format:write": "prettier . --write"
+  },
+  "author": "codemitrayt@gmail.com",
+  "license": "ISC",
+  "dependencies": {
+    "@langchain/core": "^0.3.75",
+    "@langchain/groq": "^0.2.3",
+    "@langchain/langgraph": "^0.4.9",
+    "bcrypt": "^5.1.1",
+    "cloudinary": "^2.5.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "express-session": "^1.18.1",
+    "express-validator": "^7.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "mailgen": "^2.0.28",
+    "mongoose": "^8.9.3",
+    "mongoose-aggregate-paginate-v2": "^1.1.4",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.16",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "winston": "^3.15.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7",
+    "prettier": "3.3.3"
+  }
+}

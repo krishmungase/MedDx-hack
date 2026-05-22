@@ -1,0 +1,36 @@
+# Node modules (should be installed inside the container)
+node_modules
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.*  # In case you use multiple env files like .env.production
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Editor/IDE settings
+.vscode
+.idea
+*.swp
+
+# Build output
+dist
+build
+coverage
+
+# Docker-related
+Dockerfile.dev
+docker-compose.yml
+docker-compose.override.yml
+
+# Git
+.git
+.gitignore
