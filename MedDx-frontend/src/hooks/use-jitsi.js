@@ -63,10 +63,14 @@ const useJitsi = ({
             email: email || undefined,
           },
           configOverwrite: {
+            // Skip Jitsi's "Join meeting" intro screen — current and legacy
+            // config keys both, since Jitsi renamed it across versions.
             prejoinPageEnabled: false,
+            prejoinConfig: { enabled: false },
             startWithAudioMuted: false,
             startWithVideoMuted: false,
             disableModeratorIndicator: true,
+            disableDeepLinking: true,
           },
           interfaceConfigOverwrite: {
             DEFAULT_BACKGROUND: '#0f172a',
@@ -89,11 +93,12 @@ const useJitsi = ({
         })
         apiRef.current = api
 
+        // Jitsi shows its own connecting UI inside the iframe. Drop our
+        // overlay as soon as the iframe is in the DOM so we don't double up.
+        if (!cancelled) setState({ loading: false, error: null })
+
         api.addEventListener('videoConferenceJoined', () => {
-          if (!cancelled) {
-            setState({ loading: false, error: null })
-            onReady?.()
-          }
+          if (!cancelled) onReady?.()
         })
         api.addEventListener('readyToClose', () => {
           if (!cancelled) onLeft?.()
