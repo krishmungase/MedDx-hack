@@ -5,10 +5,12 @@ import {
   TrendingUp,
 } from 'lucide-react'
 
-import { useMyEarnings, useMyProfile } from '@/apis'
+import { useMyEarnings, useMyProfile, useMyStats } from '@/apis'
 import { usePageTitle } from '@/hooks'
 import { pageTitle } from '@/constants'
 import { ProfileView } from '@/components'
+
+import PerformanceCard from '../components/performance-card'
 
 const formatRupees = (paise) =>
   new Intl.NumberFormat('en-IN', {
@@ -22,6 +24,7 @@ const DoctorProfilePage = () => {
 
   const { profile, isLoading, isFetching, refetch } = useMyProfile()
   const { balancePaise, transactions } = useMyEarnings()
+  const { stats } = useMyStats()
 
   return (
     <div className="space-y-6">
@@ -43,11 +46,14 @@ const DoctorProfilePage = () => {
         showSpecialty
         extraSection={
           profile ? (
-            <DoctorHighlights
-              profile={profile}
-              walletPaise={balancePaise}
-              consults={transactions?.length || 0}
-            />
+            <>
+              <DoctorHighlights
+                profile={profile}
+                walletPaise={balancePaise}
+                consults={transactions?.length || 0}
+              />
+              <PerformanceCard stats={stats} />
+            </>
           ) : null
         }
       />

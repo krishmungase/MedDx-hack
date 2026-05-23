@@ -20,6 +20,7 @@ import useActiveDoctors from './doctors/use-active-doctors'
 import useDoctorById from './doctors/use-doctor-by-id'
 import useMyEarnings from './doctors/use-my-earnings'
 import useMyPrescriptions from './doctors/use-my-prescriptions'
+import useMyStats from './doctors/use-my-stats'
 
 import useBookAppointment from './appointments/use-book-appointment'
 import useMyAppointments from './appointments/use-my-appointments'
@@ -58,6 +59,7 @@ export {
   useDoctorById,
   useMyEarnings,
   useMyPrescriptions,
+  useMyStats,
   useBookAppointment,
   useMyAppointments,
   useDoctorQueue,

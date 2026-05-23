@@ -18,7 +18,8 @@ const transactionService = new TransactionService(TransactionModel)
 const doctorController = new DoctorController(
   userService,
   transactionService,
-  AppointmentModel
+  AppointmentModel,
+  TransactionModel
 )
 
 // Public list (used by patients searching for specialists)
@@ -42,6 +43,15 @@ doctorRoutes.get(
   verifyJWT,
   asyncHandler((req, res, next) =>
     doctorController.getMyPrescriptions(req, res, next)
+  )
+)
+
+// Doctor's own performance stats (lifetime + this month + 6-month trend)
+doctorRoutes.get(
+  '/me/stats',
+  verifyJWT,
+  asyncHandler((req, res, next) =>
+    doctorController.getMyStats(req, res, next)
   )
 )
 
