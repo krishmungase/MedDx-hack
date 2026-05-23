@@ -7,6 +7,7 @@ import {
   SlotModel,
   TransactionModel,
   UserModel,
+  VillagePatientModel,
 } from '../../models/index.js'
 import { asyncHandler } from '../../utils/index.js'
 import { UserRoles } from '../../constants/index.js'
@@ -21,12 +22,14 @@ import {
   SlotService,
   TransactionService,
   UserService,
+  VillagePatientService,
 } from '../../services/index.js'
 import { AppointmentController } from '../../controllers/index.js'
 import {
   requireRole,
   validate,
   verifyJWT,
+  verifyPermission,
 } from '../../middlewares/index.js'
 import {
   bookValidator,
@@ -50,6 +53,7 @@ const icsService = new IcsService({
   organizerEmail: ENV.GMAIL_USER,
 })
 const dailyService = new DailyService()
+const vpService = new VillagePatientService(VillagePatientModel)
 
 const apptController = new AppointmentController(
   apptService,
@@ -62,24 +66,26 @@ const apptController = new AppointmentController(
   mailgenService,
   icsService,
   dailyService,
+  vpService,
   logger
 )
 
 appointmentRoutes.use(verifyJWT)
 
-// Patient: book a slot (may return Razorpay order if payment required)
+// Patient OR ASHA: book a slot. ASHA bookings include villagePatientId
+// in the body and are attributed via bookedByAshaId on the appointment.
 appointmentRoutes.post(
   '/book',
-  requireRole(UserRoles.PATIENT),
+  verifyPermission([UserRoles.PATIENT, UserRoles.ASHA]),
   bookValidator,
   validate,
   asyncHandler((req, res, next) => apptController.book(req, res, next))
 )
 
-// Patient: verify Razorpay payment and finalise the booking
+// Patient OR ASHA: verify Razorpay payment and finalise the booking
 appointmentRoutes.post(
   '/verify-payment',
-  requireRole(UserRoles.PATIENT),
+  verifyPermission([UserRoles.PATIENT, UserRoles.ASHA]),
   asyncHandler((req, res, next) =>
     apptController.verifyPayment(req, res, next)
   )
@@ -99,7 +105,7 @@ appointmentRoutes.get(
   asyncHandler((req, res, next) => apptController.getQueue(req, res, next))
 )
 
-// Shared (patient/doctor/admin) — controller does access check
+// Shared (patient/doctor/admin/asha) — controller does access check
 appointmentRoutes.get(
   '/:id',
   idParamValidator,

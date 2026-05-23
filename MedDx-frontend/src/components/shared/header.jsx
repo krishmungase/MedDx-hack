@@ -29,6 +29,7 @@ const Header = () => {
     location.pathname.startsWith('/admin') ||
     location.pathname.startsWith('/doctor') ||
     location.pathname.startsWith('/patient') ||
+    location.pathname.startsWith('/asha') ||
     location.pathname.startsWith('/video')
   if (onRoleDashboard) return null
 

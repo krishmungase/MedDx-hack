@@ -112,6 +112,156 @@ class AdminController {
     }
   }
 
+  // ── ASHA onboarding (same token/email flow as doctor) ─────────────────
+  async registerAsha(req, res) {
+    const { name, email, village, areaCode, ashaIdNumber, language } = req.body
+
+    const existing = await this.userSvc.findByEmail(email)
+    if (existing) {
+      throw new ApiError(409, 'A user with this email already exists.')
+    }
+
+    const passwordSetupToken = crypto.randomBytes(32).toString('hex')
+    const tokenExpiry = new Date(Date.now() + TOKEN_TTL_MS)
+
+    const asha = await this.userSvc.create({
+      name,
+      email,
+      role: UserRoles.ASHA,
+      accountStatus: AccountStatus.PENDING_SETUP,
+      village,
+      areaCode: areaCode || null,
+      ashaIdNumber,
+      language: language || 'en',
+      passwordSetupToken,
+      tokenExpiry,
+    })
+
+    const link = `${ENV.CLIENT_URL}/set-password?token=${passwordSetupToken}`
+    const mailerStatus = await this.sendAshaSetupEmail({ to: email, name, link })
+
+    this.log.info({
+      msg: 'ASHA invited',
+      data: { userId: asha._id, email, village, emailed: mailerStatus.sent },
+    })
+
+    return res
+      .status(201)
+      .json(
+        new ApiResponse(
+          201,
+          {
+            asha: this.serializeAsha(asha),
+            emailed: mailerStatus.sent,
+            ...(mailerStatus.sent ? {} : { link }),
+          },
+          mailerStatus.sent
+            ? 'ASHA registered. Set-password link emailed.'
+            : 'ASHA registered. Email not configured — share the link manually.'
+        )
+      )
+  }
+
+  async sendAshaSetupEmail({ to, name, link }) {
+    const { emailHTML, emailText } = this.mailgenSvc.generateEmail({
+      name,
+      intro: `You have been invited to join ${ENV.APP_NAME || 'MedDx'} as a community health worker (ASHA). Please set your password to activate your account.`,
+      actionInstructions:
+        'This one-time link expires in 24 hours. Click below to choose a password and sign in.',
+      actionText: 'Set my password',
+      actionLink: link,
+      outro:
+        "If you weren't expecting this invitation, you can safely ignore this email.",
+    })
+
+    try {
+      const result = await this.notificationSvc.send({
+        to,
+        subject: `Activate your ${ENV.APP_NAME || 'MedDx'} ASHA account`,
+        text: emailText,
+        html: emailHTML,
+      })
+      return { sent: result?.sent !== false }
+    } catch (err) {
+      this.log.error({ msg: MSG.MAILER.SEND_FAILED, error: err?.message })
+      return { sent: false }
+    }
+  }
+
+  // ── ASHA listing + status flip ────────────────────────────────────────
+  async listAshas(req, res) {
+    const ashas = await this.userSvc.findAll(
+      { role: UserRoles.ASHA },
+      { select: '-passwordHash -passwordSetupToken -tokenExpiry' }
+    )
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          { ashas: ashas.map((a) => this.serializeAsha(a)) },
+          'ASHAs fetched.'
+        )
+      )
+  }
+
+  async updateAshaStatus(req, res) {
+    const { id } = req.params
+    const { accountStatus } = req.body
+    const asha = await this.userSvc.findById(id)
+    if (!asha || asha.role !== UserRoles.ASHA) {
+      throw new ApiError(404, 'ASHA not found.')
+    }
+    const updated = await this.userSvc.updateById(id, { accountStatus })
+    this.log.info({
+      msg: `ASHA ${accountStatus === AccountStatus.SUSPENDED ? 'suspended' : 'reactivated'}`,
+      data: { ashaId: id, email: asha.email },
+    })
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          { asha: this.serializeAsha(updated) },
+          accountStatus === AccountStatus.SUSPENDED
+            ? 'ASHA suspended.'
+            : 'ASHA reactivated.'
+        )
+      )
+  }
+
+  async removeAsha(req, res) {
+    const { id } = req.params
+    const asha = await this.userSvc.findById(id)
+    if (!asha || asha.role !== UserRoles.ASHA) {
+      throw new ApiError(404, 'ASHA not found.')
+    }
+    await this.userSvc.deleteById(id)
+    this.log.info({
+      msg: 'ASHA removed',
+      data: { ashaId: id, email: asha.email },
+    })
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { id }, 'ASHA removed.'))
+  }
+
+  serializeAsha(asha) {
+    return {
+      _id: asha._id,
+      name: asha.name,
+      email: asha.email,
+      role: asha.role,
+      accountStatus: asha.accountStatus,
+      village: asha.village,
+      areaCode: asha.areaCode,
+      ashaIdNumber: asha.ashaIdNumber,
+      language: asha.language,
+      createdAt: asha.createdAt,
+      updatedAt: asha.updatedAt,
+    }
+  }
+
   // ── Doctor listing ────────────────────────────────────────────────────
   async listDoctors(req, res) {
     const doctors = await this.userSvc.findAll(

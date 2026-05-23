@@ -3,6 +3,7 @@ import SlotModel from './slot/slot.models.js'
 import AppointmentModel from './appointment/appointment.models.js'
 import MedicalRecordModel from './medical-record/medical-record.models.js'
 import TransactionModel from './transaction/transaction.models.js'
+import VillagePatientModel from './village-patient/village-patient.models.js'
 
 export {
   UserModel,
@@ -10,4 +11,5 @@ export {
   AppointmentModel,
   MedicalRecordModel,
   TransactionModel,
+  VillagePatientModel,
 }

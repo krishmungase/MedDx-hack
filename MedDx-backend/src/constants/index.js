@@ -6,7 +6,10 @@ export const UserRoles = {
   PATIENT: 'patient',
   DOCTOR: 'doctor',
   ADMIN: 'admin',
+  ASHA: 'asha',
 }
+
+export const AvailableGenders = ['male', 'female', 'other', 'prefer_not_to_say']
 
 export const AccountStatus = {
   ACTIVE: 'active',

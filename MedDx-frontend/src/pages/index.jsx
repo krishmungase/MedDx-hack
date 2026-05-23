@@ -20,9 +20,18 @@ import DoctorProfilePage from './doctor/pages/profile'
 import AdminLayout from './admin'
 import AdminOverviewPage from './admin/pages/overview'
 import AdminDoctorsPage from './admin/pages/doctors'
+import AdminAshasPage from './admin/pages/ashas'
 import AdminAppointmentsPage from './admin/pages/appointments'
 import AdminAuditLogPage from './admin/pages/audit-log'
 import AdminProfilePage from './admin/pages/profile'
+
+import AshaLayout from './asha'
+import AshaDashboardPage from './asha/pages/dashboard'
+import AshaPatientsPage from './asha/pages/patients'
+import AshaPatientDetailPage from './asha/pages/patient-detail'
+import AshaConsultStartPage from './asha/pages/consult-start'
+import AshaConsultDoctorPage from './asha/pages/consult-doctor'
+import AshaProfilePage from './asha/pages/profile'
 
 import VideoConsultPage from './video'
 
@@ -53,9 +62,17 @@ export {
   AdminLayout,
   AdminOverviewPage,
   AdminDoctorsPage,
+  AdminAshasPage,
   AdminAppointmentsPage,
   AdminAuditLogPage,
   AdminProfilePage,
+  AshaLayout,
+  AshaDashboardPage,
+  AshaPatientsPage,
+  AshaPatientDetailPage,
+  AshaConsultStartPage,
+  AshaConsultDoctorPage,
+  AshaProfilePage,
 }
 
 export { VideoConsultPage }

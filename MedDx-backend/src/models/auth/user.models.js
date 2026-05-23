@@ -69,6 +69,11 @@ const userSchema = new Schema(
 
     // Patient-only fields
     freeConsultationUsed: { type: Boolean, default: false },
+
+    // ASHA-only fields (community health worker)
+    village: { type: String, default: null },
+    areaCode: { type: String, default: null },
+    ashaIdNumber: { type: String, default: null },
   },
   { timestamps: true }
 )

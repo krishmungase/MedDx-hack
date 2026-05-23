@@ -3,12 +3,20 @@ import { BrowserRouter, Routes, Route } from 'react-router'
 import { ProtectedRoute } from './components/auth'
 import {
   AdminAppointmentsPage,
+  AdminAshasPage,
   AdminAuditLogPage,
   AdminDoctorsPage,
   AdminLayout,
   AdminOverviewPage,
   AdminProfilePage,
   AppLayout,
+  AshaConsultDoctorPage,
+  AshaConsultStartPage,
+  AshaDashboardPage,
+  AshaLayout,
+  AshaPatientDetailPage,
+  AshaPatientsPage,
+  AshaProfilePage,
   AuthLayout,
   DoctorAvailabilityPage,
   DoctorEarningsPage,
@@ -40,7 +48,7 @@ const AppRoutes = () => {
             <Route path="sign-up" element={<SignUpPage />} />
           </Route>
 
-          {/* Public: doctor onboarding via emailed setup link */}
+          {/* Public: doctor + ASHA onboarding via emailed setup link */}
           <Route path="set-password" element={<SetPasswordPage />} />
 
           <Route element={<ProtectedRoute role="patient" />}>
@@ -70,9 +78,24 @@ const AppRoutes = () => {
             <Route path="admin" element={<AdminLayout />}>
               <Route index element={<AdminOverviewPage />} />
               <Route path="doctors" element={<AdminDoctorsPage />} />
+              <Route path="ashas" element={<AdminAshasPage />} />
               <Route path="appointments" element={<AdminAppointmentsPage />} />
               <Route path="audit-log" element={<AdminAuditLogPage />} />
               <Route path="profile" element={<AdminProfilePage />} />
+            </Route>
+          </Route>
+
+          <Route element={<ProtectedRoute role="asha" />}>
+            <Route path="asha" element={<AshaLayout />}>
+              <Route index element={<AshaDashboardPage />} />
+              <Route path="patients" element={<AshaPatientsPage />} />
+              <Route path="patients/:id" element={<AshaPatientDetailPage />} />
+              <Route path="consult/start" element={<AshaConsultStartPage />} />
+              <Route
+                path="consult/doctor"
+                element={<AshaConsultDoctorPage />}
+              />
+              <Route path="profile" element={<AshaProfilePage />} />
             </Route>
           </Route>
 

@@ -6,6 +6,9 @@ const urls = {
   doctors: '/admin/doctors',
   doctor: (id) => `/admin/doctors/${id}`,
   stats: '/admin/stats',
+  registerAsha: '/admin/register-asha',
+  ashas: '/admin/ashas',
+  asha: (id) => `/admin/ashas/${id}`,
 }
 
 const apis = {
@@ -27,6 +30,22 @@ const apis = {
     }),
   removeDoctor: ({ id }) =>
     apiRequest({ url: urls.doctor(id), method: REQUEST_METHOD.DELETE }),
+  registerAsha: ({ data }) =>
+    apiRequest({
+      data,
+      url: urls.registerAsha,
+      method: REQUEST_METHOD.POST,
+    }),
+  listAshas: () =>
+    apiRequest({ url: urls.ashas, method: REQUEST_METHOD.GET }),
+  updateAshaStatus: ({ id, accountStatus }) =>
+    apiRequest({
+      url: urls.asha(id),
+      method: REQUEST_METHOD.PATCH,
+      data: { accountStatus },
+    }),
+  removeAsha: ({ id }) =>
+    apiRequest({ url: urls.asha(id), method: REQUEST_METHOD.DELETE }),
 }
 
 export default apis

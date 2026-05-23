@@ -109,7 +109,16 @@ const VideoConsultPage = () => {
     )
   }
 
-  const peer = isDoctor ? appointment.patientId : appointment.doctorId
+  // For doctors, "peer" is the patient or village patient (the actual
+  // subject of the consult). For patients, it's the doctor. For ASHAs,
+  // we still surface the doctor on their side too.
+  const villager = appointment.villagePatientId || null
+  const asha = appointment.bookedByAshaId || null
+  const peer = isDoctor
+    ? villager
+      ? { name: villager.name, specialty: villager.village }
+      : appointment.patientId
+    : appointment.doctorId
   const slotTime = appointment.datetime
     ? format(new Date(appointment.datetime), "EEE, MMM d · h:mm a")
     : '—'
@@ -133,6 +142,12 @@ const VideoConsultPage = () => {
                 <>
                   <User className="h-3.5 w-3.5" />
                   {peer?.name || 'Patient'}
+                  {asha && (
+                    <span className="ml-1.5 inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] font-semibold">
+                      ASHA · {asha.name}
+                      {asha.village ? `, ${asha.village}` : ''}
+                    </span>
+                  )}
                 </>
               ) : (
                 <>
@@ -233,12 +248,75 @@ const VideoConsultPage = () => {
               value="history"
               className="flex-1 overflow-hidden flex flex-col"
             >
+              {villager && (
+                <div className="m-3 mt-2 rounded-2xl border border-primary/30 bg-primary/5 p-3 space-y-1.5">
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-primary font-bold flex items-center gap-1.5">
+                    <Stethoscope className="h-3 w-3" />
+                    ASHA-assisted consult
+                  </p>
+                  <div className="text-sm">
+                    <span className="font-medium">{villager.name}</span>
+                    {villager.age && (
+                      <span className="text-muted-foreground">
+                        {' '}
+                        · {villager.age}
+                      </span>
+                    )}
+                    {villager.gender &&
+                      villager.gender !== 'prefer_not_to_say' && (
+                        <span className="text-muted-foreground">
+                          {' '}
+                          · {villager.gender}
+                        </span>
+                      )}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    {villager.village ? `${villager.village} · ` : ''}
+                    Language: {villager.language || 'en'}
+                  </p>
+                  {asha && (
+                    <p className="text-[11px] text-muted-foreground border-t border-border/50 pt-1.5 mt-1">
+                      Facilitated by{' '}
+                      <span className="font-medium text-foreground">
+                        {asha.name}
+                      </span>
+                      {asha.village ? `, ${asha.village}` : ''}
+                      {asha.ashaIdNumber ? ` · ${asha.ashaIdNumber}` : ''}
+                    </p>
+                  )}
+                </div>
+              )}
               <TriageSummaryCard appointment={appointment} />
               <div className="flex-1 overflow-hidden">
-                <PatientRecordPanel
-                  patientId={peer?._id}
-                  patientName={peer?.name}
-                />
+                {villager ? (
+                  // Village-patient records aren't owned by a User — record
+                  // history for them lives on the appointment's medical
+                  // record entries which the doctor sees via the existing
+                  // consultation notes path. Show the spoken triage transcript
+                  // here as the primary in-call context.
+                  <div className="p-4 text-xs text-muted-foreground leading-relaxed">
+                    {appointment.triageSummary ? (
+                      <>
+                        <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground font-bold mb-1.5">
+                          Spoken triage transcript
+                        </p>
+                        <div className="rounded-xl border border-border/60 bg-background/60 p-3 text-sm">
+                          {appointment.triageSummary}
+                        </div>
+                      </>
+                    ) : (
+                      <p>
+                        No triage transcript on file. The ASHA may have booked
+                        directly without running symptom check.
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <PatientRecordPanel
+                    patientId={peer?._id}
+                    patientName={peer?.name}
+                  />
+                )}
               </div>
             </TabsContent>
             <TabsContent value="notes" className="flex-1 overflow-hidden">

@@ -14,7 +14,25 @@ const appointmentSchema = new Schema(
     patientId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      // Optional now: when an ASHA books on behalf of a villager who has no
+      // MedDx account, `villagePatientId` carries the subject instead. Either
+      // field must be set — enforced in the controller.
+      required: false,
+      default: null,
+      index: true,
+    },
+    // ASHA-assisted attribution. Both fields are set together: the ASHA who
+    // facilitated the consult and the villager profile being treated.
+    bookedByAshaId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+      index: true,
+    },
+    villagePatientId: {
+      type: Schema.Types.ObjectId,
+      ref: 'VillagePatient',
+      default: null,
       index: true,
     },
     doctorId: {

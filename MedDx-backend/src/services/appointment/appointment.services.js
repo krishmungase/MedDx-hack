@@ -11,7 +11,15 @@ class AppointmentService {
     return await this.model
       .findById(id)
       .populate('doctorId', 'name email specialty')
-      .populate('patientId', 'name email')
+      .populate('patientId', 'name email language')
+      .populate(
+        'villagePatientId',
+        'name age gender phone language village'
+      )
+      .populate(
+        'bookedByAshaId',
+        'name email village ashaIdNumber language'
+      )
       .populate('slotId', 'datetime durationMins status')
   }
 
