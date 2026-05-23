@@ -15,7 +15,8 @@ const useUpdateProfile = () => {
     onSuccess: ({ data: response }) => {
       const profile = response?.data || null
       if (profile) {
-        dispatch(setUser(profile))
+        // setUser destructures { user } from the payload.
+        dispatch(setUser({ user: profile }))
         queryClient.setQueryData(['users', 'me'], profile)
       }
       successToast({ message: 'Profile updated.' })

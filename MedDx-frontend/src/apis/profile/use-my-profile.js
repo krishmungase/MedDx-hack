@@ -15,7 +15,10 @@ const useMyProfile = ({ enabled = true } = {}) => {
       const profile = res?.data?.data || null
       // Keep Redux auth.user in sync with the fresh server copy so any
       // sidebar/header avatar instantly reflects edits made elsewhere.
-      if (profile) dispatch(setUser(profile))
+      // setUser destructures { user } from the payload — passing the bare
+      // profile here would set state.user to undefined and bounce the
+      // ProtectedRoute role check to /auth/sign-in.
+      if (profile) dispatch(setUser({ user: profile }))
       return profile
     },
     retry: false,
