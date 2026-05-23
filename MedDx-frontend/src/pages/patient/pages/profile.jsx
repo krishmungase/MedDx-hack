@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { CheckCircle2, Gift, HeartPulse } from 'lucide-react'
 
 import { useMyAppointments, useMyProfile } from '@/apis'
@@ -7,6 +8,7 @@ import { ProfileView } from '@/components'
 
 const PatientProfilePage = () => {
   usePageTitle({ title: pageTitle.PATIENT_DASHBOARD })
+  const { t } = useTranslation()
 
   const { profile, isLoading, isFetching, refetch } = useMyProfile()
   const { appointments } = useMyAppointments()
@@ -15,10 +17,10 @@ const PatientProfilePage = () => {
     <div className="space-y-6">
       <div className="fade-up flex flex-col gap-1">
         <p className="text-[11px] uppercase tracking-[0.22em] text-primary/80 font-semibold">
-          Patient · Profile
+          {t('profile.patient_eyebrow')}
         </p>
         <h1 className="font-display text-2xl sm:text-3xl tracking-tight">
-          Your account.
+          {t('profile.page_title')}
         </h1>
       </div>
 
@@ -27,12 +29,13 @@ const PatientProfilePage = () => {
         isLoading={isLoading}
         isFetching={isFetching}
         refetch={refetch}
-        roleAccent={{ eyebrow: 'Patient · Profile' }}
+        roleAccent={{ eyebrow: t('profile.patient_eyebrow') }}
         extraSection={
           profile ? (
             <PatientHighlights
               profile={profile}
               appointmentCount={appointments?.length || 0}
+              t={t}
             />
           ) : null
         }
@@ -41,32 +44,34 @@ const PatientProfilePage = () => {
   )
 }
 
-const PatientHighlights = ({ profile, appointmentCount }) => (
+const PatientHighlights = ({ profile, appointmentCount, t }) => (
   <section className="fade-up fade-up-delay-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
     <HighlightCard
       icon={Gift}
-      label="Free first visit"
-      value={profile.freeConsultationUsed ? 'Used' : 'Available'}
+      label={t('appointments.expect_free_first')}
+      value={
+        profile.freeConsultationUsed
+          ? t('common.used', { defaultValue: 'Used' })
+          : t('common.available', { defaultValue: 'Available' })
+      }
       tone={profile.freeConsultationUsed ? 'muted' : 'sage'}
       hint={
         profile.freeConsultationUsed
-          ? 'Routine consults are ₹199 each'
-          : 'Your next visit is on us'
+          ? t('book_dialog.paid_note')
+          : t('appointments.no_upcoming_body')
       }
     />
     <HighlightCard
       icon={HeartPulse}
-      label="Consultations"
+      label={t('appointments.card_title')}
       value={appointmentCount}
       tone="primary"
-      hint="Bookings on file"
     />
     <HighlightCard
       icon={CheckCircle2}
-      label="Account"
-      value="Active"
+      label={t('profile.account_status')}
+      value={t('account_status.active')}
       tone="sage"
-      hint="Sign in any time"
     />
   </section>
 )

@@ -100,9 +100,9 @@ const MyAppointments = () => {
     <div className="space-y-10">
       {/* ── Hero: next consultation spotlight ─────────────────────────────── */}
       {next ? (
-        <NextConsultationHero appt={next} onJoin={() => navigate(`/video/${next._id}`)} />
+        <NextConsultationHero appt={next} onJoin={() => navigate(`/video/${next._id}`)} t={t} />
       ) : (
-        <NoUpcomingHero onBook={() => navigate('/patient/doctors')} />
+        <NoUpcomingHero onBook={() => navigate('/patient/doctors')} t={t} />
       )}
 
       {/* ── Quick stats row ────────────────────────────────────────────────── */}
@@ -112,8 +112,9 @@ const MyAppointments = () => {
         nextLabel={
           next
             ? format(new Date(next.datetime), 'EEE, MMM d · h:mm a')
-            : t('appointments.no_upcoming_short', { defaultValue: 'None scheduled' })
+            : t('appointments.no_upcoming_short')
         }
+        t={t}
       />
 
       {/* ── Upcoming queue (excluding the spotlit one) ─────────────────────── */}
@@ -123,7 +124,7 @@ const MyAppointments = () => {
             icon={CalendarClock}
             title={t('appointments.section_upcoming')}
             count={upcomingRest.length}
-            hint="Your scheduled visits"
+            hint={t('appointments.section_upcoming_hint')}
           />
           <div className="grid sm:grid-cols-2 gap-4">
             {upcomingPageItems.map((a) => (
@@ -151,7 +152,7 @@ const MyAppointments = () => {
             icon={History}
             title={t('appointments.section_history')}
             count={past.length}
-            hint="Earlier consultations"
+            hint={t('appointments.section_history_hint')}
           />
           <ol className="relative space-y-3 pl-7 before:absolute before:left-3 before:top-3 before:bottom-3 before:w-px before:bg-linear-to-b before:from-primary/40 before:via-border before:to-transparent">
             {pastPageItems.map((a, idx) => (
@@ -180,7 +181,7 @@ const MyAppointments = () => {
 // Hero — next consultation
 // ─────────────────────────────────────────────────────────────────────────
 
-const NextConsultationHero = ({ appt, onJoin }) => {
+const NextConsultationHero = ({ appt, onJoin, t }) => {
   const dt = new Date(appt.datetime)
   const ms = dt.getTime() - Date.now()
   const joinable = isJoinable(appt)
@@ -188,8 +189,9 @@ const NextConsultationHero = ({ appt, onJoin }) => {
   const inMinutes = Math.abs(Math.round(ms / 60000))
 
   const relative = (() => {
-    if (joinable) return 'Live now — join the room'
-    if (inFuture && inMinutes < 60) return `Starts in ${inMinutes} min`
+    if (joinable) return t('appointments.live_now')
+    if (inFuture && inMinutes < 60)
+      return t('appointments.starts_in_min', { n: inMinutes })
     return formatDistanceToNowStrict(dt, { addSuffix: true })
   })()
 
@@ -210,7 +212,9 @@ const NextConsultationHero = ({ appt, onJoin }) => {
               )}
               <span className={`relative inline-flex h-2 w-2 rounded-full ${joinable ? 'bg-emerald-300' : 'bg-amber-300'}`} />
             </span>
-            {joinable ? 'Consultation open' : 'Next consultation'}
+            {joinable
+              ? t('appointments.consultation_open')
+              : t('appointments.next_consultation')}
           </div>
 
           <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl leading-[1.05] tracking-tight">
@@ -242,9 +246,17 @@ const NextConsultationHero = ({ appt, onJoin }) => {
               {format(dt, "EEE, MMM d · h:mm a")}
             </HeroChip>
             {appt.triageUrgency && (
-              <HeroChip icon={Sparkles}>{appt.triageUrgency} urgency</HeroChip>
+              <HeroChip icon={Sparkles}>
+                {t('appointments.urgency_chip', {
+                  level: t(`urgency.${appt.triageUrgency}`, {
+                    defaultValue: appt.triageUrgency,
+                  }),
+                })}
+              </HeroChip>
             )}
-            <HeroChip icon={ShieldCheck}>Audited & private</HeroChip>
+            <HeroChip icon={ShieldCheck}>
+              {t('appointments.audited_private')}
+            </HeroChip>
           </div>
 
           <div className="flex flex-wrap gap-3 pt-2">
@@ -255,7 +267,9 @@ const NextConsultationHero = ({ appt, onJoin }) => {
               className="rounded-full h-12 px-7 bg-white text-primary hover:bg-white/90 font-semibold shadow-lg shadow-black/10 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Video className="h-4 w-4" />
-              {joinable ? 'Join consultation' : 'Joins 5 min before'}
+              {joinable
+                ? t('appointments.join_consult')
+                : t('appointments.joins_before')}
               {joinable && <ArrowRight className="h-4 w-4" />}
             </Button>
           </div>
@@ -264,13 +278,13 @@ const NextConsultationHero = ({ appt, onJoin }) => {
         {/* Right — micro-card with what to expect */}
         <aside className="rounded-2xl bg-white/10 backdrop-blur-md ring-1 ring-white/15 p-5 space-y-3 hidden lg:block">
           <p className="text-[10px] uppercase tracking-[0.2em] text-white/65 font-semibold">
-            What to expect
+            {t('appointments.what_to_expect')}
           </p>
           <ul className="space-y-3">
-            <ExpectRow icon={Mic} text="Voice + video call, secure end-to-end" />
-            <ExpectRow icon={Stethoscope} text="Doctor reviews your history before the call" />
-            <ExpectRow icon={FileText} text="You'll receive notes + prescription right after" />
-            <ExpectRow icon={Heart} text="Free first visit — no card needed" />
+            <ExpectRow icon={Mic} text={t('appointments.expect_video')} />
+            <ExpectRow icon={Stethoscope} text={t('appointments.expect_review')} />
+            <ExpectRow icon={FileText} text={t('appointments.expect_notes')} />
+            <ExpectRow icon={Heart} text={t('appointments.expect_free_first')} />
           </ul>
         </aside>
       </div>
@@ -298,7 +312,7 @@ const ExpectRow = ({ icon: Icon, text }) => (
 // Hero variant when there are no upcoming bookings
 // ─────────────────────────────────────────────────────────────────────────
 
-const NoUpcomingHero = ({ onBook }) => (
+const NoUpcomingHero = ({ onBook, t }) => (
   <section className="fade-up relative overflow-hidden rounded-3xl bg-soft-mesh ring-1 ring-border/60 p-8 sm:p-10">
     <div className="absolute -right-10 -bottom-12 opacity-[0.07]" aria-hidden>
       <Stethoscope className="h-64 w-64" strokeWidth={1} />
@@ -306,14 +320,13 @@ const NoUpcomingHero = ({ onBook }) => (
     <div className="relative max-w-xl">
       <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
         <Sparkles className="h-3 w-3" />
-        Ready when you are
+        {t('appointments.no_upcoming_eyebrow')}
       </span>
       <h2 className="mt-4 font-display text-3xl sm:text-4xl tracking-tight leading-tight">
-        Nothing booked — that's a good day.
+        {t('appointments.no_upcoming_title')}
       </h2>
       <p className="mt-3 text-muted-foreground leading-relaxed">
-        When you need to see a specialist, the right doctor is two taps away.
-        First consult is always on us.
+        {t('appointments.no_upcoming_body')}
       </p>
       <div className="mt-6 flex flex-wrap gap-3">
         <Button
@@ -321,7 +334,7 @@ const NoUpcomingHero = ({ onBook }) => (
           className="rounded-full h-11 px-6 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20"
         >
           <Stethoscope className="h-4 w-4" />
-          Find a specialist
+          {t('appointments.find_specialist_cta')}
         </Button>
       </div>
     </div>
@@ -332,32 +345,32 @@ const NoUpcomingHero = ({ onBook }) => (
 // Quick stats
 // ─────────────────────────────────────────────────────────────────────────
 
-const QuickStats = ({ upcoming, completed, nextLabel }) => (
+const QuickStats = ({ upcoming, completed, nextLabel, t }) => (
   <div className="fade-up fade-up-delay-1 grid grid-cols-2 lg:grid-cols-4 gap-3">
     <MiniStat
       icon={CalendarClock}
-      label="Upcoming"
+      label={t('appointments.stat_upcoming')}
       value={upcoming}
       tone="primary"
     />
     <MiniStat
       icon={CheckCircle2}
-      label="Completed"
+      label={t('appointments.stat_completed')}
       value={completed}
       tone="sage"
     />
     <MiniStat
       icon={Clock}
-      label="Next visit"
+      label={t('appointments.stat_next_visit')}
       value={nextLabel}
       tone="muted"
       compact
     />
     <MiniStat
       icon={ShieldCheck}
-      label="Privacy"
-      value="End-to-end"
-      hint="Every visit audited"
+      label={t('appointments.stat_privacy')}
+      value={t('appointments.stat_privacy_value')}
+      hint={t('appointments.stat_privacy_hint')}
       tone="muted"
       compact
     />
@@ -472,10 +485,12 @@ const UpcomingCard = ({ appt, onJoin }) => {
           </div>
           <p className="mt-1 text-[11px] text-primary font-medium">
             {joinable
-              ? 'Live — you can join now'
+              ? t('appointments.live_short')
               : minutes < 60
-                ? `Starts in ${minutes} min`
-                : `Opens 5 min before · ${format(dt, 'h:mm a')}`}
+                ? t('appointments.starts_in_min', { n: minutes })
+                : t('appointments.opens_before_at', {
+                    time: format(dt, 'h:mm a'),
+                  })}
           </p>
         </div>
 
@@ -486,7 +501,9 @@ const UpcomingCard = ({ appt, onJoin }) => {
           className="w-full rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
         >
           <Video className="h-3.5 w-3.5" />
-          {joinable ? 'Join consultation' : 'Not yet'}
+          {joinable
+            ? t('appointments.join_consult')
+            : t('appointments.not_yet')}
         </Button>
       </div>
     </article>
@@ -573,7 +590,8 @@ const Loading = () => (
 
 const Empty = () => {
   const navigate = useNavigate()
-  return <NoUpcomingHero onBook={() => navigate('/patient/doctors')} />
+  const { t } = useTranslation()
+  return <NoUpcomingHero onBook={() => navigate('/patient/doctors')} t={t} />
 }
 
 export default MyAppointments

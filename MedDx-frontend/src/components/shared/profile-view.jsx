@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { format } from 'date-fns'
@@ -48,35 +49,18 @@ const LANGUAGES = [
   { value: 'mr', label: 'मराठी (Marathi)' },
 ]
 
-const ROLE_LABEL = {
-  patient: 'Patient',
-  doctor: 'Doctor',
-  admin: 'Administrator',
-}
-
 const STATUS_TONE = {
   active: 'sage',
   pending_setup: 'amber',
   suspended: 'destructive',
 }
 
-const STATUS_LABEL = {
-  active: 'Active',
-  pending_setup: 'Pending setup',
-  suspended: 'Suspended',
-}
-
 /**
  * ProfileView — composable profile layout used by patient/doctor/admin.
  *
- * Props:
- *   profile          — current user profile (from useMyProfile)
- *   isLoading        — initial load
- *   isFetching       — background refetch state
- *   refetch          — re-fetch handler
- *   roleAccent       — { eyebrow, tone, icon } strings to vary the hero by role
- *   showSpecialty    — let doctors edit their specialty (only true for doctor)
- *   extraSection     — optional node rendered after the security card
+ * `roleAccent.eyebrow` should be passed pre-translated by the parent
+ * (e.g. t('profile.patient_eyebrow')). Everything else in this view reads
+ * directly from the active i18n bundle.
  */
 const ProfileView = ({
   profile,
@@ -115,6 +99,7 @@ const ProfileView = ({
 // ─────────────────────────────────────────────────────────────────────────
 
 const ProfileHero = ({ profile, roleAccent, isFetching, onRefresh }) => {
+  const { t } = useTranslation()
   const memberSince = profile.createdAt
     ? format(new Date(profile.createdAt), 'MMM yyyy')
     : null
@@ -160,17 +145,23 @@ const ProfileHero = ({ profile, roleAccent, isFetching, onRefresh }) => {
 
           <div className="flex flex-wrap items-center gap-2 pt-1">
             <Pill icon={UserRound}>
-              {ROLE_LABEL[profile.role] || profile.role}
+              {t(`role.${profile.role}`, { defaultValue: profile.role })}
             </Pill>
-            {profile.specialty && <Pill icon={ShieldCheck}>{profile.specialty}</Pill>}
-            {memberSince && <Pill icon={Calendar}>Joined {memberSince}</Pill>}
+            {profile.specialty && (
+              <Pill icon={ShieldCheck}>{profile.specialty}</Pill>
+            )}
+            {memberSince && (
+              <Pill icon={Calendar}>
+                {t('profile.joined_short', { date: memberSince })}
+              </Pill>
+            )}
           </div>
         </div>
 
         <aside className="hidden lg:flex flex-col gap-3 rounded-2xl bg-white/10 backdrop-blur-md ring-1 ring-white/15 p-5">
           <div className="flex items-center justify-between">
             <p className="text-[10px] uppercase tracking-[0.2em] text-white/65 font-semibold">
-              Account status
+              {t('profile.account_status')}
             </p>
             <button
               type="button"
@@ -181,21 +172,30 @@ const ProfileHero = ({ profile, roleAccent, isFetching, onRefresh }) => {
               <RefreshCw
                 className={`h-3 w-3 ${isFetching ? 'animate-spin' : ''}`}
               />
-              Refresh
+              {t('profile.refresh')}
             </button>
           </div>
           <div className="rounded-xl bg-white/10 p-3 space-y-2">
             <Row
-              label="Status"
+              label={t('profile.status')}
               value={
                 <StatusBadge tone={STATUS_TONE[profile.accountStatus] || 'muted'}>
-                  {STATUS_LABEL[profile.accountStatus] || profile.accountStatus}
+                  {t(`account_status.${profile.accountStatus}`, {
+                    defaultValue: profile.accountStatus,
+                  })}
                 </StatusBadge>
               }
             />
-            <Row label="Language" value={languageLabel(profile.language)} />
+            <Row
+              label={t('profile.language')}
+              value={languageLabel(profile.language)}
+            />
             {profile.licenseNumber && (
-              <Row label="License" value={profile.licenseNumber} mono />
+              <Row
+                label={t('profile.license')}
+                value={profile.licenseNumber}
+                mono
+              />
             )}
           </div>
         </aside>
@@ -238,6 +238,7 @@ const aboutSchema = z.object({
 })
 
 const AboutCard = ({ profile, showSpecialty }) => {
+  const { t } = useTranslation()
   const [editing, setEditing] = useState(false)
   const { isLoading, updateProfile } = useUpdateProfile()
 
@@ -284,8 +285,8 @@ const AboutCard = ({ profile, showSpecialty }) => {
 
   return (
     <Card
-      eyebrow="Account details"
-      title="About you"
+      eyebrow={t('profile.about_eyebrow')}
+      title={t('profile.about_title')}
       icon={UserRound}
       action={
         editing ? null : (
@@ -297,7 +298,7 @@ const AboutCard = ({ profile, showSpecialty }) => {
             onClick={() => setEditing(true)}
           >
             <Edit3 className="h-3.5 w-3.5" />
-            Edit
+            {t('profile.edit')}
           </Button>
         )
       }
@@ -315,14 +316,14 @@ const AboutCard = ({ profile, showSpecialty }) => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground font-bold">
-                    Full name
+                    {t('profile.full_name')}
                   </FormLabel>
                   <FormControl>
                     <div className="relative">
                       <UserRound className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         autoComplete="name"
-                        placeholder="Your full name"
+                        placeholder={t('profile.full_name_placeholder')}
                         className="h-11 pl-11 rounded-xl bg-background"
                         {...field}
                       />
@@ -339,7 +340,7 @@ const AboutCard = ({ profile, showSpecialty }) => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground font-bold">
-                    Preferred language
+                    {t('profile.preferred_language')}
                   </FormLabel>
                   <FormControl>
                     <Select
@@ -371,11 +372,11 @@ const AboutCard = ({ profile, showSpecialty }) => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground font-bold">
-                      Specialty
+                      {t('profile.specialty')}
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="e.g. Pulmonology"
+                        placeholder={t('profile.specialty_placeholder')}
                         className="h-11 rounded-xl bg-background"
                         {...field}
                       />
@@ -396,7 +397,7 @@ const AboutCard = ({ profile, showSpecialty }) => {
                 disabled={isLoading}
               >
                 <X className="h-3.5 w-3.5" />
-                Cancel
+                {t('profile.cancel')}
               </Button>
               <Button
                 type="submit"
@@ -405,24 +406,33 @@ const AboutCard = ({ profile, showSpecialty }) => {
                 disabled={isLoading}
               >
                 {isLoading ? <Spinner /> : <Save className="h-3.5 w-3.5" />}
-                Save changes
+                {t('profile.save_changes')}
               </Button>
             </div>
           </form>
         </Form>
       ) : (
         <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-4">
-          <DetailRow icon={UserRound} label="Full name" value={profile.name} />
-          <DetailRow icon={Mail} label="Email" value={profile.email} mono />
+          <DetailRow
+            icon={UserRound}
+            label={t('profile.full_name')}
+            value={profile.name}
+          />
+          <DetailRow
+            icon={Mail}
+            label={t('profile.email')}
+            value={profile.email}
+            mono
+          />
           <DetailRow
             icon={Globe}
-            label="Language"
+            label={t('profile.language')}
             value={languageLabel(profile.language)}
           />
           {showSpecialty && (
             <DetailRow
               icon={ShieldCheck}
-              label="Specialty"
+              label={t('profile.specialty')}
               value={profile.specialty || '—'}
             />
           )}
@@ -449,6 +459,7 @@ const DetailRow = ({ icon: Icon, label, value, mono = false }) => (
 // ─────────────────────────────────────────────────────────────────────────
 
 const MetaCard = ({ profile }) => {
+  const { t } = useTranslation()
   const created = profile.createdAt
     ? format(new Date(profile.createdAt), 'MMM d, yyyy')
     : '—'
@@ -457,23 +468,29 @@ const MetaCard = ({ profile }) => {
     : '—'
 
   return (
-    <Card eyebrow="Metadata" title="Account info" icon={Calendar}>
+    <Card
+      eyebrow={t('profile.meta_eyebrow')}
+      title={t('profile.meta_title')}
+      icon={Calendar}
+    >
       <ul className="space-y-3">
-        <MetaItem label="Account ID" value={profile._id} mono />
+        <MetaItem label={t('profile.account_id')} value={profile._id} mono />
         <MetaItem
-          label="Role"
-          value={ROLE_LABEL[profile.role] || profile.role}
+          label={t('profile.role')}
+          value={t(`role.${profile.role}`, { defaultValue: profile.role })}
         />
         <MetaItem
-          label="Status"
+          label={t('profile.status')}
           value={
             <StatusBadge tone={STATUS_TONE[profile.accountStatus] || 'muted'}>
-              {STATUS_LABEL[profile.accountStatus] || profile.accountStatus}
+              {t(`account_status.${profile.accountStatus}`, {
+                defaultValue: profile.accountStatus,
+              })}
             </StatusBadge>
           }
         />
-        <MetaItem label="Member since" value={created} />
-        <MetaItem label="Last updated" value={updated} />
+        <MetaItem label={t('profile.member_since')} value={created} />
+        <MetaItem label={t('profile.last_updated')} value={updated} />
       </ul>
     </Card>
   )
@@ -510,6 +527,7 @@ const securitySchema = z
   })
 
 const SecurityCard = () => {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [showCurrent, setShowCurrent] = useState(false)
   const [showNew, setShowNew] = useState(false)
@@ -536,8 +554,8 @@ const SecurityCard = () => {
 
   return (
     <Card
-      eyebrow="Security"
-      title="Password & access"
+      eyebrow={t('profile.security_eyebrow')}
+      title={t('profile.security_title')}
       icon={ShieldCheck}
       action={
         !open ? (
@@ -549,7 +567,7 @@ const SecurityCard = () => {
             onClick={() => setOpen(true)}
           >
             <KeyRound className="h-3.5 w-3.5" />
-            Change password
+            {t('profile.change_password')}
           </Button>
         ) : null
       }
@@ -560,10 +578,11 @@ const SecurityCard = () => {
             <Lock className="h-4 w-4" />
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-medium">Your password is set</p>
+            <p className="text-sm font-medium">
+              {t('profile.password_set_title')}
+            </p>
             <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
-              Choose something only you'd know. We recommend at least 10
-              characters with a mix of letters and a number.
+              {t('profile.password_set_hint')}
             </p>
           </div>
         </div>
@@ -580,13 +599,13 @@ const SecurityCard = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground font-bold">
-                    Current password
+                    {t('profile.current_password')}
                   </FormLabel>
                   <FormControl>
                     <PasswordInput
                       show={showCurrent}
                       onToggle={() => setShowCurrent((p) => !p)}
-                      placeholder="Enter your current password"
+                      placeholder={t('profile.current_password_placeholder')}
                       autoComplete="current-password"
                       {...field}
                     />
@@ -602,13 +621,13 @@ const SecurityCard = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground font-bold">
-                    New password
+                    {t('profile.new_password')}
                   </FormLabel>
                   <FormControl>
                     <PasswordInput
                       show={showNew}
                       onToggle={() => setShowNew((p) => !p)}
-                      placeholder="At least 6 characters"
+                      placeholder={t('profile.new_password_placeholder')}
                       autoComplete="new-password"
                       {...field}
                     />
@@ -624,13 +643,13 @@ const SecurityCard = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground font-bold">
-                    Confirm new password
+                    {t('profile.confirm_password')}
                   </FormLabel>
                   <FormControl>
                     <PasswordInput
                       show={showNew}
                       onToggle={() => setShowNew((p) => !p)}
-                      placeholder="Re-enter your new password"
+                      placeholder={t('profile.confirm_password_placeholder')}
                       autoComplete="new-password"
                       {...field}
                     />
@@ -653,7 +672,7 @@ const SecurityCard = () => {
                 disabled={isLoading}
               >
                 <X className="h-3.5 w-3.5" />
-                Cancel
+                {t('profile.cancel')}
               </Button>
               <Button
                 type="submit"
@@ -662,7 +681,7 @@ const SecurityCard = () => {
                 disabled={isLoading}
               >
                 {isLoading ? <Spinner /> : <KeyRound className="h-3.5 w-3.5" />}
-                Update password
+                {t('profile.update_password')}
               </Button>
             </div>
           </form>
