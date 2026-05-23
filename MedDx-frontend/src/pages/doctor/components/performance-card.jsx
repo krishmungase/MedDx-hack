@@ -2,22 +2,11 @@ import { useMemo } from 'react'
 import { format } from 'date-fns'
 import {
   Activity,
-  CalendarRange,
-  IndianRupee,
   Sparkles,
-  Stethoscope,
   TrendingUp,
-  Users,
 } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
-
-const formatRupees = (paise) =>
-  new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format((paise || 0) / 100)
 
 const URGENCY_TONE = {
   low: 'bg-sage/15 text-sage-foreground border-sage/30',
@@ -59,36 +48,6 @@ const PerformanceCard = ({ stats }) => {
 
   return (
     <div className="fade-up fade-up-delay-2 space-y-4">
-      {/* Stat grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatTile
-          icon={Stethoscope}
-          label="Lifetime consults"
-          value={stats?.totalConsults ?? 0}
-          tone="primary"
-        />
-        <StatTile
-          icon={Users}
-          label="Unique patients"
-          value={stats?.uniquePatients ?? 0}
-          tone="sage"
-        />
-        <StatTile
-          icon={CalendarRange}
-          label="This month"
-          value={stats?.thisMonth?.consults ?? 0}
-          hint="completed consults"
-          tone="amber"
-        />
-        <StatTile
-          icon={IndianRupee}
-          label="Earnings · MTD"
-          value={formatRupees(stats?.thisMonth?.earningsPaise)}
-          isText
-          tone="muted"
-        />
-      </div>
-
       {/* Monthly trend bars */}
       <section className="rounded-2xl border border-border/70 bg-card overflow-hidden">
         <header className="flex items-center justify-between gap-3 px-5 py-3 border-b border-border/60">
@@ -221,48 +180,6 @@ const PerformanceCard = ({ stats }) => {
     </div>
   )
 }
-
-const TONE_BG = {
-  primary: 'bg-primary/10 text-primary',
-  sage: 'bg-sage/15 text-sage-foreground',
-  amber: 'bg-amber-warm/15 text-amber-warm',
-  muted: 'bg-muted text-muted-foreground',
-}
-
-const StatTile = ({
-  icon: Icon,
-  label,
-  value,
-  hint,
-  tone = 'primary',
-  isText = false,
-}) => (
-  <article className="rounded-2xl border border-border/70 bg-card p-4">
-    <div className="flex items-start gap-3">
-      <span
-        className={`inline-flex h-9 w-9 items-center justify-center rounded-xl shrink-0 ${TONE_BG[tone]}`}
-      >
-        <Icon className="h-3.5 w-3.5" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground font-bold">
-          {label}
-        </p>
-        <p
-          className={`mt-0.5 font-display tracking-tight ${
-            isText ? 'text-lg font-medium' : 'text-2xl tabular-nums'
-          }`}
-          title={isText ? value : undefined}
-        >
-          {value}
-        </p>
-        {hint && (
-          <p className="text-[11px] text-muted-foreground mt-0.5">{hint}</p>
-        )}
-      </div>
-    </div>
-  </article>
-)
 
 // Tiny inline SVG sparkline — no chart lib needed.
 const Sparkline = ({ points, max }) => {

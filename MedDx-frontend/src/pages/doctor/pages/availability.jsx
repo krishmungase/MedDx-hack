@@ -119,26 +119,13 @@ const AvailabilityPage = () => {
         </div>
       </section>
 
-      {/* Quick stats row */}
-      <section className="fade-up fade-up-delay-2 grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <BigStat icon={Clock4} label="Open" value={available} tone="sage" />
-        <BigStat icon={CheckCircle2} label="Booked" value={booked} tone="primary" />
-        <BigStat icon={CalendarClock} label="Total" value={total} tone="muted" />
-        <BigStat
-          icon={TrendingUp}
-          label="Utilization"
-          value={`${utilization}%`}
-          tone="amber"
-        />
-      </section>
-
       {/* Add availability — the form */}
-      <div className="fade-up fade-up-delay-3">
+      <div className="fade-up fade-up-delay-2">
         <AddAvailabilityCard />
       </div>
 
       {/* Slots list */}
-      <div className="fade-up fade-up-delay-4">
+      <div className="fade-up fade-up-delay-3">
         <SlotsList />
       </div>
     </div>
@@ -158,33 +145,6 @@ const GlanceRow = ({ icon: Icon, label, value, compact = false }) => (
     >
       {value}
     </p>
-  </div>
-)
-
-const TONE_BG = {
-  primary: 'bg-primary/10 text-primary',
-  sage: 'bg-sage/15 text-sage-foreground',
-  amber: 'bg-amber-warm/15 text-amber-warm',
-  muted: 'bg-muted text-muted-foreground',
-}
-
-const BigStat = ({ icon: Icon, label, value, tone = 'primary' }) => (
-  <div className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card p-4 transition-all hover:border-primary/30 hover:shadow-md">
-    <div className="flex items-start gap-3">
-      <span
-        className={`inline-flex h-10 w-10 items-center justify-center rounded-xl shrink-0 ${TONE_BG[tone]}`}
-      >
-        <Icon className="h-4 w-4" />
-      </span>
-      <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-          {label}
-        </p>
-        <p className="mt-0.5 font-display text-2xl tracking-tight tabular-nums">
-          {value}
-        </p>
-      </div>
-    </div>
   </div>
 )
 

@@ -12,6 +12,7 @@ import {
   Heart,
   History,
   Mic,
+  Rocket,
   ShieldCheck,
   Sparkles,
   Stethoscope,
@@ -259,7 +260,7 @@ const NextConsultationHero = ({ appt, onJoin, t }) => {
             </HeroChip>
           </div>
 
-          <div className="flex flex-wrap gap-3 pt-2">
+          <div className="flex flex-wrap items-center gap-3 pt-2">
             <Button
               size="lg"
               onClick={onJoin}
@@ -272,6 +273,18 @@ const NextConsultationHero = ({ appt, onJoin, t }) => {
                 : t('appointments.joins_before')}
               {joinable && <ArrowRight className="h-4 w-4" />}
             </Button>
+            {!joinable && (
+              <Button
+                size="lg"
+                onClick={onJoin}
+                variant="ghost"
+                className="rounded-full h-12 px-5 text-white/95 hover:text-white hover:bg-white/15 ring-1 ring-white/30 backdrop-blur-md"
+                title="Bypass the 5-minute gate (demo only)"
+              >
+                <Rocket className="h-4 w-4" />
+                Demo · Open call
+              </Button>
+            )}
           </div>
         </div>
 
@@ -505,6 +518,17 @@ const UpcomingCard = ({ appt, onJoin }) => {
             ? t('appointments.join_consult')
             : t('appointments.not_yet')}
         </Button>
+        {!joinable && (
+          <button
+            type="button"
+            onClick={onJoin}
+            className="w-full inline-flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-[0.16em] font-semibold text-primary/80 hover:text-primary transition-colors"
+            title="Bypass the 5-minute gate (demo only)"
+          >
+            <Rocket className="h-3 w-3" />
+            Demo · Open call
+          </button>
+        )}
       </div>
     </article>
   )
