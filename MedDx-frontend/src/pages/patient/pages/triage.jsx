@@ -1,12 +1,13 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { Globe, ShieldCheck, Sparkles } from 'lucide-react'
+import { Globe, MessageSquare, ShieldCheck, Sparkles, Zap } from 'lucide-react'
 
 import { useTriage } from '@/apis'
 import { usePageTitle } from '@/hooks'
 import { pageTitle } from '@/constants'
 import { errorToast } from '@/lib'
-import { VitalLine } from '@/components'
+import { TriageChat, VitalLine } from '@/components'
 
 import TriageForm from '../components/triage-form'
 import TriageResult from '../components/triage-result'
@@ -14,7 +15,11 @@ import TriageResult from '../components/triage-result'
 const TriagePage = () => {
   usePageTitle({ title: pageTitle.PATIENT_DASHBOARD })
   const navigate = useNavigate()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const [mode, setMode] = useState('quick') // 'quick' | 'chat'
+  const [chatTriage, setChatTriage] = useState(null)
+  const [chatDisclaimer, setChatDisclaimer] = useState(null)
+  const [chatTranscript, setChatTranscript] = useState('')
 
   const { assess, isLoading, triage, disclaimer, reset, error } = useTriage()
 
@@ -22,21 +27,44 @@ const TriagePage = () => {
     assess({ data: payload })
   }
 
+  const onChatResult = ({ triage: t2, disclaimer: d2, transcript }) => {
+    setChatTriage(t2)
+    setChatDisclaimer(d2)
+    setChatTranscript(transcript || '')
+  }
+
+  const onChatReset = () => {
+    setChatTriage(null)
+    setChatDisclaimer(null)
+    setChatTranscript('')
+  }
+
+  const activeTriage = mode === 'chat' ? chatTriage : triage
+  const activeDisclaimer = mode === 'chat' ? chatDisclaimer : disclaimer
+
   const onBook = () => {
-    if (!triage) return
+    if (!activeTriage) return
     navigate(
-      `/patient/doctors?specialty=${encodeURIComponent(triage.specialty)}`,
+      `/patient/doctors?specialty=${encodeURIComponent(activeTriage.specialty)}`,
       {
         state: {
           triage: {
-            specialty: triage.specialty,
-            urgency: triage.urgency,
-            summary: triage.summary,
-            reason: triage.reason,
+            specialty: activeTriage.specialty,
+            urgency: activeTriage.urgency,
+            summary:
+              mode === 'chat' && chatTranscript
+                ? `${activeTriage.summary}\n\n--- Transcript ---\n${chatTranscript}`
+                : activeTriage.summary,
+            reason: activeTriage.reason,
           },
         },
       },
     )
+  }
+
+  const onReset = () => {
+    if (mode === 'chat') onChatReset()
+    else reset()
   }
 
   if (error) {
@@ -59,8 +87,30 @@ const TriagePage = () => {
         </h1>
       </div>
 
+      {/* Mode toggle: quick form vs guided voice chat */}
+      {!activeTriage && (
+        <div className="fade-up fade-up-delay-1 inline-flex items-center gap-1 rounded-full border border-border/70 bg-card p-1">
+          <ModeButton
+            active={mode === 'quick'}
+            onClick={() => setMode('quick')}
+            icon={Zap}
+            label={t('triage.mode_quick', {
+              defaultValue: 'Quick symptom check',
+            })}
+          />
+          <ModeButton
+            active={mode === 'chat'}
+            onClick={() => setMode('chat')}
+            icon={MessageSquare}
+            label={t('triage.mode_chat', {
+              defaultValue: 'Guided voice check',
+            })}
+          />
+        </div>
+      )}
+
       {/* Intro hero — only when there's no result yet */}
-      {!triage && (
+      {!activeTriage && (
         <section className="fade-up fade-up-delay-1 relative overflow-hidden rounded-3xl bg-hero-mesh text-white shadow-xl shadow-primary/25">
           <div className="absolute inset-0 bg-dot-grid opacity-50" aria-hidden />
           <div className="absolute inset-x-0 bottom-0 h-20 opacity-40" aria-hidden>
@@ -104,21 +154,43 @@ const TriagePage = () => {
         </section>
       )}
 
-      {!triage ? (
+      {!activeTriage ? (
         <div className="fade-up fade-up-delay-2">
-          <TriageForm onSubmit={onSubmit} isLoading={isLoading} />
+          {mode === 'quick' ? (
+            <TriageForm onSubmit={onSubmit} isLoading={isLoading} />
+          ) : (
+            <TriageChat
+              language={i18n.language}
+              onResult={onChatResult}
+            />
+          )}
         </div>
       ) : (
         <TriageResult
-          triage={triage}
-          disclaimer={disclaimer}
-          onReset={reset}
+          triage={activeTriage}
+          disclaimer={activeDisclaimer}
+          onReset={onReset}
           onBook={onBook}
         />
       )}
     </div>
   )
 }
+
+const ModeButton = ({ active, onClick, icon: Icon, label }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+      active
+        ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/25'
+        : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+    }`}
+  >
+    {Icon && <Icon className="h-3.5 w-3.5" />}
+    {label}
+  </button>
+)
 
 const HeroChip = ({ icon: Icon, children }) => (
   <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 backdrop-blur-md ring-1 ring-white/15 px-3 py-1 text-xs font-medium text-white/95">
