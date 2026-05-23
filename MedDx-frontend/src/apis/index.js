@@ -37,6 +37,7 @@ import useVerifyPayment from './appointments/use-verify-payment'
 import usePatientMedicalRecord from './medical-records/use-patient-medical-record'
 
 import useTriage from './ai/use-triage'
+import useTriageChat from './ai/use-triage-chat'
 import usePrescriptionFormat from './ai/use-prescription-format'
 
 import useMyProfile from './profile/use-my-profile'
@@ -82,6 +83,7 @@ export {
   useVerifyPayment,
   usePatientMedicalRecord,
   useTriage,
+  useTriageChat,
   usePrescriptionFormat,
   useMyProfile,
   useUpdateProfile,

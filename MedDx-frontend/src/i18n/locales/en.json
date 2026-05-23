@@ -294,7 +294,25 @@
     "mic_start": "Speak your symptoms",
     "mic_listening": "Listening… tap to stop",
     "mic_unsupported": "Voice input isn't supported in this browser",
-    "result_disclaimer": "This triage is for guidance only. It is not a diagnosis or a substitute for a doctor. In a real emergency, contact local emergency services immediately."
+    "result_disclaimer": "This triage is for guidance only. It is not a diagnosis or a substitute for a doctor. In a real emergency, contact local emergency services immediately.",
+    "mode_quick": "Quick symptom check",
+    "mode_chat": "Guided voice check"
+  },
+  "triage_chat": {
+    "title": "Guided voice check",
+    "subtitle": "Tap the mic and speak. The assistant will ask a few short questions.",
+    "opening_prompt": "Hello — tell me what is bothering you today.",
+    "mic_hint": "Tap to speak. Or type below if you prefer.",
+    "text_only_hint": "Voice not available — type your answer below.",
+    "input_placeholder": "Type your answer…",
+    "send": "Send",
+    "thinking": "Thinking…",
+    "tts_label_on": "Voice",
+    "tts_label_off": "Muted",
+    "tts_on": "Voice on",
+    "tts_off": "Mute voice",
+    "error_step": "Could not reach the triage assistant. Please try again.",
+    "result_default_reason": "Triage complete."
   },
   "duration": {
     "lt_1h": "Less than an hour",

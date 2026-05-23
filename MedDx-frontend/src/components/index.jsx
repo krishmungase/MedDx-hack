@@ -12,6 +12,7 @@ import StatusBadge from './shared/status-badge'
 import VitalLine from './shared/vital-line'
 import DoctorAvatar from './shared/doctor-avatar'
 import ProfileView from './shared/profile-view'
+import TriageChat from './shared/triage-chat'
 
 export {
   Header,
@@ -28,4 +29,5 @@ export {
   VitalLine,
   DoctorAvatar,
   ProfileView,
+  TriageChat,
 }

@@ -3,6 +3,7 @@ import express from 'express'
 import { logger } from '../../logger/index.js'
 import {
   PrescriptionFormatterService,
+  TriageChatService,
   TriageService,
 } from '../../services/index.js'
 import { asyncHandler } from '../../utils/index.js'
@@ -13,14 +14,19 @@ import {
   verifyJWT,
 } from '../../middlewares/index.js'
 import { triageValidator } from '../../validators/ai/triage.validators.js'
+import { triageChatValidator } from '../../validators/ai/triage-chat.validators.js'
 import { prescriptionFormatValidator } from '../../validators/ai/prescription.validators.js'
 import TriageController from '../../controllers/ai/triage.controllers.js'
+import TriageChatController from '../../controllers/ai/triage-chat.controllers.js'
 import PrescriptionController from '../../controllers/ai/prescription.controllers.js'
 
 const aiRoutes = express.Router()
 
 const triageService = new TriageService()
 const triageController = new TriageController(triageService, logger)
+
+const triageChatService = new TriageChatService()
+const triageChatController = new TriageChatController(triageChatService, logger)
 
 const formatterService = new PrescriptionFormatterService()
 const prescriptionController = new PrescriptionController(
@@ -35,6 +41,13 @@ aiRoutes.post(
   triageValidator,
   validate,
   asyncHandler((req, res, next) => triageController.assess(req, res, next))
+)
+
+aiRoutes.post(
+  '/triage-chat',
+  triageChatValidator,
+  validate,
+  asyncHandler((req, res, next) => triageChatController.step(req, res, next))
 )
 
 // Doctor-only: helps the doctor format raw notes into structured Rx.
