@@ -36,6 +36,7 @@ Resources:
     Properties:
       VpcId: !Ref VPC
       CidrBlock: 10.0.3.0/24
+      AvailabilityZone: !GetAtt PublicSubnet1.AvailabilityZone
       MapPublicIpOnLaunch: false
 
   PrivateSubnet2:
@@ -43,6 +44,7 @@ Resources:
     Properties:
       VpcId: !Ref VPC
       CidrBlock: 10.0.4.0/24
+      AvailabilityZone: !GetAtt PublicSubnet2.AvailabilityZone
       MapPublicIpOnLaunch: false
 
 # INTERNET GATEWAY (For Public Subnets) 
