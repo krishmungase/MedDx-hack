@@ -1,0 +1,29 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+  pre_build:
+    commands:
+      - echo "Installing dependencies..."
+      - cd MedDx-backend && npm install && cd ..
+      - cd MedDx-frontend && npm install && cd ..
+  build:
+    commands:
+      - echo "Building frontend..."
+      - cd MedDx-frontend
+      - npm run build
+      - cd ..
+artifacts:
+  secondary-artifacts:
+    FrontendArtifact:
+      base-directory: MedDx-frontend/dist
+      files:
+        - '**/*'
+    BackendArtifact:
+      base-directory: .
+      files:
+        - 'MedDx-backend/**/*'
+        - 'scripts/**/*'
+        - 'appspec.yml'
