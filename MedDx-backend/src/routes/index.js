@@ -6,6 +6,7 @@ import doctorRoutes from './doctor/doctor.routes.js'
 import appointmentRoutes from './appointment/appointment.routes.js'
 import medicalRecordRoutes from './medical-record/medical-record.routes.js'
 import ashaRoutes from './asha/asha.routes.js'
+import feedbackRoutes from './feedback/feedback.routes.js'
 
 import assistantRoutes from './ai/assistant.routes.js'
 import aiRoutes from './ai/ai.routes.js'
@@ -19,6 +20,7 @@ export {
   appointmentRoutes,
   medicalRecordRoutes,
   ashaRoutes,
+  feedbackRoutes,
   assistantRoutes,
   aiRoutes,
 }

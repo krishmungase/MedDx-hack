@@ -23,11 +23,13 @@ import { Button } from '@/components/ui/button'
 import {
   DataPagination,
   DoctorAvatar,
+  FeedbackDialog,
+  StarRating,
   StatusBadge,
   VitalLine,
 } from '@/components'
 
-import { useMyAppointments } from '@/apis'
+import { useAppointmentFeedback, useMyAppointments } from '@/apis'
 
 const STATUS_TONE = {
   scheduled: 'primary',
@@ -63,6 +65,7 @@ const MyAppointments = () => {
   const { appointments, isLoading } = useMyAppointments()
   const [pastPage, setPastPage] = useState(1)
   const [upcomingPage, setUpcomingPage] = useState(1)
+  const [feedbackAppt, setFeedbackAppt] = useState(null)
   useNowTick()
 
   const { upcoming, past, next } = useMemo(() => {
@@ -162,6 +165,7 @@ const MyAppointments = () => {
                 appt={a}
                 isFirst={idx === 0 && pastPage === 1}
                 onView={() => navigate(`/video/${a._id}`)}
+                onRate={() => setFeedbackAppt(a)}
               />
             ))}
           </ol>
@@ -174,6 +178,12 @@ const MyAppointments = () => {
           )}
         </section>
       )}
+
+      <FeedbackDialog
+        open={Boolean(feedbackAppt)}
+        onOpenChange={(open) => !open && setFeedbackAppt(null)}
+        appointment={feedbackAppt}
+      />
     </div>
   )
 }
@@ -538,19 +548,23 @@ const UpcomingCard = ({ appt, onJoin }) => {
 // Past visit — timeline row
 // ─────────────────────────────────────────────────────────────────────────
 
-const PastVisit = ({ appt, isFirst, onView }) => {
+const PastVisit = ({ appt, isFirst, onView, onRate }) => {
   const { t } = useTranslation()
+  const isCompleted = appt.status === 'completed'
+  // Only poll for feedback on completed appointments.
+  const { feedback } = useAppointmentFeedback(appt._id, { enabled: isCompleted })
+
   return (
     <li className="relative">
       <span
         className={`absolute -left-7 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full ring-4 ring-background ${
-          appt.status === 'completed'
+          isCompleted
             ? 'bg-sage text-sage-foreground'
             : 'bg-destructive/15 text-destructive'
         }`}
         aria-hidden
       >
-        {appt.status === 'completed' ? (
+        {isCompleted ? (
           <CheckCircle2 className="h-3.5 w-3.5" />
         ) : (
           <Clock className="h-3.5 w-3.5" />
@@ -560,7 +574,7 @@ const PastVisit = ({ appt, isFirst, onView }) => {
         )}
       </span>
 
-      <div className="rounded-2xl border border-border/60 bg-card px-4 py-3 transition-colors hover:border-primary/30">
+      <div className="rounded-2xl border border-border/60 bg-card px-4 py-3 transition-colors hover:border-primary/30 space-y-2">
         <div className="flex flex-wrap items-center gap-3">
           <DoctorAvatar name={appt.doctorId?.name} size="sm" showRing={false} />
           <div className="min-w-0 flex-1">
@@ -587,6 +601,37 @@ const PastVisit = ({ appt, isFirst, onView }) => {
             <ChevronRight className="h-3.5 w-3.5" />
           </Button>
         </div>
+
+        {/* Rate consultation CTA — only completed + not yet rated */}
+        {isCompleted && (
+          <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border/40">
+            {feedback ? (
+              <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                <StarRating value={feedback.rating} size="sm" />
+                <span className="font-medium text-foreground">
+                  {t('feedback.you_rated', { defaultValue: 'You rated' })}
+                </span>
+                {feedback.comment && (
+                  <span className="italic text-muted-foreground truncate max-w-[18ch]">
+                    "{feedback.comment}"
+                  </span>
+                )}
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onRate}
+                className="rounded-full border-primary/40 text-primary hover:bg-primary/10"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                {t('feedback.rate_cta', {
+                  defaultValue: 'Rate consultation',
+                })}
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </li>
   )

@@ -2,6 +2,7 @@ import {
   CalendarRange,
   ClipboardList,
   Coins,
+  MessageSquare,
   Notebook,
   Settings,
   UserRound,
@@ -34,6 +35,12 @@ const consoleItems = [
     label: 'Earnings',
     icon: Coins,
     to: '/doctor/earnings',
+  },
+  {
+    id: 'feedback',
+    label: 'Feedback',
+    icon: MessageSquare,
+    to: '/doctor/feedback',
   },
   {
     id: 'profile',

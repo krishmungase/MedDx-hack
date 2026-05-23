@@ -10,6 +10,8 @@ const SECTIONS = {
   '/asha/patients': 'asha.nav.patients',
   '/asha/profile': 'nav.profile',
   '/asha/consult/start': 'asha.nav.patients',
+  '/asha/consult/start/chat': 'asha.nav.patients',
+  '/asha/consult/start/form': 'asha.nav.patients',
   '/asha/consult/doctor': 'asha.nav.patients',
 }
 

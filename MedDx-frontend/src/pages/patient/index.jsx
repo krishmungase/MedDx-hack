@@ -2,11 +2,11 @@ import RoleShell from '@/components/shared/role-shell'
 
 import PatientSidebar from './components/patient-sidebar'
 
-// Section labels are i18n keys — RoleShell calls t() on them so the
-// breadcrumb tracks the language toggle.
 const SECTIONS = {
   '/patient': 'nav.appointments',
   '/patient/triage': 'nav.triage',
+  '/patient/triage/chat': 'nav.triage',
+  '/patient/triage/form': 'nav.triage',
   '/patient/doctors': 'nav.doctors',
   '/patient/records': 'nav.records',
   '/patient/profile': 'nav.profile',

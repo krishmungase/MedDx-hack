@@ -49,6 +49,12 @@ import useAshaPatient from './asha/use-asha-patient'
 import useAddAshaPatient from './asha/use-add-asha-patient'
 import useAshaDashboard from './asha/use-asha-dashboard'
 
+import useSubmitFeedback from './feedback/use-submit-feedback'
+import useAppointmentFeedback from './feedback/use-appointment-feedback'
+import useDoctorFeedback from './feedback/use-doctor-feedback'
+import useAdminFeedback from './feedback/use-admin-feedback'
+import useFeedbackLeaderboard from './feedback/use-feedback-leaderboard'
+
 export {
   useLogin,
   useRegister,
@@ -92,4 +98,9 @@ export {
   useAshaPatient,
   useAddAshaPatient,
   useAshaDashboard,
+  useSubmitFeedback,
+  useAppointmentFeedback,
+  useDoctorFeedback,
+  useAdminFeedback,
+  useFeedbackLeaderboard,
 }

@@ -2,8 +2,8 @@ import { body } from 'express-validator'
 
 const triageChatValidator = [
   body('history')
-    .isArray({ min: 1, max: 20 })
-    .withMessage('History must be an array of 1–20 messages'),
+    .isArray({ min: 1, max: 30 })
+    .withMessage('History must be an array of 1–30 messages'),
   body('history.*.role')
     .isIn(['user', 'assistant'])
     .withMessage("Each message role must be 'user' or 'assistant'"),

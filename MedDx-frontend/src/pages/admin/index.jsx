@@ -7,6 +7,7 @@ const SECTIONS = {
   '/admin/doctors': 'Doctors',
   '/admin/appointments': 'Appointments',
   '/admin/audit-log': 'Audit log',
+  '/admin/feedback': 'Feedback',
   '/admin/profile': 'Profile',
 }
 

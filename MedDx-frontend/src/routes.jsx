@@ -6,11 +6,14 @@ import {
   AdminAshasPage,
   AdminAuditLogPage,
   AdminDoctorsPage,
+  AdminFeedbackPage,
   AdminLayout,
   AdminOverviewPage,
   AdminProfilePage,
   AppLayout,
+  AshaConsultChatPage,
   AshaConsultDoctorPage,
+  AshaConsultFormPage,
   AshaConsultStartPage,
   AshaDashboardPage,
   AshaLayout,
@@ -20,6 +23,7 @@ import {
   AuthLayout,
   DoctorAvailabilityPage,
   DoctorEarningsPage,
+  DoctorFeedbackPage,
   DoctorLayout,
   DoctorPrescriptionsPage,
   DoctorProfilePage,
@@ -31,6 +35,8 @@ import {
   PatientLayout,
   PatientProfilePage,
   PatientRecordsPage,
+  PatientTriageChatPage,
+  PatientTriageFormPage,
   PatientTriagePage,
   SetPasswordPage,
   SignInPage,
@@ -55,6 +61,8 @@ const AppRoutes = () => {
             <Route path="patient" element={<PatientLayout />}>
               <Route index element={<PatientAppointmentsPage />} />
               <Route path="triage" element={<PatientTriagePage />} />
+              <Route path="triage/chat" element={<PatientTriageChatPage />} />
+              <Route path="triage/form" element={<PatientTriageFormPage />} />
               <Route path="doctors" element={<PatientDoctorsPage />} />
               <Route path="records" element={<PatientRecordsPage />} />
               <Route path="profile" element={<PatientProfilePage />} />
@@ -70,6 +78,7 @@ const AppRoutes = () => {
                 element={<DoctorPrescriptionsPage />}
               />
               <Route path="earnings" element={<DoctorEarningsPage />} />
+              <Route path="feedback" element={<DoctorFeedbackPage />} />
               <Route path="profile" element={<DoctorProfilePage />} />
             </Route>
           </Route>
@@ -81,6 +90,7 @@ const AppRoutes = () => {
               <Route path="ashas" element={<AdminAshasPage />} />
               <Route path="appointments" element={<AdminAppointmentsPage />} />
               <Route path="audit-log" element={<AdminAuditLogPage />} />
+              <Route path="feedback" element={<AdminFeedbackPage />} />
               <Route path="profile" element={<AdminProfilePage />} />
             </Route>
           </Route>
@@ -91,6 +101,14 @@ const AppRoutes = () => {
               <Route path="patients" element={<AshaPatientsPage />} />
               <Route path="patients/:id" element={<AshaPatientDetailPage />} />
               <Route path="consult/start" element={<AshaConsultStartPage />} />
+              <Route
+                path="consult/start/chat"
+                element={<AshaConsultChatPage />}
+              />
+              <Route
+                path="consult/start/form"
+                element={<AshaConsultFormPage />}
+              />
               <Route
                 path="consult/doctor"
                 element={<AshaConsultDoctorPage />}

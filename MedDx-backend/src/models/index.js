@@ -4,6 +4,7 @@ import AppointmentModel from './appointment/appointment.models.js'
 import MedicalRecordModel from './medical-record/medical-record.models.js'
 import TransactionModel from './transaction/transaction.models.js'
 import VillagePatientModel from './village-patient/village-patient.models.js'
+import FeedbackModel from './feedback/feedback.models.js'
 
 export {
   UserModel,
@@ -12,4 +13,5 @@ export {
   MedicalRecordModel,
   TransactionModel,
   VillagePatientModel,
+  FeedbackModel,
 }

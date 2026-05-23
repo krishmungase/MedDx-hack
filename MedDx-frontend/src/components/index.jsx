@@ -13,6 +13,8 @@ import VitalLine from './shared/vital-line'
 import DoctorAvatar from './shared/doctor-avatar'
 import ProfileView from './shared/profile-view'
 import TriageChat from './shared/triage-chat'
+import StarRating from './shared/star-rating'
+import FeedbackDialog from './shared/feedback-dialog'
 
 export {
   Header,
@@ -30,4 +32,6 @@ export {
   DoctorAvatar,
   ProfileView,
   TriageChat,
+  StarRating,
+  FeedbackDialog,
 }

@@ -520,6 +520,121 @@
   }
 }
 
+/* ── Voice assistant orb ───────────────────────────────────────────────────
+   A Gemini-style glowing orb used in the conversational triage. Three layers:
+   1. .orb-glow  — soft outer halo, breathing
+   2. .orb-ring  — animated conic-gradient ring that rotates
+   3. .orb-core  — solid centerpiece, scales subtly while speaking/listening
+   Modifier classes set the pace per state (.is-listening, .is-thinking,
+   .is-speaking). Idle is the default. */
+.orb {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.orb-glow {
+  position: absolute;
+  inset: -28%;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle at 50% 50%,
+    oklch(0.85 0.18 260 / 0.55) 0%,
+    oklch(0.7 0.22 280 / 0.35) 40%,
+    transparent 70%
+  );
+  filter: blur(22px);
+  animation: orb-breathe 4.6s ease-in-out infinite;
+}
+.orb-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: conic-gradient(
+    from 0deg,
+    oklch(0.85 0.18 260),
+    oklch(0.75 0.22 290),
+    oklch(0.85 0.18 200),
+    oklch(0.92 0.16 165),
+    oklch(0.85 0.18 260)
+  );
+  animation: orb-spin 10s linear infinite;
+  /* Mask out the centre to leave only the ring */
+  -webkit-mask: radial-gradient(circle, transparent 56%, #000 60%);
+  mask: radial-gradient(circle, transparent 56%, #000 60%);
+}
+.orb-core {
+  position: relative;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle at 35% 30%,
+    oklch(0.98 0.02 260) 0%,
+    oklch(0.78 0.18 265) 55%,
+    oklch(0.55 0.22 280) 100%
+  );
+  box-shadow:
+    inset 0 0 30px oklch(1 0 0 / 0.35),
+    0 8px 40px oklch(0.6 0.22 280 / 0.45);
+  animation: orb-core-pulse 4s ease-in-out infinite;
+}
+.orb-wave {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 2px solid oklch(0.9 0.18 260 / 0.45);
+  opacity: 0;
+}
+
+/* Listening — emit expanding ripples + faster spin + bigger glow */
+.orb.is-listening .orb-glow { animation-duration: 2.4s; filter: blur(28px); }
+.orb.is-listening .orb-ring { animation-duration: 4s; }
+.orb.is-listening .orb-core { animation: orb-core-pulse 1.4s ease-in-out infinite; }
+.orb.is-listening .orb-wave {
+  animation: orb-wave 1.8s cubic-bezier(0.3, 0.7, 0.4, 1) infinite;
+}
+.orb.is-listening .orb-wave:nth-child(5) { animation-delay: 0.6s; }
+.orb.is-listening .orb-wave:nth-child(6) { animation-delay: 1.2s; }
+
+/* Thinking — slow spin, dim core */
+.orb.is-thinking .orb-ring { animation-duration: 2.5s; }
+.orb.is-thinking .orb-core { opacity: 0.7; }
+
+/* Speaking — quick core wobble */
+.orb.is-speaking .orb-core {
+  animation: orb-speak 0.7s ease-in-out infinite;
+}
+
+@keyframes orb-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes orb-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+@keyframes orb-core-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+@keyframes orb-speak {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.07); }
+  50% { transform: scale(0.96); }
+  75% { transform: scale(1.05); }
+}
+@keyframes orb-wave {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb-glow,
+  .orb-ring,
+  .orb-core,
+  .orb-wave {
+    animation: none !important;
+  }
+}
+
 @keyframes vital-pulse {
   0%,
   100% {

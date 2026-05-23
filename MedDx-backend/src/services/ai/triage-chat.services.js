@@ -5,10 +5,12 @@ import { TriageUrgency } from '../../constants/index.js'
 
 const MODEL = 'llama-3.3-70b-versatile'
 
-// Server-side cap: after this many *prior* assistant questions, force a result.
-// "Question N" means the (N+1)th assistant turn — we want at most 4 questions
-// before a verdict.
-const MAX_QUESTIONS = 4
+// Server-side caps. We want a *conversation*, not a one-shot — so we ask the
+// model to keep digging until it has covered all the standard dimensions
+// (onset, duration, severity, associated symptoms, history). The hard upper
+// bound prevents runaway loops.
+const MIN_QUESTIONS = 5
+const MAX_QUESTIONS = 7
 
 const ALLOWED_LANGUAGES = {
   en: 'English',
@@ -33,7 +35,12 @@ const ALLOWED_SPECIALTIES = [
 
 const VALID_URGENCIES = Object.values(TriageUrgency)
 
-const buildSystemPrompt = ({ langLabel, mustFinalize, questionsAsked }) => `You are MedDx's conversational triage assistant. You are talking to a patient who has rural access and possibly low literacy. The conversation will be SPOKEN aloud to them (text-to-speech), and they will SPEAK their answers back. Keep every question short, simple, and easily speakable.
+const buildSystemPrompt = ({
+  langLabel,
+  mustFinalize,
+  mustAskMore,
+  questionsAsked,
+}) => `You are MedDx's conversational triage assistant. You are talking to a patient who has rural access and possibly low literacy. The conversation will be SPOKEN aloud to them (text-to-speech), and they will SPEAK their answers back. Keep every question short, simple, and easily speakable.
 
 CRITICAL RULES — read carefully:
 - You DO NOT diagnose, prescribe, or recommend treatment.
@@ -43,8 +50,24 @@ CRITICAL RULES — read carefully:
 - Ask ONE question per turn. Never ask multiple questions in a single message.
 - Keep each question under ~15 words. Speakable. No clinical jargon.
 - Patient's language for question prose: ${langLabel}. Always write the "question" or "reason" fields in this language. JSON keys + enum values stay in English.
-- Hard limit: at most ${MAX_QUESTIONS} questions total in the whole conversation. After ${MAX_QUESTIONS} questions, you MUST return type=result.
-- ${mustFinalize ? `You have ALREADY asked ${questionsAsked} questions — you MUST return type=result now. Do NOT ask another question.` : `So far you have asked ${questionsAsked} question(s). You may ask another only if it would change the urgency or specialty; otherwise return type=result.`}
+
+CONVERSATION PACING — IMPORTANT:
+- You must hold a real conversation, NOT jump to a result after one or two answers.
+- Cover these dimensions before finalizing (one question per turn):
+    1. Onset / duration ("when did this start?")
+    2. Location & quality of the symptom ("where exactly? sharp/dull?")
+    3. Severity ("how bad on a 1-to-10 scale?")
+    4. Associated symptoms ("any fever, vomiting, breathing trouble?")
+    5. Triggers / what makes it worse or better
+    6. Relevant history (past similar episodes, ongoing conditions, medications)
+- Minimum questions before result: ${MIN_QUESTIONS}.
+- Maximum questions in total: ${MAX_QUESTIONS}.
+- So far you have asked ${questionsAsked} question(s).
+${mustFinalize
+  ? `- You have reached the maximum. You MUST return type=result NOW. Do NOT ask another question.`
+  : mustAskMore
+    ? `- You have NOT yet asked ${MIN_QUESTIONS} questions. You MUST return type=question, picking the next unanswered dimension from the list above. Do NOT finalize yet.`
+    : `- You have asked the minimum. You may finalize now, but prefer one more question if a useful dimension is still uncovered.`}
 
 URGENCY definitions:
 - "emergency" — chest pain, severe bleeding, unconsciousness, severe trauma, stroke signs (face droop / weakness / speech), anaphylaxis, suicidal intent, sudden vision loss, severe shortness of breath. Recommend calling emergency services.
@@ -122,10 +145,12 @@ class TriageChatService {
 
     const questionsAsked = countAssistantQuestions(history)
     const mustFinalize = questionsAsked >= MAX_QUESTIONS
+    const mustAskMore = !mustFinalize && questionsAsked < MIN_QUESTIONS
 
     const systemPrompt = buildSystemPrompt({
       langLabel,
       mustFinalize,
+      mustAskMore,
       questionsAsked,
     })
 
@@ -168,6 +193,20 @@ class TriageChatService {
       return this._normalizeResult(safeFallbackResult(langLabel))
     }
 
+    // Inverse: if the model tried to finalize before we've hit the minimum,
+    // ignore its result and ask the next dimension instead. This forces a
+    // real conversation rather than a one-shot.
+    if (parsed.type === 'result' && mustAskMore) {
+      logger.warn({
+        msg: 'TriageChat: model finalized early, forcing follow-up question',
+        data: { questionsAsked, min: MIN_QUESTIONS },
+      })
+      return {
+        type: 'question',
+        question: this._recoveryQuestion(langLabel, questionsAsked),
+      }
+    }
+
     if (parsed.type === 'question') {
       const question = String(parsed.question || '').trim()
       if (!question) {
@@ -181,6 +220,40 @@ class TriageChatService {
     }
 
     return this._normalizeResult(safeFallbackResult(langLabel))
+  }
+
+  // Stock fallback questions in each language, indexed by how many turns
+  // have already happened. Used when the model tries to finalize too early —
+  // we keep the conversation moving instead of forcing a result.
+  _recoveryQuestion(langLabel, questionsAsked) {
+    const banks = {
+      [ALLOWED_LANGUAGES.en]: [
+        'How long has this been going on?',
+        'Where exactly do you feel it, and how does it feel?',
+        'On a scale of 1 to 10, how bad is the pain or discomfort?',
+        'Any other symptoms — fever, vomiting, trouble breathing?',
+        'Does anything make it worse or better?',
+        'Have you had this before, or any ongoing health issues?',
+      ],
+      [ALLOWED_LANGUAGES.hi]: [
+        'यह कब से हो रहा है?',
+        'कहाँ महसूस होता है और कैसा दर्द है?',
+        '1 से 10 में दर्द कितना है?',
+        'कोई और तकलीफ़ है — बुखार, उल्टी, साँस की दिक्कत?',
+        'किस से ज़्यादा बढ़ता है या कम होता है?',
+        'पहले कभी ऐसा हुआ है, या कोई पुरानी बीमारी है?',
+      ],
+      [ALLOWED_LANGUAGES.mr]: [
+        'हे कधीपासून होतंय?',
+        'नक्की कुठे जाणवतंय आणि कसं वाटतंय?',
+        '1 ते 10 मध्ये किती त्रास होतोय?',
+        'दुसरं काही लक्षण आहे का — ताप, उलटी, श्वासाचा त्रास?',
+        'कशामुळे वाढतं किंवा कमी होतं?',
+        'पूर्वी असं झालंय का, किंवा काही जुना आजार आहे का?',
+      ],
+    }
+    const bank = banks[langLabel] || banks[ALLOWED_LANGUAGES.en]
+    return bank[Math.min(questionsAsked, bank.length - 1)]
   }
 
   _normalizeResult(parsed) {
@@ -201,4 +274,4 @@ class TriageChatService {
 }
 
 export default TriageChatService
-export { MAX_QUESTIONS }
+export { MIN_QUESTIONS, MAX_QUESTIONS }

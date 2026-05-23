@@ -3,6 +3,7 @@ import SlotService from './slot/slot.services.js'
 import AppointmentService from './appointment/appointment.services.js'
 import MedicalRecordService from './medical-record/medical-record.services.js'
 import VillagePatientService from './village-patient/village-patient.services.js'
+import FeedbackService from './feedback/feedback.services.js'
 
 import LLMServices from './ai/llm.services.js'
 import TriageService from './ai/triage.services.js'
@@ -25,6 +26,7 @@ export {
   AppointmentService,
   MedicalRecordService,
   VillagePatientService,
+  FeedbackService,
   LLMServices,
   TriageService,
   TriageChatService,

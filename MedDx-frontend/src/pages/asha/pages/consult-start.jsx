@@ -1,56 +1,35 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { useTranslation as useI18n } from 'react-i18next'
 import {
   ArrowLeft,
+  ArrowRight,
   MapPin,
-  MessageSquare,
   Mic,
-  Sparkles,
-  Zap,
+  Pencil,
+  ShieldCheck,
 } from 'lucide-react'
 
-import { useTriage } from '@/apis'
 import { usePageTitle } from '@/hooks'
 import { pageTitle } from '@/constants'
-import { errorToast } from '@/lib'
-import { TriageChat } from '@/components'
-
-import TriageForm from '../../patient/components/triage-form'
-import TriageResult from '../../patient/components/triage-result'
 
 /**
- * ASHA-facilitated consult flow.
+ * ASHA-facilitated consult flow — chooser page.
  *
- * The ASHA holds the device; the villager (or the ASHA on their behalf)
- * speaks symptoms via the same voice-first TriageForm used in /patient/triage.
- * The triage result then routes into /asha/consult/doctor with the villager
- * context, where the ASHA picks a specialist and books on the villager's
- * behalf via the existing booking endpoint (attributed via bookedByAshaId +
- * villagePatientId).
+ * Two big picture-led cards: "Speak to us" (chatbot) vs "Fill a form" (one-shot).
+ * Each routes to a dedicated sub-page so the experiences never overlap.
  */
 const ConsultStartPage = () => {
   usePageTitle({ title: pageTitle.ASHA_DASHBOARD })
   const { t, i18n } = useTranslation()
-  // Re-imported because TriageForm uses i18n.language for the mic locale and
-  // we want to set it temporarily to the villager's language. Both hooks
-  // resolve to the same i18n instance.
-  void useI18n()
-
   const location = useLocation()
   const navigate = useNavigate()
   const villager = location.state?.villager
 
   const [originalLang] = useState(() => i18n.language)
-  const [mode, setMode] = useState('quick') // 'quick' | 'chat'
-  const [chatTriage, setChatTriage] = useState(null)
-  const [chatDisclaimer, setChatDisclaimer] = useState(null)
-  const [chatTranscript, setChatTranscript] = useState('')
 
-  // Temporarily switch the UI + mic to the villager's language so the form
-  // labels, voice prompts, and triage output all land in something they can
-  // understand. Restored on unmount.
+  // Temporarily switch to the villager's language so the chooser, mic labels,
+  // and downstream triage all match what they speak. Restored on unmount.
   useEffect(() => {
     if (villager?.language && villager.language !== i18n.language) {
       i18n.changeLanguage(villager.language)
@@ -62,16 +41,6 @@ const ConsultStartPage = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [villager?.language])
-
-  const { assess, isLoading, triage, disclaimer, reset, error } = useTriage()
-
-  if (error) {
-    errorToast({
-      message:
-        error?.response?.data?.message ||
-        t('triage.submit', { defaultValue: 'Triage failed.' }),
-    })
-  }
 
   if (!villager) {
     return (
@@ -90,54 +59,11 @@ const ConsultStartPage = () => {
     )
   }
 
-  const onSubmit = (payload) => {
-    assess({
-      data: {
-        ...payload,
-        // Override age/sex from the villager profile if the form didn't fill them.
-        age: payload.age ?? villager.age ?? undefined,
-        sex: payload.sex ?? villager.gender ?? undefined,
-        language: villager.language || payload.language,
-      },
-    })
-  }
-
-  const onChatResult = ({ triage: t2, disclaimer: d2, transcript }) => {
-    setChatTriage(t2)
-    setChatDisclaimer(d2)
-    setChatTranscript(transcript || '')
-  }
-
-  const onChatReset = () => {
-    setChatTriage(null)
-    setChatDisclaimer(null)
-    setChatTranscript('')
-  }
-
-  const activeTriage = mode === 'chat' ? chatTriage : triage
-  const activeDisclaimer = mode === 'chat' ? chatDisclaimer : disclaimer
-  const onActiveReset = mode === 'chat' ? onChatReset : reset
-
-  const onBook = () => {
-    if (!activeTriage) return
-    navigate(
-      `/asha/consult/doctor?specialty=${encodeURIComponent(activeTriage.specialty)}`,
-      {
-        state: {
-          villager,
-          triage: {
-            specialty: activeTriage.specialty,
-            urgency: activeTriage.urgency,
-            summary:
-              mode === 'chat' && chatTranscript
-                ? `${activeTriage.summary}\n\n--- Transcript ---\n${chatTranscript}`
-                : activeTriage.summary,
-            reason: activeTriage.reason,
-          },
-        },
-      }
-    )
-  }
+  // Hand the villager off to the sub-pages via location state.
+  const goChat = () =>
+    navigate('/asha/consult/start/chat', { state: { villager } })
+  const goForm = () =>
+    navigate('/asha/consult/start/form', { state: { villager } })
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -179,66 +105,97 @@ const ConsultStartPage = () => {
         </div>
       </section>
 
-      <div className="fade-up flex flex-col gap-1">
-        <p className="text-[11px] uppercase tracking-[0.22em] text-primary/80 font-semibold inline-flex items-center gap-1.5">
-          <Sparkles className="h-3 w-3" />
-          {t('triage.card_eyebrow')}
-        </p>
+      <div className="fade-up flex flex-col gap-1 text-center pt-2">
         <h1 className="font-display text-2xl sm:text-3xl tracking-tight">
-          {t('asha.consult.triage_title', { name: villager.name })}
+          {t('triage.chooser_title', {
+            defaultValue: 'How would you like to start?',
+          })}
         </h1>
-        <p className="mt-1 text-muted-foreground">
-          {t('asha.consult.triage_hint')}
+        <p className="mt-1 text-muted-foreground text-base">
+          {t('triage.chooser_subtitle', {
+            defaultValue: 'Both ways send you to the right doctor.',
+          })}
         </p>
       </div>
 
-      {!activeTriage && (
-        <div className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-card p-1">
-          <button
-            type="button"
-            onClick={() => setMode('quick')}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-              mode === 'quick'
-                ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/25'
-                : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-            }`}
-          >
-            <Zap className="h-3.5 w-3.5" />
-            {t('triage.mode_quick', { defaultValue: 'Quick symptom check' })}
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode('chat')}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-              mode === 'chat'
-                ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/25'
-                : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-            }`}
-          >
-            <MessageSquare className="h-3.5 w-3.5" />
-            {t('triage.mode_chat', { defaultValue: 'Guided voice check' })}
-          </button>
-        </div>
-      )}
+      <div className="fade-up fade-up-delay-1 grid sm:grid-cols-2 gap-4 sm:gap-6">
+        <button
+          type="button"
+          onClick={goChat}
+          className="group relative overflow-hidden rounded-3xl bg-hero-mesh text-white p-7 sm:p-9 text-left shadow-xl shadow-primary/25 transition-transform hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/40"
+        >
+          <div className="absolute inset-0 bg-dot-grid opacity-50" aria-hidden />
+          <div className="relative space-y-5">
+            <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-white/20 backdrop-blur-md ring-1 ring-white/30">
+              <Mic className="h-10 w-10" />
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/75 font-semibold">
+                {t('triage.chooser_chat_eyebrow', {
+                  defaultValue: 'Best for spoken help',
+                })}
+              </p>
+              <h2 className="font-display text-2xl tracking-tight leading-tight">
+                {t('triage.chooser_chat_title', {
+                  defaultValue: 'Speak to us.',
+                })}
+              </h2>
+              <p className="text-white/85 leading-relaxed text-sm">
+                {t('triage.chooser_chat_body', {
+                  defaultValue:
+                    'Tap the mic and answer a few short questions. No typing needed.',
+                })}
+              </p>
+            </div>
+            <div className="inline-flex items-center gap-2 text-sm font-semibold">
+              {t('triage.chooser_start', { defaultValue: 'Start' })}
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </div>
+          </div>
+        </button>
 
-      {!activeTriage ? (
-        mode === 'quick' ? (
-          <TriageForm onSubmit={onSubmit} isLoading={isLoading} />
-        ) : (
-          <TriageChat
-            language={villager.language || i18n.language}
-            onResult={onChatResult}
-            contextLine={t('asha.consult.book_eyebrow', { name: villager.name })}
-          />
-        )
-      ) : (
-        <TriageResult
-          triage={activeTriage}
-          disclaimer={activeDisclaimer}
-          onReset={onActiveReset}
-          onBook={onBook}
-        />
-      )}
+        <button
+          type="button"
+          onClick={goForm}
+          className="group relative overflow-hidden rounded-3xl bg-card border-2 border-border/70 p-7 sm:p-9 text-left transition-all hover:-translate-y-1 hover:border-primary/40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30"
+        >
+          <div className="relative space-y-5">
+            <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Pencil className="h-10 w-10" />
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground font-semibold">
+                {t('triage.chooser_form_eyebrow', {
+                  defaultValue: 'Fastest if you can read',
+                })}
+              </p>
+              <h2 className="font-display text-2xl tracking-tight leading-tight">
+                {t('triage.chooser_form_title', {
+                  defaultValue: 'Fill a short form.',
+                })}
+              </h2>
+              <p className="text-muted-foreground leading-relaxed text-sm">
+                {t('triage.chooser_form_body', {
+                  defaultValue:
+                    'Type or speak your symptoms once. Get a result instantly.',
+                })}
+              </p>
+            </div>
+            <div className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
+              {t('triage.chooser_start', { defaultValue: 'Start' })}
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <p className="text-center text-xs text-muted-foreground inline-flex items-center justify-center gap-1.5 w-full">
+        <ShieldCheck className="h-3 w-3 text-primary" />
+        {t('triage.chooser_footer', {
+          defaultValue:
+            'Both options are AI-guided — a real doctor reviews your case.',
+        })}
+      </p>
     </div>
   )
 }

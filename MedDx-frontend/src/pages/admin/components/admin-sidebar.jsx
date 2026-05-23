@@ -2,6 +2,7 @@ import {
   CalendarCheck,
   HeartHandshake,
   LayoutDashboard,
+  MessageSquare,
   ScrollText,
   Settings,
   Stethoscope,
@@ -41,6 +42,12 @@ const consoleItems = [
     label: 'Audit log',
     icon: ScrollText,
     to: '/admin/audit-log',
+  },
+  {
+    id: 'feedback',
+    label: 'Feedback',
+    icon: MessageSquare,
+    to: '/admin/feedback',
   },
   {
     id: 'profile',
