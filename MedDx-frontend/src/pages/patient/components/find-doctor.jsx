@@ -76,6 +76,7 @@ const FindDoctor = ({
   specialtyFilter,
   onClearSpecialty,
   triage,
+  villagePatient,
 }) => {
   const { t } = useTranslation()
   const { doctors, isLoading } = useActiveDoctors()
@@ -362,6 +363,7 @@ const FindDoctor = ({
       <BookDoctorDialog
         doctor={picked}
         triage={triage}
+        villagePatient={villagePatient}
         open={!!picked}
         onOpenChange={(o) => !o && setPicked(null)}
         onBooked={onBooked}

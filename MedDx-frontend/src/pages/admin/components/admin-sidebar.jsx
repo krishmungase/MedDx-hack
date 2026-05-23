@@ -1,5 +1,6 @@
 import {
   CalendarCheck,
+  HeartHandshake,
   LayoutDashboard,
   ScrollText,
   Settings,
@@ -22,6 +23,12 @@ const consoleItems = [
     label: 'Doctors',
     icon: Stethoscope,
     to: '/admin/doctors',
+  },
+  {
+    id: 'ashas',
+    label: 'ASHA workers',
+    icon: HeartHandshake,
+    to: '/admin/ashas',
   },
   {
     id: 'appointments',

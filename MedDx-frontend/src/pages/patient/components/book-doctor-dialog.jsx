@@ -33,11 +33,11 @@ const dayHeading = (date, t) => {
 }
 
 // Decide the price label for the chip + button before we even hit the server.
-// Backend remains the source of truth — this is just so the patient isn't
-// surprised when Razorpay either opens or doesn't.
-const computePricing = ({ user, triage, t }) => {
+// The "subject" of the booking is either the patient (self-booking) or the
+// villager (ASHA-assisted) — pricing tracks their freebie flag.
+const computePricing = ({ subject, triage, t }) => {
   const isEmergency = triage?.urgency === 'emergency'
-  const firstFree = !user?.freeConsultationUsed
+  const firstFree = !subject?.freeConsultationUsed
   if (isEmergency) {
     return {
       kind: 'free',
@@ -65,6 +65,7 @@ const BookDoctorDialog = ({
   onOpenChange,
   onBooked,
   triage,
+  villagePatient,
 }) => {
   const { t } = useTranslation()
   const { user } = useAuth()
@@ -81,9 +82,12 @@ const BookDoctorDialog = ({
   const [isPaying, setIsPaying] = useState(false)
 
   const busy = isBooking || isVerifying || isPaying
+  // ASHA-assisted bookings track the villager's freebie state; otherwise
+  // we use the logged-in patient's own.
+  const subject = villagePatient || user
   const pricing = useMemo(
-    () => computePricing({ user, triage, t }),
-    [user, triage, t]
+    () => computePricing({ subject, triage, t }),
+    [subject, triage, t]
   )
 
   // Group future + available slots by day.
@@ -125,6 +129,9 @@ const BookDoctorDialog = ({
           demoSkipPayment: true,
           ...(triage?.summary ? { triageSummary: triage.summary } : {}),
           ...(triage?.urgency ? { triageUrgency: triage.urgency } : {}),
+          ...(villagePatient
+            ? { villagePatientId: villagePatient._id }
+            : {}),
         },
       })
       if (demoResponse?.appointment) {
@@ -150,6 +157,7 @@ const BookDoctorDialog = ({
       slotId: selected._id,
       ...(triage?.summary ? { triageSummary: triage.summary } : {}),
       ...(triage?.urgency ? { triageUrgency: triage.urgency } : {}),
+      ...(villagePatient ? { villagePatientId: villagePatient._id } : {}),
     }
 
     let response
@@ -218,6 +226,9 @@ const BookDoctorDialog = ({
           razorpay_signature: payResult.razorpay_signature,
           ...(triage?.summary ? { triageSummary: triage.summary } : {}),
           ...(triage?.urgency ? { triageUrgency: triage.urgency } : {}),
+          ...(villagePatient
+            ? { villagePatientId: villagePatient._id }
+            : {}),
         },
       })
       successToast({ message: 'Appointment confirmed.' })

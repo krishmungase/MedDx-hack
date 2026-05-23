@@ -9,6 +9,7 @@ import {
   adminRoutes,
   aiRoutes,
   appointmentRoutes,
+  ashaRoutes,
   authRoutes,
   doctorRoutes,
   medicalRecordRoutes,
@@ -53,6 +54,7 @@ class ServerApp {
     this.app.use('/api/v1/appointments', appointmentRoutes)
     this.app.use('/api/v1/medical-records', medicalRecordRoutes)
     this.app.use('/api/v1/ai', aiRoutes)
+    this.app.use('/api/v1/asha', ashaRoutes)
 
     // Same-origin proxy for Razorpay's checkout.js — bypasses ad-blockers
     // that target the razorpay.com domain.

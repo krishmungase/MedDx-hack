@@ -280,7 +280,9 @@ const NextPatientSpotlight = ({ appt, onJoin }) => {
 
           <div className="flex items-center gap-3.5">
             <DoctorAvatar
-              name={appt.patientId?.name}
+              name={
+                appt.villagePatientId?.name || appt.patientId?.name
+              }
               size="lg"
               showRing={false}
               tone="sage"
@@ -288,10 +290,19 @@ const NextPatientSpotlight = ({ appt, onJoin }) => {
             />
             <div>
               <p className="font-display text-lg leading-tight">
-                {appt.patientId?.name || 'Patient'}
+                {appt.villagePatientId?.name ||
+                  appt.patientId?.name ||
+                  'Patient'}
+                {appt.villagePatientId?.age && (
+                  <span className="text-white/75 font-normal ml-2 text-base">
+                    · {appt.villagePatientId.age}
+                  </span>
+                )}
               </p>
               <p className="text-sm text-white/75 truncate">
-                {appt.patientId?.email || ''}
+                {appt.villagePatientId
+                  ? `${appt.villagePatientId.gender && appt.villagePatientId.gender !== 'prefer_not_to_say' ? appt.villagePatientId.gender + ' · ' : ''}${appt.villagePatientId.village || ''}`
+                  : appt.patientId?.email || ''}
               </p>
             </div>
           </div>
@@ -300,6 +311,14 @@ const NextPatientSpotlight = ({ appt, onJoin }) => {
             <HeroChip icon={Clock}>{format(dt, "EEE, MMM d · h:mm a")}</HeroChip>
             {appt.triageUrgency && (
               <HeroChip icon={Sparkles}>{appt.triageUrgency} urgency</HeroChip>
+            )}
+            {appt.bookedByAshaId && (
+              <HeroChip icon={Sparkles}>
+                ASHA-assisted · {appt.bookedByAshaId.name}
+                {appt.bookedByAshaId.village
+                  ? `, ${appt.bookedByAshaId.village}`
+                  : ''}
+              </HeroChip>
             )}
           </div>
 
@@ -414,13 +433,27 @@ const PatientCard = ({ appt, onJoin }) => {
 
       <div className="p-5 pl-6 space-y-4">
         <div className="flex items-start gap-3">
-          <DoctorAvatar name={appt.patientId?.name} size="md" tone="sage" online={joinable} />
+          <DoctorAvatar
+            name={appt.villagePatientId?.name || appt.patientId?.name}
+            size="md"
+            tone="sage"
+            online={joinable}
+          />
           <div className="min-w-0 flex-1">
             <p className="font-display text-base tracking-tight truncate">
-              {appt.patientId?.name || 'Patient'}
+              {appt.villagePatientId?.name ||
+                appt.patientId?.name ||
+                'Patient'}
+              {appt.villagePatientId?.age && (
+                <span className="text-muted-foreground font-normal ml-1.5 text-sm">
+                  · {appt.villagePatientId.age}
+                </span>
+              )}
             </p>
             <p className="text-xs text-muted-foreground truncate">
-              {appt.patientId?.email || ''}
+              {appt.villagePatientId
+                ? appt.villagePatientId.village || 'Village patient'
+                : appt.patientId?.email || ''}
             </p>
           </div>
           {appt.triageUrgency && (
@@ -429,6 +462,19 @@ const PatientCard = ({ appt, onJoin }) => {
             </StatusBadge>
           )}
         </div>
+
+        {appt.bookedByAshaId && (
+          <div className="rounded-xl border border-primary/25 bg-primary/5 px-3 py-2 flex items-center gap-2 text-[11px] text-primary">
+            <Sparkles className="h-3 w-3" />
+            ASHA-assisted ·{' '}
+            <span className="font-medium">{appt.bookedByAshaId.name}</span>
+            {appt.bookedByAshaId.village && (
+              <span className="text-muted-foreground">
+                , {appt.bookedByAshaId.village}
+              </span>
+            )}
+          </div>
+        )}
 
         <div className="rounded-xl bg-linear-to-br from-primary/8 to-transparent border border-primary/15 px-4 py-3">
           <div className="flex items-baseline justify-between gap-3">
@@ -466,10 +512,20 @@ const PatientCard = ({ appt, onJoin }) => {
 
 const DoneRow = ({ appt, onReopen }) => (
   <li className="flex flex-wrap items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3 transition-colors hover:border-primary/30">
-    <DoctorAvatar name={appt.patientId?.name} size="sm" showRing={false} tone="sage" />
+    <DoctorAvatar
+      name={appt.villagePatientId?.name || appt.patientId?.name}
+      size="sm"
+      showRing={false}
+      tone="sage"
+    />
     <div className="min-w-0 flex-1">
       <p className="text-sm font-medium truncate">
-        {appt.patientId?.name || 'Patient'}
+        {appt.villagePatientId?.name || appt.patientId?.name || 'Patient'}
+        {appt.bookedByAshaId && (
+          <span className="ml-1.5 text-[10px] uppercase tracking-[0.12em] text-primary font-semibold">
+            · ASHA
+          </span>
+        )}
       </p>
       <p className="text-[11px] text-muted-foreground font-mono tabular-nums">
         {format(new Date(appt.datetime), "EEE, MMM d · h:mm a")}

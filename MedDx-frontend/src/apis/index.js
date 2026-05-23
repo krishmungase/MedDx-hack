@@ -10,6 +10,10 @@ import useRemoveDoctor from './admin/use-remove-doctor'
 import useUpdateDoctorStatus from './admin/use-update-doctor-status'
 import usePlatformAppointments from './admin/use-platform-appointments'
 import useAuditLog from './admin/use-audit-log'
+import useAshas from './admin/use-ashas'
+import useRegisterAsha from './admin/use-register-asha'
+import useUpdateAshaStatus from './admin/use-update-asha-status'
+import useRemoveAsha from './admin/use-remove-asha'
 
 import useMySlots from './slots/use-my-slots'
 import useGenerateSlots from './slots/use-generate-slots'
@@ -39,6 +43,11 @@ import useMyProfile from './profile/use-my-profile'
 import useUpdateProfile from './profile/use-update-profile'
 import useChangePassword from './profile/use-change-password'
 
+import useAshaPatients from './asha/use-asha-patients'
+import useAshaPatient from './asha/use-asha-patient'
+import useAddAshaPatient from './asha/use-add-asha-patient'
+import useAshaDashboard from './asha/use-asha-dashboard'
+
 export {
   useLogin,
   useRegister,
@@ -51,6 +60,10 @@ export {
   useUpdateDoctorStatus,
   usePlatformAppointments,
   useAuditLog,
+  useAshas,
+  useRegisterAsha,
+  useUpdateAshaStatus,
+  useRemoveAsha,
   useMySlots,
   useGenerateSlots,
   useDeleteSlot,
@@ -73,4 +86,8 @@ export {
   useMyProfile,
   useUpdateProfile,
   useChangePassword,
+  useAshaPatients,
+  useAshaPatient,
+  useAddAshaPatient,
+  useAshaDashboard,
 }

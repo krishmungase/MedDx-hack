@@ -5,6 +5,7 @@ const pageTitle = {
   PATIENT_DASHBOARD: 'Patient · Dashboard',
   DOCTOR_DASHBOARD: 'Doctor · Workspace',
   ADMIN_DASHBOARD: 'Admin · Console',
+  ASHA_DASHBOARD: 'ASHA · Workspace',
 }
 
 export default pageTitle

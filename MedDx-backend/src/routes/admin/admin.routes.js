@@ -20,8 +20,11 @@ import {
   verifyJWT,
 } from '../../middlewares/index.js'
 import {
+  ashaIdParamValidator,
   doctorIdParamValidator,
+  registerAshaValidator,
   registerDoctorValidator,
+  updateAshaStatusValidator,
   updateDoctorStatusValidator,
 } from '../../validators/admin/admin.validators.js'
 
@@ -85,6 +88,30 @@ const routeDefinitions = [
     method: 'delete',
     validators: [doctorIdParamValidator, validate],
     handler: adminController.removeDoctor.bind(adminController),
+  },
+  {
+    path: '/register-asha',
+    method: 'post',
+    validators: [registerAshaValidator, validate],
+    handler: adminController.registerAsha.bind(adminController),
+  },
+  {
+    path: '/ashas',
+    method: 'get',
+    validators: [],
+    handler: adminController.listAshas.bind(adminController),
+  },
+  {
+    path: '/ashas/:id',
+    method: 'patch',
+    validators: [updateAshaStatusValidator, validate],
+    handler: adminController.updateAshaStatus.bind(adminController),
+  },
+  {
+    path: '/ashas/:id',
+    method: 'delete',
+    validators: [ashaIdParamValidator, validate],
+    handler: adminController.removeAsha.bind(adminController),
   },
 ]
 

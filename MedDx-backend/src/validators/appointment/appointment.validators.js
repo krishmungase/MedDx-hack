@@ -13,6 +13,10 @@ const bookValidator = [
     .optional({ nullable: true, checkFalsy: true })
     .isIn(AvailableTriageUrgencies)
     .withMessage('Invalid triage urgency'),
+  body('villagePatientId')
+    .optional({ nullable: true, checkFalsy: true })
+    .isMongoId()
+    .withMessage('Invalid villagePatientId'),
 ]
 
 const idParamValidator = [

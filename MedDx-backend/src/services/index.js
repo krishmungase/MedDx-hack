@@ -2,6 +2,7 @@ import UserService from './auth/user.services.js'
 import SlotService from './slot/slot.services.js'
 import AppointmentService from './appointment/appointment.services.js'
 import MedicalRecordService from './medical-record/medical-record.services.js'
+import VillagePatientService from './village-patient/village-patient.services.js'
 
 import LLMServices from './ai/llm.services.js'
 import TriageService from './ai/triage.services.js'
@@ -22,6 +23,7 @@ export {
   SlotService,
   AppointmentService,
   MedicalRecordService,
+  VillagePatientService,
   LLMServices,
   TriageService,
   PrescriptionFormatterService,

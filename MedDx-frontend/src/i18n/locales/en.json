@@ -23,7 +23,77 @@
   "role": {
     "patient": "Patient",
     "doctor": "Doctor",
-    "admin": "Administrator"
+    "admin": "Administrator",
+    "asha": "ASHA worker"
+  },
+  "asha": {
+    "eyebrow": "ASHA · Workspace",
+    "nav": {
+      "dashboard": "Dashboard",
+      "patients": "My villagers"
+    },
+    "dashboard": {
+      "greeting": "Hello, {{name}}.",
+      "subtitle": "You're the bridge between your village and a specialist doctor. Symptom check, bookings, records — all from here.",
+      "recent_title": "Recent bookings",
+      "recent_hint": "Appointments you've booked — newest first",
+      "recent_empty": "No bookings yet. Add your first villager."
+    },
+    "stats": {
+      "managed": "Villagers in care",
+      "this_week": "This week",
+      "urgent": "Urgent pending",
+      "pending": "Scheduled"
+    },
+    "roster": {
+      "title": "My villagers.",
+      "subtitle": "Light-touch profiles for the people in your care. Add, run a symptom check, book a doctor — all from one place.",
+      "count": "villagers on the roster",
+      "search": "Search by name",
+      "last_visit": "Last visit",
+      "no_visit": "No visit yet",
+      "urgent": "Urgent",
+      "pending": "Pending",
+      "open": "Open",
+      "empty_title": "No villagers yet",
+      "empty_body": "Add your first villager to get started."
+    },
+    "add": {
+      "cta": "Add villager",
+      "title": "Add villager",
+      "subtitle": "A light profile under your care. They don't need a smartphone.",
+      "full_name": "Full name",
+      "full_name_placeholder": "e.g. Sita Devi",
+      "name_required": "Please enter a name.",
+      "age": "Age",
+      "gender": "Gender",
+      "phone": "Phone (optional)",
+      "language": "Language they speak",
+      "village": "Village",
+      "village_placeholder": "Your village",
+      "notes": "Notes (optional)",
+      "notes_placeholder": "Any chronic condition worth remembering",
+      "submit": "Add to roster"
+    },
+    "detail": {
+      "back": "Back",
+      "years": "years",
+      "language": "Language: {{lang}}",
+      "free_available": "First consult free",
+      "start_consult": "Start consultation",
+      "appointments": "Appointments",
+      "bookings_on_file": "bookings on file",
+      "no_appointments": "No appointments yet.",
+      "past_consults": "Past consultations"
+    },
+    "consult": {
+      "no_villager": "No villager selected. Go back to the roster.",
+      "speaking_in": "Speaking in {{lang}}",
+      "triage_title": "Symptom check for {{name}}",
+      "triage_hint": "Tap the mic — let the villager speak, or speak for them.",
+      "back_to_triage": "Back to triage",
+      "book_eyebrow": "Booking for {{name}}"
+    }
   },
   "account_status": {
     "active": "Active",

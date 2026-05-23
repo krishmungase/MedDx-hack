@@ -26,6 +26,7 @@ class AppointmentController {
     mailgenService,
     icsService,
     dailyService,
+    villagePatientService,
     logger
   ) {
     this.apptSvc = appointmentService
@@ -38,17 +39,40 @@ class AppointmentController {
     this.mailgenSvc = mailgenService
     this.icsSvc = icsService
     this.dailySvc = dailyService
+    this.vpSvc = villagePatientService
     this.log = logger
   }
 
   // Determine whether the booking should bypass payment.
   // Two cases qualify, per project spec:
-  //   1) Patient hasn't used their free first consult yet.
+  //   1) Subject hasn't used their free first consult yet (patient OR villager).
   //   2) Triage assessed this case as an emergency.
-  isFreeConsult(patient, triageUrgency) {
-    if (!patient?.freeConsultationUsed) return true
+  isFreeConsult(subject, triageUrgency) {
+    if (!subject?.freeConsultationUsed) return true
     if (triageUrgency === TriageUrgency.EMERGENCY) return true
     return false
+  }
+
+  // Resolve the ASHA-assisted booking subject. Returns { villagePatient, asha }
+  // when both are valid, throws otherwise. The ASHA must own the villager.
+  async resolveAshaSubject(req, villagePatientId) {
+    if (req.user.role !== UserRoles.ASHA) {
+      throw new ApiError(
+        403,
+        'Only an ASHA can book on behalf of a village patient.'
+      )
+    }
+    if (!this.vpSvc) {
+      throw new ApiError(500, 'Village patient service not configured.')
+    }
+    const villager = await this.vpSvc.findByIdForAsha(
+      villagePatientId,
+      req.user._id
+    )
+    if (!villager) {
+      throw new ApiError(404, 'Villager not in your roster.')
+    }
+    return { villager, asha: req.user }
   }
 
   // ── Book a slot (patient only) ─────────────────────────────────────────
@@ -64,8 +88,13 @@ class AppointmentController {
   // hackathon demos walk through the paid flow even when the patient's
   // browser blocks Razorpay's CDN (ad-blockers, corporate DNS, etc).
   async book(req, res) {
-    const { slotId, triageSummary, triageUrgency, demoSkipPayment } = req.body
-    const patient = req.user
+    const {
+      slotId,
+      triageSummary,
+      triageUrgency,
+      demoSkipPayment,
+      villagePatientId,
+    } = req.body
 
     const slot = await this.slotSvc.findById(slotId)
     if (!slot) throw new ApiError(404, 'Slot not found.')
@@ -76,15 +105,28 @@ class AppointmentController {
       throw new ApiError(400, 'That slot is in the past.')
     }
 
-    const free = this.isFreeConsult(patient, triageUrgency)
+    // Determine the booking "subject" — either the logged-in patient OR
+    // the village patient an ASHA is booking for.
+    let subject = req.user
+    let villager = null
+    if (villagePatientId) {
+      const resolved = await this.resolveAshaSubject(req, villagePatientId)
+      villager = resolved.villager
+      subject = villager // freebie accounting, free-consult check
+    } else if (req.user.role === UserRoles.ASHA) {
+      throw new ApiError(
+        400,
+        'ASHA bookings must include a villagePatientId.'
+      )
+    }
+
+    const free = this.isFreeConsult(subject, triageUrgency)
     const isDev = ENV.NODE_ENV !== 'production'
 
+    const ctx = { slot, triageSummary, triageUrgency, villager }
+
     if (free) {
-      return this.confirmFreeBooking(req, res, {
-        slot,
-        triageSummary,
-        triageUrgency,
-      })
+      return this.confirmFreeBooking(req, res, ctx)
     }
 
     // Dev-mode escape hatch: confirm a paid booking without going through
@@ -92,11 +134,7 @@ class AppointmentController {
     // paymentStatus='paid', and a Transaction row is written so doctor
     // earnings + the admin dashboard still look right.
     if (demoSkipPayment && isDev) {
-      return this.confirmPaidBookingDemo(req, res, {
-        slot,
-        triageSummary,
-        triageUrgency,
-      })
+      return this.confirmPaidBookingDemo(req, res, ctx)
     }
 
     // Paid path — create Razorpay order. We deliberately do NOT lock the
@@ -114,7 +152,7 @@ class AppointmentController {
       order = await this.paymentSvc.createOrder({
         amountPaise: CONSULT_FEE_PAISE,
         slotId: slot._id,
-        patientId: patient._id,
+        patientId: req.user._id,
       })
     } catch (err) {
       this.log.error({ msg: 'Razorpay order failed', error: err?.message })
@@ -137,6 +175,7 @@ class AppointmentController {
           // Echo triage context back so the client can pass it to /verify.
           triageSummary: triageSummary || null,
           triageUrgency: triageUrgency || null,
+          villagePatientId: villager ? String(villager._id) : null,
         },
         'Razorpay order created. Complete payment to confirm the slot.'
       )
@@ -144,42 +183,60 @@ class AppointmentController {
   }
 
   // ── Free / emergency booking path ──────────────────────────────────────
-  async confirmFreeBooking(req, res, { slot, triageSummary, triageUrgency }) {
-    const patient = req.user
+  // `villager` is non-null for ASHA-assisted bookings.
+  async confirmFreeBooking(req, res, { slot, triageSummary, triageUrgency, villager }) {
     slot.status = SlotStatus.BOOKED
     await slot.save()
 
+    const apptDoc = {
+      doctorId: slot.doctorId,
+      slotId: slot._id,
+      datetime: slot.datetime,
+      status: AppointmentStatus.SCHEDULED,
+      paymentStatus: PaymentStatus.FREE,
+      mode: ConsultationMode.VIDEO,
+      triageSummary: triageSummary || null,
+      triageUrgency: triageUrgency || null,
+    }
+    if (villager) {
+      apptDoc.villagePatientId = villager._id
+      apptDoc.bookedByAshaId = req.user._id
+    } else {
+      apptDoc.patientId = req.user._id
+    }
+
     let appointment
     try {
-      appointment = await this.apptSvc.create({
-        patientId: patient._id,
-        doctorId: slot.doctorId,
-        slotId: slot._id,
-        datetime: slot.datetime,
-        status: AppointmentStatus.SCHEDULED,
-        paymentStatus: PaymentStatus.FREE,
-        mode: ConsultationMode.VIDEO,
-        triageSummary: triageSummary || null,
-        triageUrgency: triageUrgency || null,
-      })
+      appointment = await this.apptSvc.create(apptDoc)
     } catch (err) {
       slot.status = SlotStatus.AVAILABLE
       await slot.save()
       throw err
     }
 
-    // First-consult freebie is burned even if this booking was emergency-free.
-    // Cleaner accounting: every patient gets exactly one freebie, and emergency
-    // bookings don't piggyback on that quota.
-    if (!patient.freeConsultationUsed && triageUrgency !== TriageUrgency.EMERGENCY) {
-      await this.userSvc.updateById(patient._id, { freeConsultationUsed: true })
+    // First-consult freebie burns on the actual subject (villager or patient),
+    // never on the ASHA's user record. Emergency bookings don't burn the quota.
+    if (triageUrgency !== TriageUrgency.EMERGENCY) {
+      if (villager && !villager.freeConsultationUsed) {
+        await this.vpSvc?.updateById(villager._id, {
+          freeConsultationUsed: true,
+        })
+      } else if (!villager && !req.user.freeConsultationUsed) {
+        await this.userSvc.updateById(req.user._id, {
+          freeConsultationUsed: true,
+        })
+      }
     }
 
     this.log.info({
-      msg: 'Appointment booked (free path)',
+      msg: villager
+        ? 'Appointment booked (free path, ASHA-assisted)'
+        : 'Appointment booked (free path)',
       data: {
         appointmentId: appointment._id,
-        patientId: patient._id,
+        patientId: villager ? null : req.user._id,
+        villagePatientId: villager?._id || null,
+        bookedByAshaId: villager ? req.user._id : null,
         doctorId: slot.doctorId,
         urgency: triageUrgency || 'n/a',
       },
@@ -203,23 +260,30 @@ class AppointmentController {
   // Same accounting as the real verify path (80/20 split, transaction row,
   // wallet credit) so the rest of the app stays consistent. Gated by
   // NODE_ENV !== 'production' inside book().
-  async confirmPaidBookingDemo(req, res, { slot, triageSummary, triageUrgency }) {
+  async confirmPaidBookingDemo(req, res, { slot, triageSummary, triageUrgency, villager }) {
     slot.status = SlotStatus.BOOKED
     await slot.save()
 
+    const apptDoc = {
+      doctorId: slot.doctorId,
+      slotId: slot._id,
+      datetime: slot.datetime,
+      status: AppointmentStatus.SCHEDULED,
+      paymentStatus: PaymentStatus.PAID,
+      mode: ConsultationMode.VIDEO,
+      triageSummary: triageSummary || null,
+      triageUrgency: triageUrgency || null,
+    }
+    if (villager) {
+      apptDoc.villagePatientId = villager._id
+      apptDoc.bookedByAshaId = req.user._id
+    } else {
+      apptDoc.patientId = req.user._id
+    }
+
     let appointment
     try {
-      appointment = await this.apptSvc.create({
-        patientId: req.user._id,
-        doctorId: slot.doctorId,
-        slotId: slot._id,
-        datetime: slot.datetime,
-        status: AppointmentStatus.SCHEDULED,
-        paymentStatus: PaymentStatus.PAID,
-        mode: ConsultationMode.VIDEO,
-        triageSummary: triageSummary || null,
-        triageUrgency: triageUrgency || null,
-      })
+      appointment = await this.apptSvc.create(apptDoc)
     } catch (err) {
       slot.status = SlotStatus.AVAILABLE
       await slot.save()
@@ -229,7 +293,7 @@ class AppointmentController {
     const { platformFee, doctorEarning } = splitFee(CONSULT_FEE_PAISE)
     await this.transactionSvc.create({
       appointmentId: appointment._id,
-      patientId: req.user._id,
+      patientId: villager ? null : req.user._id,
       doctorId: slot.doctorId,
       amount: CONSULT_FEE_PAISE,
       platformFee,
@@ -271,7 +335,16 @@ class AppointmentController {
       razorpay_signature: signature,
       triageSummary,
       triageUrgency,
+      villagePatientId,
     } = req.body
+
+    // Re-resolve the ASHA-villager link so a stolen-signature attempt can't
+    // attach the booking to a random villager.
+    let villager = null
+    if (villagePatientId) {
+      const resolved = await this.resolveAshaSubject(req, villagePatientId)
+      villager = resolved.villager
+    }
 
     if (!this.paymentSvc?.isConfigured) {
       throw new ApiError(503, 'Payments are not configured.')
@@ -317,19 +390,26 @@ class AppointmentController {
     slot.status = SlotStatus.BOOKED
     await slot.save()
 
+    const apptDoc = {
+      doctorId: slot.doctorId,
+      slotId: slot._id,
+      datetime: slot.datetime,
+      status: AppointmentStatus.SCHEDULED,
+      paymentStatus: PaymentStatus.PAID,
+      mode: ConsultationMode.VIDEO,
+      triageSummary: triageSummary || null,
+      triageUrgency: triageUrgency || null,
+    }
+    if (villager) {
+      apptDoc.villagePatientId = villager._id
+      apptDoc.bookedByAshaId = req.user._id
+    } else {
+      apptDoc.patientId = req.user._id
+    }
+
     let appointment
     try {
-      appointment = await this.apptSvc.create({
-        patientId: req.user._id,
-        doctorId: slot.doctorId,
-        slotId: slot._id,
-        datetime: slot.datetime,
-        status: AppointmentStatus.SCHEDULED,
-        paymentStatus: PaymentStatus.PAID,
-        mode: ConsultationMode.VIDEO,
-        triageSummary: triageSummary || null,
-        triageUrgency: triageUrgency || null,
-      })
+      appointment = await this.apptSvc.create(apptDoc)
     } catch (err) {
       slot.status = SlotStatus.AVAILABLE
       await slot.save()
@@ -340,7 +420,7 @@ class AppointmentController {
     const { platformFee, doctorEarning } = splitFee(CONSULT_FEE_PAISE)
     await this.transactionSvc.create({
       appointmentId: appointment._id,
-      patientId: req.user._id,
+      patientId: villager ? null : req.user._id,
       doctorId: slot.doctorId,
       amount: CONSULT_FEE_PAISE,
       platformFee,
@@ -407,7 +487,17 @@ class AppointmentController {
       },
       {
         sort: { datetime: 1 },
-        populate: [{ path: 'patientId', select: 'name email language' }],
+        populate: [
+          { path: 'patientId', select: 'name email language' },
+          {
+            path: 'villagePatientId',
+            select: 'name age gender phone language village',
+          },
+          {
+            path: 'bookedByAshaId',
+            select: 'name email village ashaIdNumber',
+          },
+        ],
       }
     )
     return res
@@ -443,13 +533,15 @@ class AppointmentController {
     })
 
     await this.mrSvc.appendConsultation({
-      patientId: appt.patientId,
+      patientId: appt.villagePatientId ? null : appt.patientId,
+      villagePatientId: appt.villagePatientId || null,
       entry: {
         date: new Date(),
         doctorId: appt.doctorId,
         notes: updated.doctorNotes,
         prescription: updated.prescription,
         triageSummary: updated.triageSummary,
+        bookedByAshaId: appt.bookedByAshaId || null,
       },
     })
 
@@ -625,6 +717,7 @@ class AppointmentController {
     if (user.role === UserRoles.ADMIN) return true
     if (
       user.role === UserRoles.PATIENT &&
+      appt.patientId &&
       String(appt.patientId._id || appt.patientId) === String(user._id)
     ) {
       return true
@@ -632,6 +725,13 @@ class AppointmentController {
     if (
       user.role === UserRoles.DOCTOR &&
       String(appt.doctorId._id || appt.doctorId) === String(user._id)
+    ) {
+      return true
+    }
+    if (
+      user.role === UserRoles.ASHA &&
+      appt.bookedByAshaId &&
+      String(appt.bookedByAshaId._id || appt.bookedByAshaId) === String(user._id)
     ) {
       return true
     }
