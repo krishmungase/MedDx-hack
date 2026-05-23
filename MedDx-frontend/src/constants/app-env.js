@@ -5,8 +5,8 @@ const appEnv = {
   APP_LOGO: import.meta.env.VITE_APP_LOGO,
   APP_FAVICON_LOGO: import.meta.env.VITE_APP_FAVICON_LOGO,
 
-  BACKEND_URL: import.meta.env.VITE_BACKEND_URL,
-  BACKEND_BASE_URL: `${import.meta.env.VITE_BACKEND_URL}/api/v1`,
+  BACKEND_URL: import.meta.env.VITE_BACKEND_URL || '',
+  BACKEND_BASE_URL: `${import.meta.env.VITE_BACKEND_URL || ''}/api/v1`,
 }
 
 export default appEnv
