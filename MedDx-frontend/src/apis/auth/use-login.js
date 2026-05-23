@@ -15,6 +15,9 @@ const useLogin = () => {
     mutationFn: ({ data }) => apis.login({ data }),
     onSuccess: ({ data: response }) => {
       const payload = response?.data || {}
+      console.log('Login Response:', response)
+      console.log('Login Payload:', payload)
+      
       successToast({ message: 'Logged in successfully' })
       dispatch(
         setAuth({
@@ -22,7 +25,11 @@ const useLogin = () => {
           token: payload.token,
         })
       )
-      if (payload.role) navigate(`/${payload.role}`, { replace: true })
+      
+      console.log('Redux updated. Navigating to:', `/${payload.role}`)
+      setTimeout(() => {
+        if (payload.role) navigate(`/${payload.role}`, { replace: true })
+      }, 50)
     },
     retry: false,
   })
