@@ -1,13 +1,11 @@
 import { useMemo, useState } from 'react'
 import { format, isSameMonth } from 'date-fns'
 import {
-  ArrowDownRight,
   Banknote,
   Coins,
   IndianRupee,
   RefreshCw,
   Sparkles,
-  TrendingUp,
   Wallet,
 } from 'lucide-react'
 
@@ -44,18 +42,11 @@ const EarningsPage = () => {
     useMyEarnings()
   const [page, setPage] = useState(1)
 
-  const { thisMonthPaise, lastConsult, totalEarnings, last7DaysPath } = useMemo(() => {
+  const { thisMonthPaise, last7DaysPath } = useMemo(() => {
     const now = new Date()
     const thisMonth = transactions
       .filter((t) => isSameMonth(new Date(t.createdAt), now))
       .reduce((sum, t) => sum + (t.doctorEarning || 0), 0)
-    const last = transactions[0]
-      ? format(new Date(transactions[0].createdAt), 'MMM d, yyyy')
-      : 'No paid consults yet'
-    const total = transactions.reduce(
-      (sum, t) => sum + (t.doctorEarning || 0),
-      0,
-    )
 
     // Build a tiny sparkline from the last 7 days' daily totals
     const days = Array.from({ length: 7 }, (_, i) => {
@@ -82,8 +73,6 @@ const EarningsPage = () => {
       .join(' ')
     return {
       thisMonthPaise: thisMonth,
-      lastConsult: last,
-      totalEarnings: total,
       last7DaysPath: path,
     }
   }, [transactions])
@@ -196,37 +185,8 @@ const EarningsPage = () => {
         </div>
       </section>
 
-      {/* Stat grid */}
-      <section className="fade-up fade-up-delay-2 grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <BigStat
-          icon={Coins}
-          label="Wallet"
-          value={isLoading ? '—' : formatCompactRupees(balancePaise)}
-          tone="primary"
-        />
-        <BigStat
-          icon={TrendingUp}
-          label="This month"
-          value={isLoading ? '—' : formatCompactRupees(thisMonthPaise)}
-          tone="sage"
-        />
-        <BigStat
-          icon={IndianRupee}
-          label="Total earned"
-          value={isLoading ? '—' : formatCompactRupees(totalEarnings)}
-          tone="amber"
-        />
-        <BigStat
-          icon={ArrowDownRight}
-          label="Consults"
-          value={isLoading ? '—' : String(transactions.length)}
-          hint={transactions.length ? `Last ${lastConsult}` : 'No paid yet'}
-          tone="muted"
-        />
-      </section>
-
       {/* Transactions card */}
-      <section className="fade-up fade-up-delay-3 rounded-3xl border border-border/70 bg-card overflow-hidden shadow-sm">
+      <section className="fade-up fade-up-delay-2 rounded-3xl border border-border/70 bg-card overflow-hidden shadow-sm">
         <header className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-border/60 bg-linear-to-r from-primary/5 to-transparent">
           <div className="flex items-center gap-3">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -271,36 +231,6 @@ const EarningsPage = () => {
     </div>
   )
 }
-
-// ─────────────────────────────────────────────────────────────────────────
-
-const TONE_BG = {
-  primary: 'bg-primary/10 text-primary',
-  sage: 'bg-sage/15 text-sage-foreground',
-  amber: 'bg-amber-warm/15 text-amber-warm',
-  muted: 'bg-muted text-muted-foreground',
-}
-
-const BigStat = ({ icon: Icon, label, value, hint, tone = 'primary' }) => (
-  <div className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card p-4 transition-all hover:border-primary/30 hover:shadow-md">
-    <div className="flex items-start gap-3">
-      <span
-        className={`inline-flex h-10 w-10 items-center justify-center rounded-xl shrink-0 ${TONE_BG[tone]}`}
-      >
-        <Icon className="h-4 w-4" />
-      </span>
-      <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-          {label}
-        </p>
-        <p className="mt-0.5 font-display text-2xl tracking-tight tabular-nums">
-          {value}
-        </p>
-        {hint && <p className="text-xs text-muted-foreground mt-0.5">{hint}</p>}
-      </div>
-    </div>
-  </div>
-)
 
 // ─────────────────────────────────────────────────────────────────────────
 

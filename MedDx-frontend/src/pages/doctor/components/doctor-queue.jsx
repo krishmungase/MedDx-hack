@@ -9,12 +9,21 @@ import {
   Clock,
   FileText,
   RefreshCw,
+  Rocket,
   Sparkles,
   Users,
   Video,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import {
   DataPagination,
   DoctorAvatar,
@@ -40,6 +49,7 @@ const URGENCY_TONE = {
 const JOIN_WINDOW_BEFORE_MS = 5 * 60 * 1000
 const JOIN_WINDOW_AFTER_MS = 60 * 60 * 1000
 const DONE_PAGE_SIZE = 4
+const UPCOMING_PAGE_SIZE = 8
 
 const isJoinable = (appt) => {
   if (appt.status !== 'scheduled') return false
@@ -61,6 +71,7 @@ const DoctorQueue = () => {
   const navigate = useNavigate()
   const { appointments, isLoading, isFetching, refetch } = useDoctorQueue()
   const [donePage, setDonePage] = useState(1)
+  const [upcomingPage, setUpcomingPage] = useState(1)
   useNowTick()
 
   const { upcoming, done, next } = useMemo(() => {
@@ -82,6 +93,14 @@ const DoctorQueue = () => {
   }, [appointments])
 
   const upcomingRest = next ? upcoming.slice(1) : upcoming
+  const upcomingTotalPages = Math.max(
+    1,
+    Math.ceil(upcomingRest.length / UPCOMING_PAGE_SIZE),
+  )
+  const upcomingPageItems = upcomingRest.slice(
+    (upcomingPage - 1) * UPCOMING_PAGE_SIZE,
+    upcomingPage * UPCOMING_PAGE_SIZE,
+  )
   const doneTotalPages = Math.max(1, Math.ceil(done.length / DONE_PAGE_SIZE))
   const donePageItems = done.slice(
     (donePage - 1) * DONE_PAGE_SIZE,
@@ -134,7 +153,7 @@ const DoctorQueue = () => {
         <QuietHero onRefresh={() => refetch()} isFetching={isFetching} />
       )}
 
-      {/* ── Rest of the queue as cards ────────────────────────────────────── */}
+      {/* ── Rest of the queue as a table ──────────────────────────────────── */}
       {upcomingRest.length > 0 && (
         <section className="fade-up fade-up-delay-2 space-y-4">
           <div className="flex items-center justify-between gap-3">
@@ -157,15 +176,17 @@ const DoctorQueue = () => {
               Refresh
             </Button>
           </div>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {upcomingRest.map((a) => (
-              <PatientCard
-                key={a._id}
-                appt={a}
-                onJoin={() => navigate(`/video/${a._id}`)}
-              />
-            ))}
-          </div>
+          <UpcomingTable
+            items={upcomingPageItems}
+            onJoin={(id) => navigate(`/video/${id}`)}
+          />
+          {upcomingTotalPages > 1 && (
+            <DataPagination
+              page={upcomingPage}
+              totalPages={upcomingTotalPages}
+              onPageChange={setUpcomingPage}
+            />
+          )}
         </section>
       )}
 
@@ -322,16 +343,30 @@ const NextPatientSpotlight = ({ appt, onJoin }) => {
             )}
           </div>
 
-          <Button
-            size="lg"
-            onClick={onJoin}
-            disabled={!joinable}
-            className="rounded-full h-12 px-7 bg-white text-primary hover:bg-white/90 font-semibold shadow-lg shadow-black/10 disabled:opacity-50"
-          >
-            <Video className="h-4 w-4" />
-            {joinable ? 'Open consultation room' : 'Joins 5 min before'}
-            {joinable && <ArrowRight className="h-4 w-4" />}
-          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              size="lg"
+              onClick={onJoin}
+              disabled={!joinable}
+              className="rounded-full h-12 px-7 bg-white text-primary hover:bg-white/90 font-semibold shadow-lg shadow-black/10 disabled:opacity-50"
+            >
+              <Video className="h-4 w-4" />
+              {joinable ? 'Open consultation room' : 'Joins 5 min before'}
+              {joinable && <ArrowRight className="h-4 w-4" />}
+            </Button>
+            {!joinable && (
+              <Button
+                size="lg"
+                onClick={onJoin}
+                variant="ghost"
+                className="rounded-full h-12 px-5 text-white/95 hover:text-white hover:bg-white/15 ring-1 ring-white/30 backdrop-blur-md"
+                title="Bypass the 5-minute gate (demo only)"
+              >
+                <Rocket className="h-4 w-4" />
+                Demo · Open call
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* AI triage panel */}
@@ -417,94 +452,145 @@ const SectionHeader = ({ icon: Icon, title, count, hint }) => (
 
 // ─────────────────────────────────────────────────────────────────────────
 
-const PatientCard = ({ appt, onJoin }) => {
+const UpcomingTable = ({ items, onJoin }) => (
+  <div className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-sm">
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent bg-muted/30">
+            <TableHead className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+              Patient
+            </TableHead>
+            <TableHead className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+              Time
+            </TableHead>
+            <TableHead className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+              Triage
+            </TableHead>
+            <TableHead className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+              Status
+            </TableHead>
+            <TableHead className="text-right text-[11px] uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+              Action
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {items.map((a) => (
+            <UpcomingRow key={a._id} appt={a} onJoin={() => onJoin(a._id)} />
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  </div>
+)
+
+const UpcomingRow = ({ appt, onJoin }) => {
   const dt = new Date(appt.datetime)
   const joinable = isJoinable(appt)
-  return (
-    <article className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/10 hover:border-primary/30">
-      <span
-        className={`absolute left-0 top-0 bottom-0 w-1 ${
-          joinable
-            ? 'bg-linear-to-b from-emerald-400 to-primary'
-            : 'bg-linear-to-b from-primary to-primary/40'
-        }`}
-        aria-hidden
-      />
+  const ms = dt.getTime() - Date.now()
+  const minutes = Math.max(0, Math.round(ms / 60000))
+  const statusText = joinable
+    ? 'Live now'
+    : minutes < 60
+      ? `In ${minutes} min`
+      : 'Joins 5 min before'
 
-      <div className="p-5 pl-6 space-y-4">
-        <div className="flex items-start gap-3">
+  return (
+    <TableRow className="hover:bg-muted/40 transition-colors">
+      <TableCell>
+        <div className="flex items-center gap-3">
           <DoctorAvatar
             name={appt.villagePatientId?.name || appt.patientId?.name}
-            size="md"
+            size="sm"
             tone="sage"
             online={joinable}
+            showRing={false}
           />
-          <div className="min-w-0 flex-1">
-            <p className="font-display text-base tracking-tight truncate">
+          <div className="min-w-0">
+            <div className="font-medium truncate">
               {appt.villagePatientId?.name ||
                 appt.patientId?.name ||
                 'Patient'}
               {appt.villagePatientId?.age && (
-                <span className="text-muted-foreground font-normal ml-1.5 text-sm">
+                <span className="text-muted-foreground font-normal ml-1.5 text-xs">
                   · {appt.villagePatientId.age}
                 </span>
               )}
-            </p>
-            <p className="text-xs text-muted-foreground truncate">
+            </div>
+            <div className="text-xs text-muted-foreground truncate">
               {appt.villagePatientId
                 ? appt.villagePatientId.village || 'Village patient'
                 : appt.patientId?.email || ''}
-            </p>
-          </div>
-          {appt.triageUrgency && (
-            <StatusBadge tone={URGENCY_TONE[appt.triageUrgency] || 'muted'}>
-              {appt.triageUrgency}
-            </StatusBadge>
-          )}
-        </div>
-
-        {appt.bookedByAshaId && (
-          <div className="rounded-xl border border-primary/25 bg-primary/5 px-3 py-2 flex items-center gap-2 text-[11px] text-primary">
-            <Sparkles className="h-3 w-3" />
-            ASHA-assisted ·{' '}
-            <span className="font-medium">{appt.bookedByAshaId.name}</span>
-            {appt.bookedByAshaId.village && (
-              <span className="text-muted-foreground">
-                , {appt.bookedByAshaId.village}
-              </span>
+            </div>
+            {appt.bookedByAshaId && (
+              <div className="mt-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.14em] text-primary font-semibold">
+                <Sparkles className="h-2.5 w-2.5" />
+                ASHA · {appt.bookedByAshaId.name}
+              </div>
             )}
           </div>
-        )}
-
-        <div className="rounded-xl bg-linear-to-br from-primary/8 to-transparent border border-primary/15 px-4 py-3">
-          <div className="flex items-baseline justify-between gap-3">
-            <p className="font-display text-xl tracking-tight tabular-nums">
-              {format(dt, 'h:mm a')}
-            </p>
-            <p className="text-xs text-muted-foreground tabular-nums">
-              {format(dt, 'EEE, MMM d')}
-            </p>
-          </div>
         </div>
-
-        {appt.triageSummary && (
-          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-            <Sparkles className="inline h-3 w-3 mr-1 text-primary" />
-            {appt.triageSummary}
-          </p>
+      </TableCell>
+      <TableCell className="text-sm tabular-nums">
+        <div className="font-medium">{format(dt, 'h:mm a')}</div>
+        <div className="text-xs text-muted-foreground">
+          {format(dt, 'EEE, MMM d')}
+        </div>
+      </TableCell>
+      <TableCell>
+        {appt.triageUrgency ? (
+          <StatusBadge tone={URGENCY_TONE[appt.triageUrgency] || 'muted'}>
+            {appt.triageUrgency}
+          </StatusBadge>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
         )}
-
-        <Button
-          size="sm"
-          onClick={onJoin}
-          disabled={!joinable}
-          className="w-full rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+      </TableCell>
+      <TableCell>
+        <span
+          className={`inline-flex items-center gap-1.5 text-xs font-medium ${
+            joinable ? 'text-emerald-600' : 'text-muted-foreground'
+          }`}
         >
-          <Video className="h-3.5 w-3.5" />
-          {joinable ? 'Join consultation' : 'Not yet'}
-        </Button>
-      </div>
-    </article>
+          <span
+            className={`relative inline-flex h-2 w-2 rounded-full ${
+              joinable ? 'bg-emerald-500' : 'bg-amber-400'
+            }`}
+          >
+            {joinable && (
+              <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping" />
+            )}
+          </span>
+          {statusText}
+        </span>
+      </TableCell>
+      <TableCell className="text-right">
+        <div className="inline-flex items-center gap-2 justify-end">
+          <Button
+            size="sm"
+            onClick={onJoin}
+            disabled={!joinable}
+            className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+          >
+            <Video className="h-3.5 w-3.5" />
+            {joinable ? 'Join' : 'Not yet'}
+          </Button>
+          {!joinable && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onJoin}
+              className="rounded-full text-primary/80 hover:text-primary hover:bg-primary/10"
+              title="Bypass the 5-minute gate (demo only)"
+            >
+              <Rocket className="h-3.5 w-3.5" />
+              Demo
+            </Button>
+          )}
+        </div>
+      </TableCell>
+    </TableRow>
   )
 }
 
