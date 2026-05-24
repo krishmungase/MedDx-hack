@@ -30,8 +30,19 @@ class ServerApp {
   }
 
   initializeMiddlewares() {
+    const allowedOrigins = (ENV.CLIENT_URL || '')
+      .split(',')
+      .map((o) => o.trim().replace(/\/$/, ''))
+      .filter(Boolean)
+
     const corsOptions = {
-      origin: ENV.CLIENT_URL || '*',
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true)
+        if (allowedOrigins.length === 0) return callback(null, true)
+        const normalized = origin.replace(/\/$/, '')
+        if (allowedOrigins.includes(normalized)) return callback(null, true)
+        return callback(new Error(`CORS: origin ${origin} not allowed`))
+      },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
       allowedHeaders: ['Content-Type', 'Authorization'],
